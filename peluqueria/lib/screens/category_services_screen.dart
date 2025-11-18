@@ -15,9 +15,10 @@ class CategoryServicesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final servicios = context.watch<ServiceProvider>().getServiciosPorTipo(idTipo);
+    const primary = Color(0xFFFF8B00);
 
     return Scaffold(
-      appBar: AppBar(title: Text(nombreCategoria)),
+      appBar: AppBar(title: Text(nombreCategoria), backgroundColor: primary),
       body: servicios.isEmpty
           ? const Center(child: Text('No hay servicios en esta categoría'))
           : ListView.builder(
@@ -25,46 +26,35 @@ class CategoryServicesScreen extends StatelessWidget {
               itemCount: servicios.length,
               itemBuilder: (ctx, i) {
                 final s = servicios[i];
-                return _ServiceCard(service: s);
+                final precio = (s['precio'] as num).toStringAsFixed(2);
+                final duracion = s['duracion'];
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    leading: CircleAvatar(
+                      backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                      child: Icon(_iconForTipo(s['id_tipo'] as int), color: Theme.of(context).colorScheme.primary),
+                    ),
+                    title: Text(s['nombre'] as String, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text(s['descripcion'] as String),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('$precio €', style: const TextStyle(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 6),
+                        Text('${duracion} h', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      ],
+                    ),
+                    onTap: () {
+                      // Acción al pulsar el servicio
+                    },
+                  ),
+                );
               },
             ),
-    );
-  }
-}
-
-class _ServiceCard extends StatelessWidget {
-  final Map<String, dynamic> service;
-  const _ServiceCard({required this.service});
-
-  @override
-  Widget build(BuildContext context) {
-    final precio = (service['precio'] as num).toStringAsFixed(2);
-    final duracion = service['duracion'];
-
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        leading: CircleAvatar(
-          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-          child: Icon(_iconForTipo(service['id_tipo'] as int), color: Theme.of(context).colorScheme.primary),
-        ),
-        title: Text(service['nombre'] as String, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(service['descripcion'] as String),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text('$precio €', style: const TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
-            Text('${duracion} h', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-          ],
-        ),
-        onTap: () {
-          // Acción al pulsar el servicio (ej: abrir detalle o reservar)
-        },
-      ),
     );
   }
 

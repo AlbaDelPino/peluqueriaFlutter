@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // 👈 necesario para bloquear orientación
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+
 import 'providers/service_provider.dart';
+import 'screens/login_screen.dart';
+import 'screens/signup_screen.dart';
 import 'screens/main_navigation.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Bloquear solo en vertical (portrait)
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -18,6 +20,7 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+  static const Color brandColor = Color(0xFFFF8B00);
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +29,16 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Centro de Belleza',
-        theme: ThemeData(primarySwatch: Colors.pink),
-        home: const MainNavigation(),
+        theme: ThemeData(
+          colorSchemeSeed: brandColor,
+          useMaterial3: true,
+        ),
+        initialRoute: '/',
+        routes: {
+          '/': (_) => const LoginScreen(),
+          '/signup': (_) => const SignUpScreen(),
+          '/home': (_) => const MainNavigation(),
+        },
       ),
     );
   }

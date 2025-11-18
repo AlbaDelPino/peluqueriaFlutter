@@ -11,33 +11,40 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  int _selectedIndex = 0;
+  int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const HomeServicesScreen(), // Inicio → listado de servicios
-    const NewsScreen(),         // Noticias
-    const ProfileScreen(),      // Ajustes
-    const Placeholder(),        // Botón extra si lo quieres usar luego
-  ];
+  late final List<Widget> _tabs;
 
-  void _onItemTapped(int index) {
-    setState(() => _selectedIndex = index);
+  @override
+  void initState() {
+    super.initState();
+    _tabs = const [
+      HomeServicesScreen(), // pestaña Servicios
+      NewsScreen(),         // pestaña Noticias
+      ProfileScreen(),      // pestaña Perfil
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
+    const primary = Color(0xFFFF8B00);
+
     return Scaffold(
-      body: _screens[_selectedIndex],
+      appBar: AppBar(
+        title: const Text('Centro de Belleza'),
+        backgroundColor: primary,
+        automaticallyImplyLeading: false,
+      ),
+      body: IndexedStack(index: _currentIndex, children: _tabs),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.pink,
+        currentIndex: _currentIndex,
+        selectedItemColor: primary,
         unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
+        onTap: (i) => setState(() => _currentIndex = i),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Servicios'),
           BottomNavigationBarItem(icon: Icon(Icons.article), label: 'Noticias'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Ajustes'),
-          BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: 'Extra'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
         ],
       ),
     );

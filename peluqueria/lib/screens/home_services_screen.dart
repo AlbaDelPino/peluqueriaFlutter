@@ -10,9 +10,9 @@ class HomeServicesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final tipos = context.watch<ServiceProvider>().tiposServicio;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Servicios por categoría')),
-      body: ListView.separated(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: ListView.separated(
         itemCount: tipos.length,
         separatorBuilder: (_, __) => const Divider(height: 1),
         itemBuilder: (ctx, i) {
