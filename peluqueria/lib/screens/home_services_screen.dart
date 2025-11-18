@@ -22,9 +22,9 @@ class HomeServicesScreen extends StatelessWidget {
             title: Text(category, style: const TextStyle(fontWeight: FontWeight.bold)),
             children: services.map((service) {
               return ListTile(
-                title: Text(service.name),
-                subtitle: Text("Duración: ${service.duration}"),
-                trailing: Text("${service.price.toStringAsFixed(2)} €"),
+                title: Text(service["name"]),
+                subtitle: Text("Duración: ${service["duration"]}"),
+                trailing: Text("${service["price"].toStringAsFixed(2)} €"),
               );
             }).toList(),
           );
