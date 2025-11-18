@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'package:flutter/services.dart';
+=======
+import 'package:flutter/services.dart'; // necesario para bloquear orientación
+>>>>>>> 622ce709b8c2e8138a34ac2c7d98fe8eb67c3302
 import 'package:provider/provider.dart';
 
 import 'providers/service_provider.dart';
