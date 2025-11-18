@@ -3,30 +3,93 @@ import 'package:provider/provider.dart';
 import '../providers/service_provider.dart';
 
 class CategoryServicesScreen extends StatelessWidget {
-  final String category;
+  final int idTipo;
+  final String nombreCategoria;
 
-  const CategoryServicesScreen({super.key, required this.category});
+  const CategoryServicesScreen({
+    super.key,
+    required this.idTipo,
+    required this.nombreCategoria,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final serviceProvider = Provider.of<ServiceProvider>(context);
-    final services = serviceProvider.services[category] ?? [];
+    final servicios = context.watch<ServiceProvider>().getServiciosPorTipo(idTipo);
 
     return Scaffold(
-      appBar: AppBar(title: Text(category)),
-      body: ListView.builder(
-        itemCount: services.length,
-        itemBuilder: (ctx, i) {
-          final service = services[i];
-          return Card(
-            child: ListTile(
-              title: Text(service["name"]),
-              subtitle: Text("Duración: ${service["duration"]}"),
-              trailing: Text("${service["price"].toStringAsFixed(2)} €"),
+      appBar: AppBar(title: Text(nombreCategoria)),
+      body: servicios.isEmpty
+          ? const Center(child: Text('No hay servicios en esta categoría'))
+          : ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              itemCount: servicios.length,
+              itemBuilder: (ctx, i) {
+                final s = servicios[i];
+                return _ServiceCard(service: s);
+              },
             ),
-          );
+    );
+  }
+}
+
+class _ServiceCard extends StatelessWidget {
+  final Map<String, dynamic> service;
+  const _ServiceCard({required this.service});
+
+  @override
+  Widget build(BuildContext context) {
+    final precio = (service['precio'] as num).toStringAsFixed(2);
+    final duracion = service['duracion'];
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+          child: Icon(_iconForTipo(service['id_tipo'] as int), color: Theme.of(context).colorScheme.primary),
+        ),
+        title: Text(service['nombre'] as String, style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(service['descripcion'] as String),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text('$precio €', style: const TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 6),
+            Text('${duracion} h', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+          ],
+        ),
+        onTap: () {
+          // Acción al pulsar el servicio (ej: abrir detalle o reservar)
         },
       ),
     );
+  }
+
+  IconData _iconForTipo(int idTipo) {
+    switch (idTipo) {
+      case 1:
+        return Icons.content_cut;
+      case 2:
+        return Icons.clean_hands;
+      case 3:
+        return Icons.spa;
+      case 4:
+        return Icons.remove_red_eye;
+      case 5:
+        return Icons.face;
+      case 6:
+        return Icons.self_improvement;
+      case 7:
+        return Icons.airline_seat_flat;
+      case 8:
+        return Icons.brush;
+      case 9:
+        return Icons.edit;
+      default:
+        return Icons.miscellaneous_services;
+    }
   }
 }
