@@ -91,4 +91,12 @@ class ServiceProvider with ChangeNotifier {
   List<Map<String, dynamic>> getServiciosPorTipo(int idTipo) {
     return _servicios.where((s) => s["id_tipo"] == idTipo).toList();
   }
+  // 🔎 Buscar servicios por texto
+  List<Map<String, dynamic>> buscarServicios(String query) {
+    final q = query.toLowerCase();
+    return _servicios.where((s) {
+      return (s["nombre"] as String).toLowerCase().contains(q) ||
+             (s["descripcion"] as String).toLowerCase().contains(q);
+    }).toList();
+  }
 }

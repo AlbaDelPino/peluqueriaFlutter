@@ -30,11 +30,7 @@ class _MainNavigationState extends State<MainNavigation> {
     const primary = Color(0xFFFF8B00);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Centro de Belleza'),
-        backgroundColor: primary,
-        automaticallyImplyLeading: false,
-      ),
+    
       body: IndexedStack(index: _currentIndex, children: _tabs),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
