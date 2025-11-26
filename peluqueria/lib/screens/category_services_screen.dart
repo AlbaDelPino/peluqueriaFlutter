@@ -18,7 +18,7 @@ class CategoryServicesScreen extends StatelessWidget {
     const primary = Color(0xFFFF8B00);
 
     return Scaffold(
-      appBar: AppBar(title: Text(nombreCategoria), backgroundColor: primary),
+      appBar: AppBar(title: Text(nombreCategoria, style: TextStyle(color: Colors.white),), backgroundColor: primary),
       body: servicios.isEmpty
           ? const Center(child: Text('No hay servicios en esta categoría'))
           : ListView.builder(

@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
-
 import 'package:flutter/services.dart';
-
 import 'package:provider/provider.dart';
 
 import 'providers/service_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/main_navigation.dart';
+import 'shared_prefs/user_preferences.dart'; // 👈 importa tu clase
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 🔹 Inicializamos las preferencias
+  final prefs = UserPreferences();
+  await prefs.initPrefs();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -30,7 +33,6 @@ class MyApp extends StatelessWidget {
       create: (_) => ServiceProvider(),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-     
         theme: ThemeData(
           colorSchemeSeed: brandColor,
           useMaterial3: true,
@@ -40,6 +42,7 @@ class MyApp extends StatelessWidget {
           '/': (_) => const LoginScreen(),
           '/signup': (_) => const SignUpScreen(),
           '/home': (_) => const MainNavigation(),
+           '/login': (_) => const LoginScreen(),
         },
       ),
     );
