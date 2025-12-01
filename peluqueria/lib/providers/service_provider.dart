@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 
 class ServiceProvider with ChangeNotifier {
   final List<Map<String, dynamic>> _tiposServicio = [
-    {"id_tipo": 1, "nombre": "Peluquería", "descripcion": "Servicios de corte, color y peinado"},
-    {"id_tipo": 2, "nombre": "Manicura y Pedicura", "descripcion": "Cuidado y esmaltado de uñas"},
-    {"id_tipo": 3, "nombre": "Depilación", "descripcion": "Eliminación de vello en distintas zonas"},
-    {"id_tipo": 4, "nombre": "Pestañas y Cejas", "descripcion": "Tratamientos estéticos para pestañas y cejas"},
-    {"id_tipo": 5, "nombre": "Tratamientos Faciales", "descripcion": "Cuidado y rejuvenecimiento de la piel del rostro"},
-    {"id_tipo": 6, "nombre": "Tratamientos Corporales", "descripcion": "Masajes y tratamientos para el cuerpo"},
-    {"id_tipo": 7, "nombre": "Masajes", "descripcion": "Servicios de relajación y terapéuticos"},
-    {"id_tipo": 8, "nombre": "Maquillaje", "descripcion": "Servicios de maquillaje profesional"},
-    {"id_tipo": 9, "nombre": "Micropigmentación", "descripcion": "Tratamientos de pigmentación semipermanente"},
+    {"id_tipo": 1, "nombre": "Peluquería"},
+    {"id_tipo": 2, "nombre": "Manicura y Pedicura"},
+    {"id_tipo": 3, "nombre": "Depilación"},
+    {"id_tipo": 4, "nombre": "Pestañas y Cejas"},
+    {"id_tipo": 5, "nombre": "Tratamientos Faciales"},
+    {"id_tipo": 6, "nombre": "Tratamientos Corporales"},
+    {"id_tipo": 7, "nombre": "Masajes"},
+    {"id_tipo": 8, "nombre": "Maquillaje"},
+    {"id_tipo": 9, "nombre": "Micropigmentación"},
   ];
 
   final List<Map<String, dynamic>> _servicios = [
@@ -90,5 +90,13 @@ class ServiceProvider with ChangeNotifier {
 
   List<Map<String, dynamic>> getServiciosPorTipo(int idTipo) {
     return _servicios.where((s) => s["id_tipo"] == idTipo).toList();
+  }
+  // 🔎 Buscar servicios por texto
+  List<Map<String, dynamic>> buscarServicios(String query) {
+    final q = query.toLowerCase();
+    return _servicios.where((s) {
+      return (s["nombre"] as String).toLowerCase().contains(q) ||
+             (s["descripcion"] as String).toLowerCase().contains(q);
+    }).toList();
   }
 }

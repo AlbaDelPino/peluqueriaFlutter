@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/service_provider.dart';
+import '../providers/providers.dart';
 
 class CategoryServicesScreen extends StatelessWidget {
   final int idTipo;
@@ -14,11 +14,16 @@ class CategoryServicesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final servicios = context.watch<ServiceProvider>().getServiciosPorTipo(idTipo);
+    final servicios = context.watch<ServiceProvider>().getServiciosPorTipo(
+      idTipo,
+    );
     const primary = Color(0xFFFF8B00);
 
     return Scaffold(
-      appBar: AppBar(title: Text(nombreCategoria), backgroundColor: primary),
+      appBar: AppBar(
+        title: Text(nombreCategoria, style: TextStyle(color: Colors.white)),
+        backgroundColor: primary,
+      ),
       body: servicios.isEmpty
           ? const Center(child: Text('No hay servicios en esta categoría'))
           : ListView.builder(
@@ -30,22 +35,44 @@ class CategoryServicesScreen extends StatelessWidget {
                 final duracion = s['duracion'];
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    leading: CircleAvatar(
-                      backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                      child: Icon(_iconForTipo(s['id_tipo'] as int), color: Theme.of(context).colorScheme.primary),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
                     ),
-                    title: Text(s['nombre'] as String, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    leading: CircleAvatar(
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.12),
+                      child: Icon(
+                        _iconForTipo(s['id_tipo'] as int),
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    title: Text(
+                      s['nombre'] as String,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
                     subtitle: Text(s['descripcion'] as String),
                     trailing: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text('$precio €', style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(
+                          '$precio €',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
                         const SizedBox(height: 6),
-                        Text('${duracion} h', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                        Text(
+                          '${duracion} h',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                     onTap: () {
