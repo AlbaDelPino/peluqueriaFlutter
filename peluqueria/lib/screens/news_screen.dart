@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'profile_screen.dart';
 
 class NewsScreen extends StatelessWidget {
   const NewsScreen({super.key});
@@ -10,13 +9,10 @@ class NewsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Noticias', style: TextStyle(color: Colors.white),),
+        title: const Text('Noticias', style: TextStyle(color: Colors.white)),
         backgroundColor: primary,
-        
       ),
-      body: const Center(
-        child: Text('Aquí irán las noticias'),
-      ),
+      body: const Center(child: Text('Aquí irán las noticias')),
     );
   }
 }
