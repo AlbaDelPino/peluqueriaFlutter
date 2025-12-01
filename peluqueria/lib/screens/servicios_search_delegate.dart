@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../providers/service_provider.dart';
+import '../providers/providers.dart';
 
 class ServiciosSearchDelegate extends SearchDelegate {
   final ServiceProvider provider;
@@ -9,10 +9,7 @@ class ServiciosSearchDelegate extends SearchDelegate {
   @override
   List<Widget>? buildActions(BuildContext context) {
     return [
-      IconButton(
-        icon: const Icon(Icons.clear),
-        onPressed: () => query = '',
-      ),
+      IconButton(icon: const Icon(Icons.clear), onPressed: () => query = ''),
     ];
   }
 

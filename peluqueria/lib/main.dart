@@ -11,7 +11,7 @@ import 'shared_prefs/user_preferences.dart'; // 👈 importa tu clase
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 🔹 Inicializamos las preferencias
+  //  Inicializamos las preferencias
   final prefs = UserPreferences();
   await prefs.initPrefs();
 
@@ -33,16 +33,13 @@ class MyApp extends StatelessWidget {
       create: (_) => ServiceProvider(),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorSchemeSeed: brandColor,
-          useMaterial3: true,
-        ),
+        theme: ThemeData(colorSchemeSeed: brandColor, useMaterial3: true),
         initialRoute: '/',
         routes: {
           '/': (_) => const LoginScreen(),
           '/signup': (_) => const SignUpScreen(),
           '/home': (_) => const MainNavigation(),
-           '/login': (_) => const LoginScreen(),
+          '/login': (_) => const LoginScreen(),
         },
       ),
     );

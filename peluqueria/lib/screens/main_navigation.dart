@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home_services_screen.dart';
-import 'news_screen.dart';
-import 'profile_screen.dart';
+import 'screens.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -20,8 +18,8 @@ class _MainNavigationState extends State<MainNavigation> {
     super.initState();
     _tabs = const [
       HomeServicesScreen(), // pestaña Servicios
-      NewsScreen(),         // pestaña Noticias
-      ProfileScreen(),      // pestaña Perfil
+      NewsScreen(), // pestaña Noticias
+      ProfileScreen(), // pestaña Perfil
     ];
   }
 
@@ -30,7 +28,6 @@ class _MainNavigationState extends State<MainNavigation> {
     const primary = Color(0xFFFF8B00);
 
     return Scaffold(
-    
       body: IndexedStack(index: _currentIndex, children: _tabs),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,

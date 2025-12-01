@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/service_provider.dart';
-import 'category_services_screen.dart';
+import '../providers/providers.dart';
+import 'screens.dart';
 import 'servicios_search_delegate.dart';
 
 class HomeServicesScreen extends StatelessWidget {
@@ -13,23 +13,23 @@ class HomeServicesScreen extends StatelessWidget {
   IconData _iconForTipo(int idTipo) {
     switch (idTipo) {
       case 1:
-        return Icons.content_cut;          // Corte
+        return Icons.content_cut; // Corte
       case 2:
-        return Icons.clean_hands;          // Lavado
+        return Icons.clean_hands; // Lavado
       case 3:
-        return Icons.spa;                  // Spa
+        return Icons.spa; // Spa
       case 4:
-        return Icons.remove_red_eye;       // Cejas / pestañas
+        return Icons.remove_red_eye; // Cejas / pestañas
       case 5:
-        return Icons.face;                 // Facial
+        return Icons.face; // Facial
       case 6:
-        return Icons.self_improvement;     // Relajación
+        return Icons.self_improvement; // Relajación
       case 7:
-        return Icons.airline_seat_flat;    // Masajes
+        return Icons.airline_seat_flat; // Masajes
       case 8:
-        return Icons.brush;                // Color
+        return Icons.brush; // Color
       case 9:
-        return Icons.edit;                 // Personalización
+        return Icons.edit; // Personalización
       default:
         return Icons.miscellaneous_services;
     }
@@ -62,7 +62,8 @@ class HomeServicesScreen extends StatelessWidget {
       ),
       body: ListView.separated(
         itemCount: tipos.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8), // 👈 separación entre tarjetas
+        separatorBuilder: (_, __) =>
+            const SizedBox(height: 8), // 👈 separación entre tarjetas
         itemBuilder: (ctx, i) {
           final tipo = tipos[i];
           return Padding(
@@ -80,7 +81,10 @@ class HomeServicesScreen extends StatelessWidget {
                 ],
               ),
               child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 leading: Icon(
                   _iconForTipo(tipo['id_tipo'] as int),
                   color: primary,
