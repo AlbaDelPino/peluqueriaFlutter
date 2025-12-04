@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/service_provider.dart';
+import 'service_detail_screen.dart'; // 👈 importa la pantalla de detalle
 
 class CategoryServicesScreen extends StatelessWidget {
   final int idTipo;
@@ -34,10 +35,21 @@ class CategoryServicesScreen extends StatelessWidget {
                 return Card(
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: ListTile(
-                    leading: const Icon(Icons.miscellaneous_services, color: Color(0xFFFF8B00)),
-                    title: Text(servicio.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    leading: const Icon(Icons.miscellaneous_services,
+                        color: Color(0xFFFF8B00)),
+                    title: Text(servicio.nombre,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text(servicio.descripcion),
                     trailing: Text("${servicio.precio} €"),
+                    // 👇 Navegación al detalle del servicio
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ServiceDetailScreen(servicio: servicio),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
