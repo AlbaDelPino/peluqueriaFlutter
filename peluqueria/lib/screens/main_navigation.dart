@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'screens.dart';
+import 'home_services_screen.dart';
+import 'profile_screen.dart';
+import 'news_screen.dart'; // si tienes pantalla de noticias
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -17,7 +19,7 @@ class _MainNavigationState extends State<MainNavigation> {
   void initState() {
     super.initState();
     _tabs = const [
-      HomeServicesScreen(), // pestaña Servicios
+      HomeServicesScreen(),
       NewsScreen(), // pestaña Noticias
       ProfileScreen(), // pestaña Perfil
     ];

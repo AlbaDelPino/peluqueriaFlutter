@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -8,19 +10,30 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailCtrl = TextEditingController();
+  final _userCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _obscure = true;
 
   @override
   void dispose() {
-    _emailCtrl.dispose();
+    _userCtrl.dispose();
     _passCtrl.dispose();
     super.dispose();
   }
 
-  void _onLoginPressed() {
-    Navigator.pushReplacementNamed(context, '/home');
+  void _onLoginPressed() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final success = await auth.login(
+      username: _userCtrl.text,
+      password: _passCtrl.text,
+    );
+    if (success) {
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al iniciar sesión')),
+      );
+    }
   }
 
   void _onGoToSignUp() {
@@ -32,7 +45,6 @@ class _LoginScreenState extends State<LoginScreen> {
     const primary = Color(0xFFFF8B00);
 
     return Scaffold(
-     
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -44,26 +56,16 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // 👇 Logo redondo arriba
                   CircleAvatar(
                     radius: 40,
-                    backgroundImage: AssetImage('assets/iconPeluqueria.png'), // cambia la ruta si usas otra
+                    backgroundImage: AssetImage('assets/iconPeluqueria.png'),
                     backgroundColor: Colors.grey[200],
                   ),
                   const SizedBox(height: 16),
-
                   Text('Bienvenido', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: primary, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text('Accede con tu cuenta', style: Theme.of(context).textTheme.bodyMedium),
                   const SizedBox(height: 18),
-
-                  TextField(
-                    controller: _emailCtrl,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(labelText: 'Correo electrónico', prefixIcon: Icon(Icons.email)),
-                  ),
+                  TextField(controller: _userCtrl, decoration: const InputDecoration(labelText: 'Usuario', prefixIcon: Icon(Icons.person))),
                   const SizedBox(height: 12),
-
                   TextField(
                     controller: _passCtrl,
                     obscureText: _obscure,
@@ -77,7 +79,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 18),
-
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -87,7 +88,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

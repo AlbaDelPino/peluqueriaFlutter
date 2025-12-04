@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../providers/providers.dart';
+import '../providers/service_provider.dart';
 
 class ServiciosSearchDelegate extends SearchDelegate {
   final ServiceProvider provider;
@@ -29,9 +29,9 @@ class ServiciosSearchDelegate extends SearchDelegate {
       itemBuilder: (_, i) {
         final servicio = resultados[i];
         return ListTile(
-          title: Text(servicio['nombre']),
-          subtitle: Text(servicio['descripcion']),
-          trailing: Text("${servicio['precio']} €"),
+          title: Text(servicio.nombre),
+          subtitle: Text(servicio.descripcion),
+          trailing: Text("${servicio.precio} €"),
         );
       },
     );
@@ -45,8 +45,8 @@ class ServiciosSearchDelegate extends SearchDelegate {
       itemBuilder: (_, i) {
         final servicio = sugerencias[i];
         return ListTile(
-          title: Text(servicio['nombre']),
-          subtitle: Text(servicio['descripcion']),
+          title: Text(servicio.nombre),
+          subtitle: Text(servicio.descripcion),
         );
       },
     );

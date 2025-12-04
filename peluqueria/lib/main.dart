@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'shared_prefs/user_preferences.dart';
 
+import 'providers/auth_provider.dart';
 import 'providers/service_provider.dart';
+import 'providers/cliente_provider.dart'; // 👈 asegúrate de importar esto
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/main_navigation.dart';
-import 'shared_prefs/user_preferences.dart'; // 👈 importa tu clase
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  //  Inicializamos las preferencias
-  final prefs = UserPreferences();
-  await prefs.initPrefs();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+
+  final prefs = UserPreferences();
+  await prefs.init();
 
   runApp(const MyApp());
 }
@@ -29,17 +30,23 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ServiceProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ServiceProvider()),
+        ChangeNotifierProvider(create: (_) => ClienteProvider()), // ✅ activado
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(colorSchemeSeed: brandColor, useMaterial3: true),
+        theme: ThemeData(
+          colorSchemeSeed: brandColor,
+          useMaterial3: true,
+        ),
         initialRoute: '/',
         routes: {
           '/': (_) => const LoginScreen(),
           '/signup': (_) => const SignUpScreen(),
           '/home': (_) => const MainNavigation(),
-          '/login': (_) => const LoginScreen(),
         },
       ),
     );
