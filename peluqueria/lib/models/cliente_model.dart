@@ -1,3 +1,8 @@
+import 'dart:typed_data';
+import 'dart:convert';
+
+/// Modelo de Cliente para sincronizar con el backend.
+/// El campo `imagen` se maneja como Uint8List (bytes) para mapear un BLOB en BD.
 class Cliente {
   final int id;
   final String username;
@@ -10,7 +15,7 @@ class Cliente {
   final String alergenos;
   final String direccion;
   final String observacion;
-  final String imagen;
+  final Uint8List? imagen;   // Imagen en binario (BLOB en BD)
 
   Cliente({
     required this.id,
@@ -24,7 +29,7 @@ class Cliente {
     required this.alergenos,
     required this.direccion,
     required this.observacion,
-    required this.imagen,
+    this.imagen,
   });
 
   factory Cliente.fromJson(Map<String, dynamic> json) {
@@ -40,7 +45,9 @@ class Cliente {
       alergenos: json['alergenos'] ?? '',
       direccion: json['direccion'] ?? '',
       observacion: json['observacion'] ?? '',
-      imagen: json['imagen'] ?? '',
+      imagen: json['imagen'] != null && (json['imagen'] as String).isNotEmpty
+          ? base64Decode(json['imagen'])
+          : null,
     );
   }
 
@@ -57,7 +64,7 @@ class Cliente {
       "alergenos": alergenos,
       "direccion": direccion,
       "observacion": observacion,
-      "imagen": imagen,
+      "imagen": imagen != null ? base64Encode(imagen!) : "",
     };
   }
 }

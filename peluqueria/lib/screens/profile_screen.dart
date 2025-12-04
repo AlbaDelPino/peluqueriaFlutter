@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/cliente_provider.dart';
 import '../providers/auth_provider.dart';
@@ -16,119 +14,13 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  File? _avatarFile;
-  String? _assetAvatar;
-
   @override
   void initState() {
     super.initState();
     Future.microtask(() {
       final prefs = UserPreferences();
       context.read<ClienteProvider>().cargarClientePorUsername(prefs.username);
-
-      if (prefs.avatarPath.isNotEmpty) {
-        _avatarFile = File(prefs.avatarPath);
-      }
-      if (prefs.assetAvatar.isNotEmpty) {
-        _assetAvatar = prefs.assetAvatar;
-      }
     });
-  }
-
-  Future<void> _pickLocalImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() {
-        _avatarFile = File(picked.path);
-        _assetAvatar = null;
-      });
-      final prefs = UserPreferences();
-      prefs.avatarPath = picked.path;
-    }
-  }
-
-  void _pickAssetAvatar(String assetPath) {
-    setState(() {
-      _assetAvatar = assetPath;
-      _avatarFile = null;
-    });
-    final prefs = UserPreferences();
-    prefs.assetAvatar = assetPath;
-  }
-
-  void _showAvatarOptions() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo),
-              title: const Text("Subir foto desde galería"),
-              onTap: () {
-                Navigator.pop(context);
-                _pickLocalImage();
-              },
-            ),
-            const SizedBox(height: 12),
-            const Text("Elegir avatar predefinido",
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 12,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickAssetAvatar('assets/avatar/avatar1.png');
-                  },
-                  child: const CircleAvatar(
-                    radius: 30,
-                    backgroundImage: AssetImage('assets/avatar/avatar1.png'),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickAssetAvatar('assets/avatar/avatar2.png');
-                  },
-                  child: const CircleAvatar(
-                    radius: 30,
-                    backgroundImage: AssetImage('assets/avatar/avatar2.png'),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickAssetAvatar('assets/avatar/avatar3.png');
-                  },
-                  child: const CircleAvatar(
-                    radius: 30,
-                    backgroundImage: AssetImage('assets/avatar/avatar3.png'),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickAssetAvatar('assets/avatar/avatar4.png');
-                  },
-                  child: const CircleAvatar(
-                    radius: 30,
-                    backgroundImage: AssetImage('assets/avatar/avatar4.png'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _infoItem(IconData icon, String label, String value) {
@@ -170,34 +62,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: 60,
-                        backgroundColor: primary.withOpacity(0.2),
-                        backgroundImage: _avatarFile != null
-                            ? FileImage(_avatarFile!)
-                            : (_assetAvatar != null
-                                ? AssetImage(_assetAvatar!)
-                                : null) as ImageProvider?,
-                        child: (_avatarFile == null && _assetAvatar == null)
-                            ? const Icon(Icons.person, size: 60, color: primary)
-                            : null,
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: InkWell(
-                          onTap: _showAvatarOptions,
-                          child: CircleAvatar(
-                            radius: 20,
-                            backgroundColor: primary,
-                            child: const Icon(Icons.camera_alt,
-                                color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ],
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundColor: primary.withOpacity(0.2),
+                    backgroundImage: cliente.imagen != null
+                        ? MemoryImage(cliente.imagen!)
+                        : null,
+                    child: cliente.imagen == null
+                        ? const Icon(Icons.person, size: 60, color: primary)
+                        : null,
                   ),
                   const SizedBox(height: 16),
                   Text(cliente.nombre,

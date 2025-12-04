@@ -1,10 +1,10 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/cliente_provider.dart';
 import '../shared_prefs/user_preferences.dart';
-import 'change_password_screen.dart'; // 👈 importamos la pantalla de cambio de contraseña
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -25,7 +25,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _observacionCtrl;
 
   File? _avatarFile;
-  String? _assetAvatar;
+  String? _base64Image;
 
   @override
   void initState() {
@@ -38,14 +38,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _direccionCtrl = TextEditingController(text: cliente?.direccion ?? '');
     _alergenosCtrl = TextEditingController(text: cliente?.alergenos ?? '');
     _observacionCtrl = TextEditingController(text: cliente?.observacion ?? '');
-
-    final prefs = UserPreferences();
-    if (prefs.avatarPath.isNotEmpty) {
-      _avatarFile = File(prefs.avatarPath);
-    }
-    if (prefs.assetAvatar.isNotEmpty) {
-      _assetAvatar = prefs.assetAvatar;
-    }
+    _base64Image = cliente?.imagen != null ? base64Encode(cliente!.imagen!) : '';
   }
 
   Future<void> _pickLocalImage() async {
@@ -54,91 +47,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (picked != null) {
       setState(() {
         _avatarFile = File(picked.path);
-        _assetAvatar = null;
       });
-      final prefs = UserPreferences();
-      prefs.avatarPath = picked.path;
+      final bytes = await _avatarFile!.readAsBytes();
+      _base64Image = base64Encode(bytes);
     }
-  }
-
-  void _pickAssetAvatar(String assetPath) {
-    setState(() {
-      _assetAvatar = assetPath;
-      _avatarFile = null;
-    });
-    final prefs = UserPreferences();
-    prefs.assetAvatar = assetPath;
-  }
-
-  void _showAvatarOptions() {
-    showModalBottomSheet(
-      context: context,
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo),
-              title: const Text("Subir foto desde galería"),
-              onTap: () {
-                Navigator.pop(context);
-                _pickLocalImage();
-              },
-            ),
-            const SizedBox(height: 12),
-            const Text("Elegir avatar predefinido",
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 12,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickAssetAvatar('assets/avatar/avatar1.png');
-                  },
-                  child: const CircleAvatar(
-                    radius: 30,
-                    backgroundImage: AssetImage('assets/avatar/avatar1.png'),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickAssetAvatar('assets/avatar/avatar2.png');
-                  },
-                  child: const CircleAvatar(
-                    radius: 30,
-                    backgroundImage: AssetImage('assets/avatar/avatar2.png'),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickAssetAvatar('assets/avatar/avatar3.png');
-                  },
-                  child: const CircleAvatar(
-                    radius: 30,
-                    backgroundImage: AssetImage('assets/avatar/avatar3.png'),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickAssetAvatar('assets/avatar/avatar4.png');
-                  },
-                  child: const CircleAvatar(
-                    radius: 30,
-                    backgroundImage: AssetImage('assets/avatar/avatar4.png'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   void _guardarCambios() async {
@@ -157,12 +69,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         "alergenos": _alergenosCtrl.text,
         "direccion": _direccionCtrl.text,
         "observacion": _observacionCtrl.text,
-        "imagen": _assetAvatar != null
-            ? _assetAvatar!.split('/').last
-            : (_avatarFile != null ? _avatarFile!.path.split('/').last : "")
+        "imagen": _base64Image ?? ""
       };
 
-      // 👇 No incluimos contrasenya aquí, solo en ChangePasswordScreen
+      debugPrint("➡️ Body enviado: ${json.encode(clienteActualizado)}");
 
       await provider.actualizarCliente(clienteActualizado);
 
@@ -201,10 +111,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     backgroundColor: primary.withOpacity(0.2),
                     backgroundImage: _avatarFile != null
                         ? FileImage(_avatarFile!)
-                        : (_assetAvatar != null
-                            ? AssetImage(_assetAvatar!)
-                            : null) as ImageProvider?,
-                    child: (_avatarFile == null && _assetAvatar == null)
+                        : (_base64Image != null && _base64Image!.isNotEmpty
+                            ? MemoryImage(base64Decode(_base64Image!))
+                            : null),
+                    child: (_avatarFile == null && (_base64Image == null || _base64Image!.isEmpty))
                         ? const Icon(Icons.person, size: 60, color: primary)
                         : null,
                   ),
@@ -212,7 +122,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     bottom: 0,
                     right: 0,
                     child: InkWell(
-                      onTap: _showAvatarOptions,
+                      onTap: _pickLocalImage,
                       child: CircleAvatar(
                         radius: 20,
                         backgroundColor: primary,
@@ -230,17 +140,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               TextFormField(controller: _direccionCtrl, decoration: const InputDecoration(labelText: "Dirección")),
               TextFormField(controller: _alergenosCtrl, decoration: const InputDecoration(labelText: "Alérgenos")),
               TextFormField(controller: _observacionCtrl, decoration: const InputDecoration(labelText: "Observación")),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
-                  );
-                },
-                child: const Text("Cambiar contraseña", style: TextStyle(color: Colors.white)),
-              ),
               const SizedBox(height: 30),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: primary),

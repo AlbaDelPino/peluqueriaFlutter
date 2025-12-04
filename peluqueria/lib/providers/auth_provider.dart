@@ -24,7 +24,7 @@ class AuthProvider with ChangeNotifier {
 
  /* //uninquisitorial-weariful-brayan.ngrok-free.dev/api/auth/signin*/
         final url = Uri.parse(
-        'https://localhost:8082/api/auth/signin');
+        'http://localhost:8082/api/auth/signin');
 
     final response = await http.post(
       url,
@@ -82,7 +82,7 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     final url = Uri.parse(
-        'https://localhost:8082/api/auth/signup/cliente/public');
+        'http://localhost:8082/api/auth/signup/cliente/public');
 
     final response = await http.post(
       url,
