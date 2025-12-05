@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:intl/date_symbol_data_local.dart'; // 👈 necesario para el calendario
-
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
-import 'shared_prefs/user_preferences.dart';
 
+import 'shared_prefs/user_preferences.dart';
 import 'providers/auth_provider.dart';
 import 'providers/service_provider.dart';
 import 'providers/cliente_provider.dart';
@@ -17,16 +16,13 @@ import 'screens/main_navigation.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializa datos de formato para español (requerido por TableCalendar)
   await initializeDateFormatting('es_ES', null);
 
-  // Bloqueamos la orientación en vertical
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // Inicializamos las preferencias de usuario
   final prefs = UserPreferences();
   await prefs.init();
 
@@ -51,20 +47,19 @@ class MyApp extends StatelessWidget {
           colorSchemeSeed: brandColor,
           useMaterial3: true,
         ),
-        // 🌍 Soporte de localización
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [
-          Locale('es', 'ES'), // 👈 Español
+          Locale('es', 'ES'),
         ],
         initialRoute: '/',
         routes: {
           '/': (_) => const LoginScreen(),
           '/signup': (_) => const SignUpScreen(),
-          '/home': (_) => const MainNavigation(),
+          '/home': (_) => const MainNavigation(), // 👈 navegación principal
         },
       ),
     );

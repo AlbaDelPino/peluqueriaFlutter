@@ -1,27 +1,29 @@
 import 'package:flutter/material.dart';
 import 'home_services_screen.dart';
+import 'news_screen.dart';
 import 'profile_screen.dart';
-import 'news_screen.dart'; // si tienes pantalla de noticias
 
 class MainNavigation extends StatefulWidget {
-  const MainNavigation({super.key});
+  final int initialIndex;
+
+  const MainNavigation({super.key, this.initialIndex = 0});
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  int _currentIndex = 0;
-
+  late int _currentIndex;
   late final List<Widget> _tabs;
 
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     _tabs = const [
       HomeServicesScreen(),
-      NewsScreen(), // pestaña Noticias
-      ProfileScreen(), // pestaña Perfil
+      NewsScreen(),
+      ProfileScreen(),
     ];
   }
 

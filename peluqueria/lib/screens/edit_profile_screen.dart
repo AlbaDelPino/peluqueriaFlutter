@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/cliente_provider.dart';
 import '../shared_prefs/user_preferences.dart';
+import 'change_password_screen.dart'; // 👈 importa la pantalla de cambio de contraseña
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -72,8 +73,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         "imagen": _base64Image ?? ""
       };
 
-      debugPrint("➡️ Body enviado: ${json.encode(clienteActualizado)}");
-
       await provider.actualizarCliente(clienteActualizado);
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -83,14 +82,47 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon) {
+    const primary = Color(0xFFFF8B00);
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Colors.white,
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          prefixIcon: Icon(icon, color: primary),
+          labelText: label,
+          filled: true,
+          fillColor: Colors.white,
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.grey, width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: primary, width: 2),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const primary = Color(0xFFFF8B00);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: primary,
-        title: const Text("Editar Perfil", style: TextStyle(color: Colors.white)),
+        centerTitle: true,
+        title: const Text(
+          "Editar Perfil",
+          style: TextStyle(color: Colors.white, fontSize: 20),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.save, color: Colors.white),
@@ -104,19 +136,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           key: _formKey,
           child: Column(
             children: [
+              // Avatar
               Stack(
                 children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundColor: primary.withOpacity(0.2),
-                    backgroundImage: _avatarFile != null
-                        ? FileImage(_avatarFile!)
-                        : (_base64Image != null && _base64Image!.isNotEmpty
-                            ? MemoryImage(base64Decode(_base64Image!))
-                            : null),
-                    child: (_avatarFile == null && (_base64Image == null || _base64Image!.isEmpty))
-                        ? const Icon(Icons.person, size: 60, color: primary)
-                        : null,
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
+                      ],
+                    ),
+                    child: CircleAvatar(
+                      radius: 60,
+                      backgroundColor: primary.withOpacity(0.2),
+                      backgroundImage: _avatarFile != null
+                          ? FileImage(_avatarFile!)
+                          : (_base64Image != null && _base64Image!.isNotEmpty
+                              ? MemoryImage(base64Decode(_base64Image!))
+                              : null),
+                      child: (_avatarFile == null && (_base64Image == null || _base64Image!.isEmpty))
+                          ? const Icon(Icons.person, size: 60, color: primary)
+                          : null,
+                    ),
                   ),
                   Positioned(
                     bottom: 0,
@@ -124,7 +165,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: InkWell(
                       onTap: _pickLocalImage,
                       child: CircleAvatar(
-                        radius: 20,
+                        radius: 22,
                         backgroundColor: primary,
                         child: const Icon(Icons.camera_alt, color: Colors.white),
                       ),
@@ -132,19 +173,59 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              TextFormField(controller: _usernameCtrl, decoration: const InputDecoration(labelText: "Username")),
-              TextFormField(controller: _nombreCtrl, decoration: const InputDecoration(labelText: "Nombre")),
-              TextFormField(controller: _emailCtrl, decoration: const InputDecoration(labelText: "Email")),
-              TextFormField(controller: _telefonoCtrl, decoration: const InputDecoration(labelText: "Teléfono")),
-              TextFormField(controller: _direccionCtrl, decoration: const InputDecoration(labelText: "Dirección")),
-              TextFormField(controller: _alergenosCtrl, decoration: const InputDecoration(labelText: "Alérgenos")),
-              TextFormField(controller: _observacionCtrl, decoration: const InputDecoration(labelText: "Observación")),
+              const SizedBox(height: 20),
+
+              // Campos
+              _buildTextField(_usernameCtrl, "Username", Icons.account_circle),
+              _buildTextField(_nombreCtrl, "Nombre", Icons.person),
+              _buildTextField(_emailCtrl, "Email", Icons.email),
+              _buildTextField(_telefonoCtrl, "Teléfono", Icons.phone),
+              _buildTextField(_direccionCtrl, "Dirección", Icons.home),
+              _buildTextField(_alergenosCtrl, "Alérgenos", Icons.warning),
+              _buildTextField(_observacionCtrl, "Observación", Icons.note),
+
               const SizedBox(height: 30),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: primary),
-                onPressed: _guardarCambios,
-                child: const Text("Guardar cambios", style: TextStyle(color: Colors.white)),
+
+              // Botón Guardar
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: _guardarCambios,
+                  child: const Text(
+                    "Guardar cambios",
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Botón Cambiar contraseña
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: primary, width: 2),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.lock, color: primary),
+                  label: const Text(
+                    "Cambiar contraseña",
+                    style: TextStyle(color: primary, fontSize: 16),
+                  ),
+                ),
               ),
             ],
           ),

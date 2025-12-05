@@ -17,16 +17,27 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   String? _selectedHora;
   List<String> _horasDisponibles = [];
 
-  // Simulación de horas disponibles
+  // Lista de festivos (ejemplo, añade los que quieras)
+  final List<DateTime> _festivos = [
+    DateTime(2025, 1, 1),   // Año Nuevo
+    DateTime(2025, 12, 25), // Navidad
+    DateTime(2025, 12, 6),  // Constitución
+  ];
+
+  // Función para obtener horas disponibles
   List<String> _getHoras(DateTime day) {
-    return [
-      "10:00",
-      "11:00",
-      "12:00",
-      "16:00",
-      "17:00",
-      "18:00",
-    ];
+    // Bloquear sábados y domingos
+    if (day.weekday == DateTime.saturday || day.weekday == DateTime.sunday) {
+      return [];
+    }
+
+    // Bloquear festivos
+    if (_festivos.any((f) => isSameDay(f, day))) {
+      return [];
+    }
+
+    // Horas normales
+    return ["10:00", "11:00", "12:00", "16:00", "17:00", "18:00"];
   }
 
   void _abrirFormularioReserva() {
@@ -73,42 +84,110 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: primary,
-        title: Text(widget.servicio.nombre),
+        title: const Text(
+          "Calendario",
+          style: TextStyle(color: Colors.white),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.servicio.descripcion,
-                style: const TextStyle(fontSize: 16)),
+            // 🟠 Bloque con servicio y descripción
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(widget.servicio.nombre,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          color: primary,
+                        )),
+                    const SizedBox(height: 8),
+                    Text(widget.servicio.descripcion,
+                        style: const TextStyle(fontSize: 16, color: Colors.black87)),
+                  ],
+                ),
+              ),
+            ),
+
             const SizedBox(height: 20),
 
-            // 📅 Calendario en español con semana de lunes a domingo
-            TableCalendar(
-              locale: 'es_ES',
-              firstDay: DateTime.utc(2020, 1, 1),
-              lastDay: DateTime.utc(2030, 12, 31),
-              focusedDay: DateTime.now(),
-              selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-              onDaySelected: (selectedDay, focusedDay) {
-                setState(() {
-                  _selectedDay = selectedDay;
-                  _focusedDay = focusedDay;
-                  _horasDisponibles = _getHoras(selectedDay);
-                  _selectedHora = null; // reset al cambiar de día
-                });
-              },
-              startingDayOfWeek: StartingDayOfWeek.monday,
-              calendarFormat: CalendarFormat.month,
-              calendarStyle: const CalendarStyle(
-                todayDecoration: BoxDecoration(
-                  color: primary,
-                  shape: BoxShape.circle,
+            // 📅 Calendario estilizado
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
+                ],
+              ),
+              child: TableCalendar(
+                locale: 'es_ES',
+                firstDay: DateTime.utc(2020, 1, 1),
+                lastDay: DateTime.utc(2030, 12, 31),
+                focusedDay: _focusedDay,
+                selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                onDaySelected: (selectedDay, focusedDay) {
+                  // Bloquear sábados, domingos y festivos
+                  if (selectedDay.weekday == DateTime.saturday ||
+                      selectedDay.weekday == DateTime.sunday ||
+                      _festivos.any((f) => isSameDay(f, selectedDay))) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("No hay horas disponibles en este día")),
+                    );
+                    return;
+                  }
+
+                  setState(() {
+                    _selectedDay = selectedDay;
+                    _focusedDay = focusedDay;
+                    _horasDisponibles = _getHoras(selectedDay);
+                    _selectedHora = null;
+                  });
+                },
+                startingDayOfWeek: StartingDayOfWeek.monday,
+                calendarFormat: CalendarFormat.month,
+                headerStyle: const HeaderStyle(
+                  formatButtonVisible: false,
+                  titleCentered: true,
+                  titleTextStyle: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: primary,
+                  ),
+                  leftChevronIcon: Icon(Icons.chevron_left, color: primary),
+                  rightChevronIcon: Icon(Icons.chevron_right, color: primary),
                 ),
-                selectedDecoration: BoxDecoration(
-                  color: Colors.orange,
-                  shape: BoxShape.circle,
+                calendarStyle: const CalendarStyle(
+                  todayDecoration: BoxDecoration(
+                    color: primary,
+                    shape: BoxShape.circle,
+                  ),
+                  selectedDecoration: BoxDecoration(
+                    color: Colors.orange,
+                    shape: BoxShape.circle,
+                  ),
+                  weekendTextStyle: TextStyle(color: Colors.redAccent),
+                ),
+                calendarBuilders: CalendarBuilders(
+                  defaultBuilder: (context, day, focusedDay) {
+                    if (_festivos.any((f) => isSameDay(f, day))) {
+                      return Center(
+                        child: Text(
+                          '${day.day}',
+                          style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                        ),
+                      );
+                    }
+                    return null;
+                  },
                 ),
               ),
             ),
@@ -116,7 +195,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
             const SizedBox(height: 20),
 
             // ⏰ Horas disponibles
-            if (_selectedDay != null) ...[
+            if (_selectedDay != null && _horasDisponibles.isNotEmpty) ...[
               const Text("Horas disponibles:",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
@@ -133,15 +212,13 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         _selectedHora = hora;
                       });
                     },
-                    child: Text(hora,
-                        style: const TextStyle(color: Colors.white)),
+                    child: Text(hora, style: const TextStyle(color: Colors.white)),
                   );
                 }).toList(),
               ),
 
               const SizedBox(height: 20),
 
-              // 👉 Botón de añadir debajo de las horas
               if (_selectedHora != null)
                 Center(
                   child: ElevatedButton.icon(

@@ -8,6 +8,7 @@ class NewsScreen extends StatelessWidget {
     const primary = Color(0xFFFF8B00);
 
     return Scaffold(
+      
       appBar: AppBar(
         title: const Text('Noticias', style: TextStyle(color: Colors.white)),
         backgroundColor: primary,

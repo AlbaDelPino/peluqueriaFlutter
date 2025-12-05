@@ -22,9 +22,20 @@ class CategoryServicesScreen extends StatelessWidget {
         .toList();
 
     return Scaffold(
+            backgroundColor: Colors.white,
+
       appBar: AppBar(
-        title: Text(nombreCategoria),
         backgroundColor: const Color(0xFFFF8B00),
+        title: Text(
+          nombreCategoria,
+          style: const TextStyle(
+            color: Colors.white, // 👈 título en blanco
+            fontSize: 20,        // 👈 tamaño normal, sin negrita
+          ),
+        ),
+        iconTheme: const IconThemeData(
+          color: Colors.white, // 👈 flecha (back button) en blanco
+        ),
       ),
       body: servicios.isEmpty
           ? const Center(child: Text("No hay servicios disponibles"))
@@ -35,13 +46,19 @@ class CategoryServicesScreen extends StatelessWidget {
                 return Card(
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: ListTile(
-                    leading: const Icon(Icons.miscellaneous_services,
-                        color: Color(0xFFFF8B00)),
-                    title: Text(servicio.nombre,
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    leading: const Icon(
+                      Icons.miscellaneous_services,
+                      color: Color(0xFFFF8B00),
+                    ),
+                    title: Text(
+                      servicio.nombre,
+                      style: const TextStyle(
+                        color: Colors.black, // 👈 texto normal
+                        fontSize: 16,
+                      ),
+                    ),
                     subtitle: Text(servicio.descripcion),
                     trailing: Text("${servicio.precio} €"),
-                    // 👇 Navegación al detalle del servicio
                     onTap: () {
                       Navigator.push(
                         context,

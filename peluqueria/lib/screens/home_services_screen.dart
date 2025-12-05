@@ -47,7 +47,13 @@ class _HomeServicesScreenState extends State<HomeServicesScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: primary,
-        title: const Text('Servicios por categoría', style: TextStyle(color: Colors.white)),
+        title: const Padding(
+          padding: EdgeInsets.only(left: 4.0),
+          child: Text(
+            'Servicios por categoría',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.search, color: Colors.white),
@@ -71,19 +77,33 @@ class _HomeServicesScreenState extends State<HomeServicesScreen> {
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 10), // 👈 espacio arriba y abajo del bloque
+                    padding: const EdgeInsets.symmetric(vertical: 12), // 👈 espacio interno del contenido
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
-                        BoxShadow(color: Colors.black12, blurRadius: 4, offset: const Offset(0, 2)),
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
                       ],
                     ),
-
-                  
                     child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      leading: Icon(_iconForTipo(tipo.id), color: primary, size: 32),
-                      title: Text(tipo.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                      leading: Icon(
+                        _iconForTipo(tipo.id),
+                        color: primary,
+                        size: 32,
+                      ),
+                      title: Padding(
+                        padding: const EdgeInsets.only(left: 12.0),
+                        child: Text(
+                          tipo.nombre,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
                         Navigator.push(
