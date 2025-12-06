@@ -49,7 +49,8 @@ class ServiciosSearchDelegate extends SearchDelegate {
             style: TextStyle(fontSize: 16, color: Colors.grey)),
       );
     }
-    return ListView.builder(
+    return SafeArea(
+     child: ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: resultados.length,
       itemBuilder: (_, i) {
@@ -91,13 +92,15 @@ class ServiciosSearchDelegate extends SearchDelegate {
           ),
         );
       },
+     ),
     );
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
     final sugerencias = provider.buscarServicios(query);
-    return ListView.builder(
+   return SafeArea(
+      child: ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: sugerencias.length,
       itemBuilder: (_, i) {
@@ -130,6 +133,7 @@ class ServiciosSearchDelegate extends SearchDelegate {
           ),
         );
       },
+      ),
     );
   }
 }

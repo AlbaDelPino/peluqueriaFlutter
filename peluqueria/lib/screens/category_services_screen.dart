@@ -13,6 +13,7 @@ class CategoryServicesScreen extends StatelessWidget {
     required this.nombreCategoria,
   });
 
+// obtiene los servicios del tipo de servicio selecionado en home_services_screen
   @override
   Widget build(BuildContext context) {
     final servicios = context
@@ -20,6 +21,7 @@ class CategoryServicesScreen extends StatelessWidget {
         .servicios
         .where((s) => s.tipoServicio.id == idTipo)
         .toList();
+      
 
     const primary = Color(0xFFFF8B00);
 
@@ -34,7 +36,8 @@ class CategoryServicesScreen extends StatelessWidget {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: servicios.isEmpty
+     body: SafeArea( 
+       child: servicios.isEmpty
           ? const Center(
               child: Text(
                 "No hay servicios disponibles",
@@ -103,6 +106,7 @@ class CategoryServicesScreen extends StatelessWidget {
                 );
               },
             ),
+     ),
     );
   }
 }

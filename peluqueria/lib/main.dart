@@ -17,12 +17,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await initializeDateFormatting('es_ES', null);
-
+// Fuerza la app a funcionar solo en orientacion vertical
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
+// incializa la claise de preferencias (SharePrefeences) para guardas datos persistentes 
   final prefs = UserPreferences();
   await prefs.init();
 

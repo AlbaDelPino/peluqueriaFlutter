@@ -14,7 +14,7 @@ class ClienteProvider with ChangeNotifier {
       final prefs = UserPreferences();
       final token = prefs.token;
 
-      final url = Uri.parse("https://uninquisitorial-weariful-brayan.ngrok-free.dev/clientes/username/$username");
+      final url = Uri.parse("http://localhost:8082/clientes/username/$username");
 
       final response = await http.get(
         url,
@@ -48,7 +48,7 @@ class ClienteProvider with ChangeNotifier {
       throw Exception("No se encontró el id del cliente en UserPreferences");
     }
 
-    final url = Uri.parse('https://uninquisitorial-weariful-brayan.ngrok-free.dev/clientes/$id');
+    final url = Uri.parse('http://localhost:8082/clientes/$id');
 
     // Si la contraseña está vacía, no la enviamos
     if (clienteActualizado["contrasenya"] == null ||

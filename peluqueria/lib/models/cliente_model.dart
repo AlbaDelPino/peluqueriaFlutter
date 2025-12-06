@@ -1,8 +1,8 @@
-import 'dart:typed_data';
-import 'dart:convert';
+import 'dart:typed_data';//datos binarios
+import 'dart:convert';//converson de cadena y binario
 
 /// Modelo de Cliente para sincronizar con el backend.
-/// El campo `imagen` se maneja como Uint8List (bytes) para mapear un BLOB en BD.
+//clase cCliente
 class Cliente {
   final int id;
   final String username;
@@ -17,6 +17,7 @@ class Cliente {
   final String observacion;
   final Uint8List? imagen;   // Imagen en binario (BLOB en BD)
 
+//constructor
   Cliente({
     required this.id,
     required this.username,
@@ -32,6 +33,7 @@ class Cliente {
     this.imagen,
   });
 
+//crear un objeto cliente a aprtir de un JSON
   factory Cliente.fromJson(Map<String, dynamic> json) {
     return Cliente(
       id: json['id'] ?? 0,
@@ -51,6 +53,7 @@ class Cliente {
     );
   }
 
+//convierte el objeto Cliente en un mapa JSON para enviarlo al backend
   Map<String, dynamic> toJson() {
     return {
       "id": id,

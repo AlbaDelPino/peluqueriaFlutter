@@ -48,11 +48,11 @@ class _MainNavigationState extends State<MainNavigation> {
           currentIndex: _currentIndex,
           selectedItemColor: primary,
           unselectedItemColor: Colors.grey,
-          showUnselectedLabels: true, // 👈 etiquetas siempre visibles
+          showUnselectedLabels: true, //  etiquetas siempre visibles
           type: BottomNavigationBarType.fixed,
           selectedFontSize: 13,
           unselectedFontSize: 12,
-          iconSize: 28, // 👈 iconos más grandes
+          iconSize: 28, //  iconos más grandes
           onTap: (i) => setState(() => _currentIndex = i),
           items: const [
             BottomNavigationBarItem(
