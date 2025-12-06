@@ -44,15 +44,13 @@ class _HomeServicesScreenState extends State<HomeServicesScreen> {
     final tipos = context.watch<ServiceProvider>().tiposServicio;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
         backgroundColor: primary,
-        title: const Padding(
-          padding: EdgeInsets.only(left: 4.0),
-          child: Text(
-            'Servicios por categoría',
-            style: TextStyle(color: Colors.white),
-          ),
+        centerTitle: true,
+        title: const Text(
+          'Servicios por categoría',
+          style: TextStyle(color: Colors.white, fontSize: 18),
         ),
         actions: [
           IconButton(
@@ -69,53 +67,56 @@ class _HomeServicesScreenState extends State<HomeServicesScreen> {
       ),
       body: tipos.isEmpty
           ? const Center(child: CircularProgressIndicator())
-          : ListView.separated(
+          : GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, // 👈 dos columnas tipo catálogo
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 1,
+              ),
               itemCount: tipos.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (ctx, i) {
                 final tipo = tipos[i];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                return InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CategoryServicesScreen(
+                          idTipo: tipo.id,
+                          nombreCategoria: tipo.nombre,
+                        ),
+                      ),
+                    );
+                  },
                   child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 10), // 👈 espacio arriba y abajo del bloque
-                    padding: const EdgeInsets.symmetric(vertical: 12), // 👈 espacio interno del contenido
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black12,
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      leading: Icon(
-                        _iconForTipo(tipo.id),
-                        color: primary,
-                        size: 32,
-                      ),
-                      title: Padding(
-                        padding: const EdgeInsets.only(left: 12.0),
-                        child: Text(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(_iconForTipo(tipo.id), color: primary, size: 40),
+                        const SizedBox(height: 12),
+                        Text(
                           tipo.nombre,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => CategoryServicesScreen(
-                              idTipo: tipo.id,
-                              nombreCategoria: tipo.nombre,
-                            ),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black87,
                           ),
-                        );
-                      },
+                        ),
+                      ],
                     ),
                   ),
                 );

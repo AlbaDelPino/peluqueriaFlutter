@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/cliente_provider.dart';
 import '../shared_prefs/user_preferences.dart';
-import 'change_password_screen.dart'; // 👈 importa la pantalla de cambio de contraseña
+import 'change_password_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -130,104 +130,109 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              // Avatar
-              Stack(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
-                      ],
-                    ),
-                    child: CircleAvatar(
-                      radius: 60,
-                      backgroundColor: primary.withOpacity(0.2),
-                      backgroundImage: _avatarFile != null
-                          ? FileImage(_avatarFile!)
-                          : (_base64Image != null && _base64Image!.isNotEmpty
-                              ? MemoryImage(base64Decode(_base64Image!))
-                              : null),
-                      child: (_avatarFile == null && (_base64Image == null || _base64Image!.isEmpty))
-                          ? const Icon(Icons.person, size: 60, color: primary)
-                          : null,
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: InkWell(
-                      onTap: _pickLocalImage,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                // Avatar
+                Stack(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
+                        ],
+                      ),
                       child: CircleAvatar(
-                        radius: 22,
-                        backgroundColor: primary,
-                        child: const Icon(Icons.camera_alt, color: Colors.white),
+                        radius: 60,
+                        backgroundColor: primary.withOpacity(0.2),
+                        backgroundImage: _avatarFile != null
+                            ? FileImage(_avatarFile!)
+                            : (_base64Image != null && _base64Image!.isNotEmpty
+                                ? MemoryImage(base64Decode(_base64Image!))
+                                : null),
+                        child: (_avatarFile == null && (_base64Image == null || _base64Image!.isEmpty))
+                            ? const Icon(Icons.person, size: 60, color: primary)
+                            : null,
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: InkWell(
+                        onTap: _pickLocalImage,
+                        child: CircleAvatar(
+                          radius: 22,
+                          backgroundColor: primary,
+                          child: const Icon(Icons.camera_alt, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
 
-              // Campos
-              _buildTextField(_usernameCtrl, "Username", Icons.account_circle),
-              _buildTextField(_nombreCtrl, "Nombre", Icons.person),
-              _buildTextField(_emailCtrl, "Email", Icons.email),
-              _buildTextField(_telefonoCtrl, "Teléfono", Icons.phone),
-              _buildTextField(_direccionCtrl, "Dirección", Icons.home),
-              _buildTextField(_alergenosCtrl, "Alérgenos", Icons.warning),
-              _buildTextField(_observacionCtrl, "Observación", Icons.note),
+                // Campos
+                _buildTextField(_usernameCtrl, "Username", Icons.account_circle),
+                _buildTextField(_nombreCtrl, "Nombre", Icons.person),
+                _buildTextField(_emailCtrl, "Email", Icons.email),
+                _buildTextField(_telefonoCtrl, "Teléfono", Icons.phone),
+                _buildTextField(_direccionCtrl, "Dirección", Icons.home),
+                _buildTextField(_alergenosCtrl, "Alérgenos", Icons.warning),
+                _buildTextField(_observacionCtrl, "Observación", Icons.note),
 
-              const SizedBox(height: 30),
+                const SizedBox(height: 30),
 
-              // Botón Guardar
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: _guardarCambios,
-                  child: const Text(
-                    "Guardar cambios",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                // Botón Guardar
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    onPressed: _guardarCambios,
+                    child: const Text(
+                      "Guardar cambios",
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              // Botón Cambiar contraseña
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: primary, width: 2),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
-                    );
-                  },
-                  icon: const Icon(Icons.lock, color: primary),
-                  label: const Text(
-                    "Cambiar contraseña",
-                    style: TextStyle(color: primary, fontSize: 16),
+                // Botón Cambiar contraseña
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: primary, width: 2),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
+                      );
+                    },
+                    icon: const Icon(Icons.lock, color: primary),
+                    label: const Text(
+                      "Cambiar contraseña",
+                      style: TextStyle(color: primary, fontSize: 16),
+                    ),
                   ),
                 ),
-              ),
-            ],
+
+                // 👇 Espaciado dinámico para evitar que los botones queden ocultos
+                SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 20),
+              ],
+            ),
           ),
         ),
       ),

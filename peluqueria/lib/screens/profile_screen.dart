@@ -27,10 +27,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Card(
       elevation: 3,
       margin: const EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: Icon(icon, color: const Color(0xFFFF8B00)),
-        title: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(value.isEmpty ? "Sin definir" : value),
+        title: Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+            color: Colors.black87,
+          ),
+        ),
+        subtitle: Text(
+          value.isEmpty ? "Sin definir" : value,
+          style: const TextStyle(fontSize: 14, color: Colors.black54),
+        ),
       ),
     );
   }
@@ -41,9 +52,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     const primary = Color(0xFFFF8B00);
 
     return Scaffold(
-        backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
         backgroundColor: primary,
+        centerTitle: true,
         title: const Text("Perfil", style: TextStyle(color: Colors.white)),
         actions: [
           IconButton(
@@ -74,9 +86,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         : null,
                   ),
                   const SizedBox(height: 16),
-                  Text(cliente.nombre,
-                      style: const TextStyle(
-                          fontSize: 22, fontWeight: FontWeight.bold)),
+                  Text(
+                    cliente.nombre,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
                   const SizedBox(height: 24),
                   _infoItem(Icons.account_circle, "Username", cliente.username),
                   _infoItem(Icons.email, "Email", cliente.email),
@@ -85,19 +102,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _infoItem(Icons.warning, "Alérgenos", cliente.alergenos),
                   _infoItem(Icons.note, "Observación", cliente.observacion),
                   const SizedBox(height: 30),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primary,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primary,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 24),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.logout, color: Colors.white),
+                      label: const Text(
+                        "Cerrar sesión",
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
+                      onPressed: () {
+                        context.read<AuthProvider>().logout();
+                        Navigator.pushReplacementNamed(context, '/');
+                      },
                     ),
-                    icon: const Icon(Icons.logout, color: Colors.white),
-                    label: const Text("Cerrar sesión",
-                        style: TextStyle(color: Colors.white)),
-                    onPressed: () {
-                      context.read<AuthProvider>().logout();
-                      Navigator.pushReplacementNamed(context, '/');
-                    },
                   ),
                 ],
               ),

@@ -19,39 +19,38 @@ class AuthProvider with ChangeNotifier {
 
   /// LOGIN
   Future<bool> login({required String username, required String password}) async {
-    _loading = true;
-    notifyListeners();
+  _loading = true;
+  notifyListeners();
 
- /* //uninquisitorial-weariful-brayan.ngrok-free.dev/api/auth/signin*/
-        final url = Uri.parse(
-        'http://localhost:8082/api/auth/signin');
+  final url = Uri.parse(
+      'https://uninquisitorial-weariful-brayan.ngrok-free.dev/api/auth/signin');
 
+  try {
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         "username": username,
-        "contrasenya": password,
+        "contrasenya": password, 
       }),
     );
 
     _loading = false;
 
+      //si al respuesta es correcta , converte el body en mapa Json
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-
-      debugPrint("Login response: $data");
 
       _token = data['token'];
       _username = data['username'];
       _email = data['email'];
-      _clienteId = data['id']; // 👈 backend debe devolver id
+      _clienteId = data['id'];
 
       if (_token == null || _username == null || _clienteId == null) {
-        debugPrint("Login JSON no contiene token/username/id");
+        debugPrint("Login JSON incompleto: $data");
         return false;
       }
-
+//Persiste los datos en SharedPreferences.
       final prefs = UserPreferences();
       prefs.token = _token!;
       prefs.username = _username!;
@@ -61,11 +60,19 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } else {
-      debugPrint("Error login: ${response.statusCode} - ${response.body}");
+      final errorMsg = jsonDecode(response.body)['message'] ?? 'Error desconocido';
+      debugPrint("Error login: $errorMsg");
       notifyListeners();
       return false;
     }
+  } catch (e) {
+    _loading = false;
+    debugPrint("Excepción login: $e");
+    notifyListeners();
+    return false;
   }
+}
+
 
   /// SIGNUP
   Future<bool> signup({
@@ -82,7 +89,7 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     final url = Uri.parse(
-        'http://localhost:8082/api/auth/signup/cliente/public');
+        'https://uninquisitorial-weariful-brayan.ngrok-free.dev/api/auth/signup/cliente/public');
 
     final response = await http.post(
       url,
