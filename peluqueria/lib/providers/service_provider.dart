@@ -17,7 +17,9 @@ class ServiceProvider with ChangeNotifier {
     final token = prefs.token;
 // config.dart
 
-    final url = Uri.parse('http://localhost:8082/servicio');
+    final url = Uri.parse(
+      //'http://localhost:8082/servicio');
+      'https://uninquisitorial-weariful-brayan.ngrok-free.dev/servicio');
     final response = await http.get(
       url,
       headers: {
@@ -41,7 +43,10 @@ class ServiceProvider with ChangeNotifier {
 // config.dart
 
 
-    final url = Uri.parse('http://localhost:8082/tiposervicio');
+    final url = Uri.parse(
+      // 'http://localhost:8082/tiposervicio');
+            'https://uninquisitorial-weariful-brayan.ngrok-free.dev/tiposervicio');
+
     final response = await http.get(
       url,
       headers: {
