@@ -27,12 +27,14 @@ class _MainNavigationState extends State<MainNavigation> {
     ];
   }
 
+  static const primary = Color(0xFFFF8B00);
+
   @override
   Widget build(BuildContext context) {
-    const primary = Color(0xFFFF8B00);
-
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _tabs),
+      body: SafeArea( // 👈 asegura que el contenido no quede debajo de barras del sistema
+        child: IndexedStack(index: _currentIndex, children: _tabs),
+      ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -48,23 +50,29 @@ class _MainNavigationState extends State<MainNavigation> {
           currentIndex: _currentIndex,
           selectedItemColor: primary,
           unselectedItemColor: Colors.grey,
-          showUnselectedLabels: true, //  etiquetas siempre visibles
+          showUnselectedLabels: true,
           type: BottomNavigationBarType.fixed,
           selectedFontSize: 13,
           unselectedFontSize: 12,
-          iconSize: 28, //  iconos más grandes
+          iconSize: 28,
           onTap: (i) => setState(() => _currentIndex = i),
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home),
+              icon: Icon(
+                _currentIndex == 0 ? Icons.home_filled : Icons.home,
+              ),
               label: 'Servicios',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.article),
+              icon: Icon(
+                _currentIndex == 1 ? Icons.article_outlined : Icons.article,
+              ),
               label: 'Noticias',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person),
+              icon: Icon(
+                _currentIndex == 2 ? Icons.person_2 : Icons.person,
+              ),
               label: 'Perfil',
             ),
           ],

@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/cliente_provider.dart';
 import '../shared_prefs/user_preferences.dart';
+import '../widgets/widget.dart'; // 👈 importa todos tus widgets reutilizables
 import 'change_password_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -82,34 +83,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon) {
-    const primary = Color(0xFFFF8B00);
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.white,
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          prefixIcon: Icon(icon, color: primary),
-          labelText: label,
-          filled: true,
-          fillColor: Colors.white,
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.grey, width: 1),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: primary, width: 2),
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     const primary = Color(0xFFFF8B00);
@@ -176,37 +149,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Campos
-                _buildTextField(_usernameCtrl, "Username", Icons.account_circle),
-                _buildTextField(_nombreCtrl, "Nombre", Icons.person),
-                _buildTextField(_emailCtrl, "Email", Icons.email),
-                _buildTextField(_telefonoCtrl, "Teléfono", Icons.phone),
-                _buildTextField(_direccionCtrl, "Dirección", Icons.home),
-                _buildTextField(_alergenosCtrl, "Alérgenos", Icons.warning),
-                _buildTextField(_observacionCtrl, "Observación", Icons.note),
+                // Campos usando CustomTextField
+                CustomTextField(controller: _usernameCtrl, label: "Username", icon: Icons.account_circle),
+                CustomTextField(controller: _nombreCtrl, label: "Nombre", icon: Icons.person),
+                CustomTextField(controller: _emailCtrl, label: "Email", icon: Icons.email),
+                CustomTextField(controller: _telefonoCtrl, label: "Teléfono", icon: Icons.phone),
+                CustomTextField(controller: _direccionCtrl, label: "Dirección", icon: Icons.home),
+                CustomTextField(controller: _alergenosCtrl, label: "Alérgenos", icon: Icons.warning),
+                CustomTextField(controller: _observacionCtrl, label: "Observación", icon: Icons.note),
 
                 const SizedBox(height: 30),
 
-                // Botón Guardar
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: _guardarCambios,
-                    child: const Text(
-                      "Guardar cambios",
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                  ),
-                ),
+                // Botón Guardar usando PrimaryButton
+                PrimaryButton(text: "Guardar cambios", onPressed: _guardarCambios),
 
                 const SizedBox(height: 16),
 
-                // Botón Cambiar contraseña
+                // Botón Cambiar contraseña (puedes crear OutlinedPrimaryButton si quieres reutilizar)
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
@@ -229,7 +188,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                 ),
 
-                // 👇 Espaciado dinámico para evitar que los botones queden ocultos
+                // Espaciado dinámico para evitar que los botones queden ocultos
                 SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 20),
               ],
             ),

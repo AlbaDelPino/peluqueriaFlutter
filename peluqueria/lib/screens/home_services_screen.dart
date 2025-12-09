@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/service_provider.dart';
+import '../widgets/widget.dart'; // 👈 aquí exportas CategoryCard
 import 'category_services_screen.dart';
 import 'servicios_search_delegate.dart';
 
@@ -65,63 +66,43 @@ class _HomeServicesScreenState extends State<HomeServicesScreen> {
           ),
         ],
       ),
-      body: tipos.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // 👈 dos columnas tipo catálogo
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1,
-              ),
-              itemCount: tipos.length,
-              itemBuilder: (ctx, i) {
-                final tipo = tipos[i];
-                return InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => CategoryServicesScreen(
-                          idTipo: tipo.id,
-                          nombreCategoria: tipo.nombre,
-                        ),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 6,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(_iconForTipo(tipo.id), color: primary, size: 40),
-                        const SizedBox(height: 12),
-                        Text(
-                          tipo.nombre,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black87,
+      body: SafeArea(
+        child: tipos.isEmpty
+            ? const Center(child: CircularProgressIndicator())
+            : GridView.builder(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  16,
+                  16,
+                  MediaQuery.of(context).viewInsets.bottom + 20, // 👈 espacio dinámico
+                ),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2, // catálogo en dos columnas
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.9, // 👈 tarjetas un poco más altas
+                ),
+                itemCount: tipos.length,
+                itemBuilder: (ctx, i) {
+                  final tipo = tipos[i];
+                  return CategoryCard(
+                    nombre: tipo.nombre,
+                    icon: _iconForTipo(tipo.id),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CategoryServicesScreen(
+                            idTipo: tipo.id,
+                            nombreCategoria: tipo.nombre,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+                      );
+                    },
+                  );
+                },
+              ),
+      ),
     );
   }
 }

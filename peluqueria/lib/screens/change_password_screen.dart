@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/cliente_provider.dart';
 import '../shared_prefs/user_preferences.dart';
+import '../widgets/widget.dart'; // 👈 importa tus widgets reutilizables
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -52,37 +53,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     }
   }
 
-  Widget _buildPasswordField(TextEditingController controller, String label, IconData icon) {
-    const primary = Color(0xFFFF8B00);
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.white,
-      child: TextFormField(
-        controller: controller,
-        obscureText: true,
-        validator: (value) =>
-            value == null || value.isEmpty ? "Este campo es obligatorio" : null,
-        decoration: InputDecoration(
-          prefixIcon: Icon(icon, color: primary),
-          labelText: label,
-          filled: true,
-          fillColor: Colors.white,
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.grey, width: 1),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: primary, width: 2),
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     const primary = Color(0xFFFF8B00);
@@ -98,33 +68,37 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              _buildPasswordField(_passwordCtrl, "Nueva contraseña", Icons.lock),
-              _buildPasswordField(_confirmCtrl, "Confirmar contraseña", Icons.lock_outline),
-
-              const SizedBox(height: 30),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: _guardarNuevaPassword,
-                  child: const Text(
-                    "Aceptar",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                // Campos usando CustomTextField
+                CustomTextField(
+                  controller: _passwordCtrl,
+                  label: "Nueva contraseña",
+                  icon: Icons.lock,
                 ),
-              ),
-            ],
+                CustomTextField(
+                  controller: _confirmCtrl,
+                  label: "Confirmar contraseña",
+                  icon: Icons.lock_outline,
+                ),
+
+                const SizedBox(height: 30),
+
+                // Botón Aceptar usando PrimaryButton
+                PrimaryButton(
+                  text: "Aceptar",
+                  onPressed: _guardarNuevaPassword,
+                ),
+
+                // Espaciado dinámico para evitar que el teclado tape el botón
+                SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 20),
+              ],
+            ),
           ),
         ),
       ),

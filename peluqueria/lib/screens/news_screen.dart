@@ -27,9 +27,36 @@ class _NewsScreenState extends State<NewsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const primary = Color(0xFFFF8B00);
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Noticias")),
-      body: WebViewWidget(controller: _controller),
+      backgroundColor: const Color(0xFFF7F7F7), // 👈 fondo gris claro como en otras pantallas
+      appBar: AppBar(
+        backgroundColor: primary,
+        centerTitle: true,
+        elevation: 4,
+        title: const Text(
+          "Noticias",
+          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: SafeArea(
+        child: Container(
+          margin: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: const [
+              BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: WebViewWidget(controller: _controller),
+          ),
+        ),
+      ),
     );
   }
 }

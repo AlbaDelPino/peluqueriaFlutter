@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../providers/service_provider.dart';
+import 'service_detail_screen.dart'; // 👈 importa la pantalla de detalle
 
 class ServiciosSearchDelegate extends SearchDelegate {
   final ServiceProvider provider;
@@ -50,89 +51,105 @@ class ServiciosSearchDelegate extends SearchDelegate {
       );
     }
     return SafeArea(
-     child: ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: resultados.length,
-      itemBuilder: (_, i) {
-        final servicio = resultados[i];
-        return Card(
-          elevation: 4,
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            leading: Icon(
-              _iconForTipo(servicio.tipoServicio.id), // 👈 icono dinámico
-              color: primary,
-              size: 28,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: resultados.length,
+        itemBuilder: (_, i) {
+          final servicio = resultados[i];
+          return Card(
+            elevation: 4,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            title: Text(
-              servicio.nombre,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
-            subtitle: Text(
-              servicio.descripcion,
-              style: const TextStyle(fontSize: 14, color: Colors.black54),
-            ),
-            trailing: Text(
-              "${servicio.precio} €",
-              style: const TextStyle(
+            child: ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              leading: Icon(
+                _iconForTipo(servicio.tipoServicio.id),
                 color: primary,
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
+                size: 28,
               ),
+              title: Text(
+                servicio.nombre,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              subtitle: Text(
+                servicio.descripcion,
+                style: const TextStyle(fontSize: 14, color: Colors.black54),
+              ),
+              trailing: Text(
+                "${servicio.precio} €",
+                style: const TextStyle(
+                  color: primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ServiceDetailScreen(servicio: servicio),
+                  ),
+                );
+              },
             ),
-          ),
-        );
-      },
-     ),
+          );
+        },
+      ),
     );
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
     final sugerencias = provider.buscarServicios(query);
-   return SafeArea(
+    return SafeArea(
       child: ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: sugerencias.length,
-      itemBuilder: (_, i) {
-        final servicio = sugerencias[i];
-        return Card(
-          elevation: 2,
-          margin: const EdgeInsets.symmetric(vertical: 6),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            leading: Icon(
-              _iconForTipo(servicio.tipoServicio.id), // 👈 icono dinámico
-              color: primary,
+        padding: const EdgeInsets.all(16),
+        itemCount: sugerencias.length,
+        itemBuilder: (_, i) {
+          final servicio = sugerencias[i];
+          return Card(
+            elevation: 2,
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            title: Text(
-              servicio.nombre,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
+            child: ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              leading: Icon(
+                _iconForTipo(servicio.tipoServicio.id),
+                color: primary,
               ),
+              title: Text(
+                servicio.nombre,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+              subtitle: Text(
+                servicio.descripcion,
+                style: const TextStyle(fontSize: 13, color: Colors.black54),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ServiceDetailScreen(servicio: servicio),
+                  ),
+                );
+              },
             ),
-            subtitle: Text(
-              servicio.descripcion,
-              style: const TextStyle(fontSize: 13, color: Colors.black54),
-            ),
-          ),
-        );
-      },
+          );
+        },
       ),
     );
   }

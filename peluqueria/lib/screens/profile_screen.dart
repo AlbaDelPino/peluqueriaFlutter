@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/cliente_provider.dart';
 import '../providers/auth_provider.dart';
 import '../shared_prefs/user_preferences.dart';
+import '../widgets/widget.dart'; // 👈 importa InfoCard y PrimaryButton
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -21,29 +22,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final prefs = UserPreferences();
       context.read<ClienteProvider>().cargarClientePorUsername(prefs.username);
     });
-  }
-
-  Widget _infoItem(IconData icon, String label, String value) {
-    return Card(
-      elevation: 3,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        leading: Icon(icon, color: const Color(0xFFFF8B00)),
-        title: Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 15,
-            color: Colors.black87,
-          ),
-        ),
-        subtitle: Text(
-          value.isEmpty ? "Sin definir" : value,
-          style: const TextStyle(fontSize: 14, color: Colors.black54),
-        ),
-      ),
-    );
   }
 
   @override
@@ -71,60 +49,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: cliente == null
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundColor: primary.withOpacity(0.2),
-                    backgroundImage: cliente.imagen != null
-                        ? MemoryImage(cliente.imagen!)
-                        : null,
-                    child: cliente.imagen == null
-                        ? const Icon(Icons.person, size: 60, color: primary)
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    cliente.nombre,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+          : SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 60,
+                      backgroundColor: primary.withOpacity(0.2),
+                      backgroundImage: cliente.imagen != null
+                          ? MemoryImage(cliente.imagen!)
+                          : null,
+                      child: cliente.imagen == null
+                          ? const Icon(Icons.person, size: 60, color: primary)
+                          : null,
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  _infoItem(Icons.account_circle, "Username", cliente.username),
-                  _infoItem(Icons.email, "Email", cliente.email),
-                  _infoItem(Icons.phone, "Teléfono", cliente.telefono.toString()),
-                  _infoItem(Icons.home, "Dirección", cliente.direccion),
-                  _infoItem(Icons.warning, "Alérgenos", cliente.alergenos),
-                  _infoItem(Icons.note, "Observación", cliente.observacion),
-                  const SizedBox(height: 30),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primary,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 14, horizontal: 24),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                    const SizedBox(height: 16),
+                    Text(
+                      cliente.nombre,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
-                      icon: const Icon(Icons.logout, color: Colors.white),
-                      label: const Text(
-                        "Cerrar sesión",
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    InfoCard(icon: Icons.account_circle, label: "Username", value: cliente.username),
+                    InfoCard(icon: Icons.email, label: "Email", value: cliente.email),
+                    InfoCard(icon: Icons.phone, label: "Teléfono", value: cliente.telefono.toString()),
+                    InfoCard(icon: Icons.home, label: "Dirección", value: cliente.direccion),
+                    InfoCard(icon: Icons.warning, label: "Alérgenos", value: cliente.alergenos),
+                    InfoCard(icon: Icons.note, label: "Observación", value: cliente.observacion),
+                    const SizedBox(height: 30),
+                    PrimaryButton(
+                      text: "Cerrar sesión",
                       onPressed: () {
                         context.read<AuthProvider>().logout();
                         Navigator.pushReplacementNamed(context, '/');
                       },
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/service_provider.dart';
+import '../widgets/widget.dart'; // 👈 importa tus widgets reutilizables
 import 'service_detail_screen.dart';
 
 class CategoryServicesScreen extends StatelessWidget {
@@ -13,7 +14,6 @@ class CategoryServicesScreen extends StatelessWidget {
     required this.nombreCategoria,
   });
 
-// obtiene los servicios del tipo de servicio selecionado en home_services_screen
   @override
   Widget build(BuildContext context) {
     final servicios = context
@@ -21,7 +21,6 @@ class CategoryServicesScreen extends StatelessWidget {
         .servicios
         .where((s) => s.tipoServicio.id == idTipo)
         .toList();
-      
 
     const primary = Color(0xFFFF8B00);
 
@@ -36,77 +35,38 @@ class CategoryServicesScreen extends StatelessWidget {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-     body: SafeArea( 
-       child: servicios.isEmpty
-          ? const Center(
-              child: Text(
-                "No hay servicios disponibles",
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: servicios.length,
-              itemBuilder: (_, i) {
-                final servicio = servicios[i];
-                return Card(
-                  elevation: 5,
-                  margin: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
+      body: SafeArea(
+        child: servicios.isEmpty
+            ? const Center(
+                child: Text(
+                  "No hay servicios disponibles",
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              )
+            : ListView.builder(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  16,
+                  16,
+                  MediaQuery.of(context).viewInsets.bottom + 20, // 👈 espacio dinámico
+                ),
+                itemCount: servicios.length,
+                itemBuilder: (_, i) {
+                  final servicio = servicios[i];
+                  return ServiceCard(
+                    servicio: servicio,
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              ServiceDetailScreen(servicio: servicio),
+                          builder: (_) => ServiceDetailScreen(servicio: servicio),
                         ),
                       );
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            servicio.nombre,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            servicio.descripcion,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black54,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Align(
-                            alignment: Alignment.bottomRight,
-                            child: Text(
-                              "${servicio.precio} €",
-                              style: const TextStyle(
-                                color: primary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-     ),
+                  );
+                },
+              ),
+      ),
     );
   }
 }
