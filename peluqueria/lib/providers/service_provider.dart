@@ -18,8 +18,8 @@ class ServiceProvider with ChangeNotifier {
 // config.dart
 
     final url = Uri.parse(
-      //'http://localhost:8082/servicio');
-      'https://uninquisitorial-weariful-brayan.ngrok-free.dev/servicio');
+      'http://192.168.7.13:8082/servicio');
+      // 'https://uninquisitorial-weariful-brayan.ngrok-free.dev/servicio');
     final response = await http.get(
       url,
       headers: {
@@ -44,8 +44,8 @@ class ServiceProvider with ChangeNotifier {
 
 
     final url = Uri.parse(
-      // 'http://localhost:8082/tiposervicio');
-            'https://uninquisitorial-weariful-brayan.ngrok-free.dev/tiposervicio');
+      'http://192.168.7.13:8082/tiposervicio');
+            // 'https://uninquisitorial-weariful-brayan.ngrok-free.dev/tiposervicio');
 
     final response = await http.get(
       url,

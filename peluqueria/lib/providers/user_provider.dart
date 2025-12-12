@@ -15,8 +15,8 @@ class ClienteProvider with ChangeNotifier {
       final token = prefs.token;
 
       final url = Uri.parse(
-        //"http://localhost:8082/clientes/username/$username");
-        "https://uninquisitorial-weariful-brayan.ngrok-free.dev/clientes/username/$username");
+        "http://192.168.7.13:8082/clientes/username/$username");
+        // "https://uninquisitorial-weariful-brayan.ngrok-free.dev/clientes/username/$username");
 
       final response = await http.get(
         url,
@@ -51,8 +51,8 @@ class ClienteProvider with ChangeNotifier {
     }
 
     final url = Uri.parse(
-      //'http://localhost:8082/clientes/$id');
-      'https://uninquisitorial-weariful-brayan.ngrok-free.dev/clientes/$id');
+      'http://192.168.7.13:8082/clientes/$id');
+      // 'https://uninquisitorial-weariful-brayan.ngrok-free.dev/clientes/$id');
 
     // Si la contraseña está vacía, no la enviamos
     if (clienteActualizado["contrasenya"] == null ||

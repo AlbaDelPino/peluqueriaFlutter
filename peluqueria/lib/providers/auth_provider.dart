@@ -23,8 +23,8 @@ class AuthProvider with ChangeNotifier {
   notifyListeners();
 
   final url = Uri.parse(
-     // 'http://localhost:8082/api/auth/signin');
-     'https://uninquisitorial-weariful-brayan.ngrok-free.dev/api/auth/signin');
+     'http://192.168.7.13:8082/api/auth/signin');
+    //  'https://uninquisitorial-weariful-brayan.ngrok-free.dev/api/auth/signin');
 
   try {
     final response = await http.post(
@@ -90,8 +90,8 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     final url = Uri.parse(
-        //'http://localhost:8082/api/auth/signup/cliente/public');
-       'https://uninquisitorial-weariful-brayan.ngrok-free.dev/api/auth/signup/cliente/public');
+        'http://192.168.7.13:8082/api/auth/signup/cliente/public');
+      //  'https://uninquisitorial-weariful-brayan.ngrok-free.dev/api/auth/signup/cliente/public');
 
     final response = await http.post(
       url,
