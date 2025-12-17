@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/cliente_provider.dart';
-import '../shared_prefs/user_preferences.dart';
-import '../widgets/widget.dart'; // 👈 importa tus widgets reutilizables
+import '../../providers/user_provider.dart';
+import '../../shared_prefs/user_preferences.dart';
+import '../../widgets/widget.dart'; // 👈 importa tus widgets reutilizables
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});

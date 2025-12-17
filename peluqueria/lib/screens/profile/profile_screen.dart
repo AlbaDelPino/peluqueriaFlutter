@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/cliente_provider.dart';
-import '../providers/auth_provider.dart';
-import '../shared_prefs/user_preferences.dart';
-import '../widgets/widget.dart'; // 👈 importa InfoCard y PrimaryButton
+import '../../providers/user_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../shared_prefs/user_preferences.dart';
+import '../../widgets/widget.dart'; // 👈 importa InfoCard y PrimaryButton
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {

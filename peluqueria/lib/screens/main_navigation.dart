@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'home_services_screen.dart';
-import 'news_screen.dart';
-import 'profile_screen.dart';
+import 'service/home_services_screen.dart';
+import 'news/news_screen.dart';
+import 'profile/profile_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   final int initialIndex;

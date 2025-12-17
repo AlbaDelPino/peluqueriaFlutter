@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import '../models/service_model.dart';
-import '../widgets/widget.dart'; // 👈 aquí exportas PrimaryButton, etc.
+import '../../models/service_model.dart';
+import '../../widgets/widget.dart'; // 👈 aquí exportas PrimaryButton, etc.
 
 class ServiceDetailScreen extends StatefulWidget {
   final Servicio servicio;

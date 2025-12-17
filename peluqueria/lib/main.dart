@@ -7,10 +7,10 @@ import 'package:provider/provider.dart';
 import 'shared_prefs/user_preferences.dart';
 import 'providers/auth_provider.dart';
 import 'providers/service_provider.dart';
-import 'providers/cliente_provider.dart';
+import 'providers/user_provider.dart';
 
-import 'screens/login_screen.dart';
-import 'screens/signup_screen.dart';
+import 'screens/login/login_screen.dart';
+import 'screens/signup/signup_screen.dart';
 import 'screens/main_navigation.dart';
 
 void main() async {

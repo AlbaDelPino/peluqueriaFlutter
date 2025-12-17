@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../providers/service_provider.dart';
-import 'service_detail_screen.dart'; // 👈 importa la pantalla de detalle
+import '../../providers/service_provider.dart';
+import '../calendar/service_detail_screen.dart'; // 👈 importa la pantalla de detalle
 
 class ServiciosSearchDelegate extends SearchDelegate {
   final ServiceProvider provider;

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/service_provider.dart';
-import '../widgets/widget.dart'; // 👈 importa tus widgets reutilizables
-import 'service_detail_screen.dart';
+import '../../providers/service_provider.dart';
+import '../../widgets/widget.dart'; // 👈 importa tus widgets reutilizables
+import '../calendar/service_detail_screen.dart';
 
 class CategoryServicesScreen extends StatelessWidget {
   final int idTipo;

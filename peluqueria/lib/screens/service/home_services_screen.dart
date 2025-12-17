@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/service_provider.dart';
-import '../widgets/widget.dart'; // 👈 aquí exportas CategoryCard
+import '../../providers/service_provider.dart';
+import '../../widgets/widget.dart'; // 👈 aquí exportas CategoryCard
 import 'category_services_screen.dart';
-import 'servicios_search_delegate.dart';
+import '../search_service/servicios_search_delegate.dart';
 
 class HomeServicesScreen extends StatefulWidget {
   const HomeServicesScreen({super.key});

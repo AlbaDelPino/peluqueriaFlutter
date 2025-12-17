@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../providers/cliente_provider.dart';
-import '../shared_prefs/user_preferences.dart';
-import '../widgets/widget.dart'; // 👈 importa todos tus widgets reutilizables
+import '../../providers/user_provider.dart';
+import '../../shared_prefs/user_preferences.dart';
+import '../../widgets/widget.dart'; // 👈 importa todos tus widgets reutilizables
 import 'change_password_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
