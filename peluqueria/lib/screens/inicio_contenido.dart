@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:peluqueria/screens/detalles_screen.dart';
-import 'package:peluqueria/widget/menu_lateral.dart';
 
 class InicioContenido extends StatefulWidget {
   @override
