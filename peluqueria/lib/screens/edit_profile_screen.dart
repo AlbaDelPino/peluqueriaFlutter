@@ -1,6 +1,9 @@
 import 'dart:io';
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import 'dart:convert';
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 import 'package:flutter/material.dart';
@@ -9,8 +12,12 @@ import 'package:provider/provider.dart';
 import '../providers/cliente_provider.dart';
 import '../shared_prefs/user_preferences.dart';
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import '../widgets/widget.dart'; // 👈 importa todos tus widgets reutilizables
 import 'change_password_screen.dart';
+=======
+import 'change_password_screen.dart'; // 👈 importamos la pantalla de cambio de contraseña
+>>>>>>> Stashed changes
 =======
 import 'change_password_screen.dart'; // 👈 importamos la pantalla de cambio de contraseña
 >>>>>>> Stashed changes
@@ -35,7 +42,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   File? _avatarFile;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   String? _base64Image;
+=======
+  String? _assetAvatar;
+>>>>>>> Stashed changes
 =======
   String? _assetAvatar;
 >>>>>>> Stashed changes
@@ -52,8 +63,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _alergenosCtrl = TextEditingController(text: cliente?.alergenos ?? '');
     _observacionCtrl = TextEditingController(text: cliente?.observacion ?? '');
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     _base64Image = cliente?.imagen != null ? base64Encode(cliente!.imagen!) : '';
 =======
+=======
+>>>>>>> Stashed changes
 
     final prefs = UserPreferences();
     if (prefs.avatarPath.isNotEmpty) {
@@ -62,6 +76,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (prefs.assetAvatar.isNotEmpty) {
       _assetAvatar = prefs.assetAvatar;
     }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   }
 
@@ -72,6 +89,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       setState(() {
         _avatarFile = File(picked.path);
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
       });
       final bytes = await _avatarFile!.readAsBytes();
       _base64Image = base64Encode(bytes);
@@ -79,6 +97,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
 =======
+=======
+>>>>>>> Stashed changes
         _assetAvatar = null;
       });
       final prefs = UserPreferences();
@@ -166,6 +186,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   void _guardarCambios() async {
     if (_formKey.currentState!.validate()) {
@@ -184,10 +207,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         "direccion": _direccionCtrl.text,
         "observacion": _observacionCtrl.text,
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         "imagen": _base64Image ?? ""
       };
 
 =======
+=======
+>>>>>>> Stashed changes
         "imagen": _assetAvatar != null
             ? _assetAvatar!.split('/').last
             : (_avatarFile != null ? _avatarFile!.path.split('/').last : "")
@@ -195,6 +221,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       // 👇 No incluimos contrasenya aquí, solo en ChangePasswordScreen
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
       await provider.actualizarCliente(clienteActualizado);
 
@@ -211,6 +240,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     return Scaffold(
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: primary,
@@ -224,6 +254,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         backgroundColor: primary,
         title: const Text("Editar Perfil", style: TextStyle(color: Colors.white)),
 >>>>>>> Stashed changes
+=======
+      appBar: AppBar(
+        backgroundColor: primary,
+        title: const Text("Editar Perfil", style: TextStyle(color: Colors.white)),
+>>>>>>> Stashed changes
         actions: [
           IconButton(
             icon: const Icon(Icons.save, color: Colors.white),
@@ -231,6 +266,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ],
       ),
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
       body: SafeArea(
         child: SingleChildScrollView(
@@ -322,6 +358,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ],
             ),
 =======
+=======
+>>>>>>> Stashed changes
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -382,6 +420,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: const Text("Guardar cambios", style: TextStyle(color: Colors.white)),
               ),
             ],
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
           ),
         ),

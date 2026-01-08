@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/service_provider.dart';
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import '../widgets/widget.dart'; // 👈 importa tus widgets reutilizables
 import 'service_detail_screen.dart';
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 
@@ -25,14 +28,18 @@ class CategoryServicesScreen extends StatelessWidget {
         .where((s) => s.tipoServicio.id == idTipo)
         .toList();
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
     const primary = Color(0xFFFF8B00);
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
         backgroundColor: primary,
         centerTitle: true,
@@ -75,6 +82,8 @@ class CategoryServicesScreen extends StatelessWidget {
               ),
       ),
 =======
+=======
+>>>>>>> Stashed changes
         title: Text(nombreCategoria),
         backgroundColor: const Color(0xFFFF8B00),
       ),

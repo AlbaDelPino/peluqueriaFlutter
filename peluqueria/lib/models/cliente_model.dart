@@ -1,9 +1,12 @@
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import 'dart:typed_data';//datos binarios
 import 'dart:convert';//converson de cadena y binario
 
 /// Modelo de Cliente para sincronizar con el backend.
 //clase cCliente
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 class Cliente {
@@ -19,9 +22,14 @@ class Cliente {
   final String direccion;
   final String observacion;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   final Uint8List? imagen;   // Imagen en binario (BLOB en BD)
 
 //constructor
+=======
+  final String imagen;
+
+>>>>>>> Stashed changes
 =======
   final String imagen;
 
@@ -39,10 +47,16 @@ class Cliente {
     required this.direccion,
     required this.observacion,
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     this.imagen,
   });
 
 //crear un objeto cliente a aprtir de un JSON
+=======
+    required this.imagen,
+  });
+
+>>>>>>> Stashed changes
 =======
     required this.imagen,
   });
@@ -62,6 +76,7 @@ class Cliente {
       direccion: json['direccion'] ?? '',
       observacion: json['observacion'] ?? '',
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
       imagen: json['imagen'] != null && (json['imagen'] as String).isNotEmpty
           ? base64Decode(json['imagen'])
           : null,
@@ -70,10 +85,15 @@ class Cliente {
 
 //convierte el objeto Cliente en un mapa JSON para enviarlo al backend
 =======
+=======
+>>>>>>> Stashed changes
       imagen: json['imagen'] ?? '',
     );
   }
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   Map<String, dynamic> toJson() {
     return {
@@ -89,7 +109,11 @@ class Cliente {
       "direccion": direccion,
       "observacion": observacion,
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
       "imagen": imagen != null ? base64Encode(imagen!) : "",
+=======
+      "imagen": imagen,
+>>>>>>> Stashed changes
 =======
       "imagen": imagen,
 >>>>>>> Stashed changes

@@ -6,11 +6,17 @@ import 'package:provider/provider.dart';
 import 'shared_prefs/user_preferences.dart';
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import 'shared_prefs/user_preferences.dart';
 import 'providers/auth_provider.dart';
 import 'providers/service_provider.dart';
 import 'providers/cliente_provider.dart';
 
+=======
+import 'providers/auth_provider.dart';
+import 'providers/service_provider.dart';
+import 'providers/cliente_provider.dart'; // 👈 asegúrate de importar esto
+>>>>>>> Stashed changes
 =======
 import 'providers/auth_provider.dart';
 import 'providers/service_provider.dart';
@@ -24,8 +30,11 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   await initializeDateFormatting('es_ES', null);
 // Fuerza la app a funcionar solo en orientacion vertical
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
   await SystemChrome.setPreferredOrientations([
@@ -34,7 +43,10 @@ void main() async {
   ]);
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 // incializa la claise de preferencias (SharePrefeences) para guardas datos persistentes 
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
   final prefs = UserPreferences();
@@ -54,7 +66,11 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ServiceProvider()),
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         ChangeNotifierProvider(create: (_) => ClienteProvider()),
+=======
+        ChangeNotifierProvider(create: (_) => ClienteProvider()), // ✅ activado
+>>>>>>> Stashed changes
 =======
         ChangeNotifierProvider(create: (_) => ClienteProvider()), // ✅ activado
 >>>>>>> Stashed changes
@@ -66,6 +82,7 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
         ),
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
@@ -76,6 +93,8 @@ class MyApp extends StatelessWidget {
         ],
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
         initialRoute: '/',
         routes: {
           '/': (_) => const LoginScreen(),
@@ -84,6 +103,9 @@ class MyApp extends StatelessWidget {
           '/home': (_) => const MainNavigation(), // 👈 navegación principal
 =======
           '/home': (_) => const MainNavigation(),
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         },
       ),

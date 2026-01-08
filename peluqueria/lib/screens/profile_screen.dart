@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 <<<<<<< Updated upstream
 =======
 import 'package:image_picker/image_picker.dart';
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 import 'package:provider/provider.dart';
 import '../providers/cliente_provider.dart';
 import '../providers/auth_provider.dart';
 import '../shared_prefs/user_preferences.dart';
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import '../widgets/widget.dart'; // 👈 importa InfoCard y PrimaryButton
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 import 'edit_profile_screen.dart';
@@ -23,7 +29,10 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
   File? _avatarFile;
   String? _assetAvatar;
 
@@ -35,7 +44,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final prefs = UserPreferences();
       context.read<ClienteProvider>().cargarClientePorUsername(prefs.username);
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 
       if (prefs.avatarPath.isNotEmpty) {
         _avatarFile = File(prefs.avatarPath);
@@ -63,6 +75,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _assetAvatar = assetPath;
       _avatarFile = null;
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     });
     final prefs = UserPreferences();
@@ -70,7 +85,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
   void _showAvatarOptions() {
     showModalBottomSheet(
       context: context,
@@ -165,10 +183,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
         backgroundColor: primary,
         centerTitle: true,
+=======
+      appBar: AppBar(
+        backgroundColor: primary,
+>>>>>>> Stashed changes
 =======
       appBar: AppBar(
         backgroundColor: primary,
@@ -188,6 +211,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: cliente == null
           ? const Center(child: CircularProgressIndicator())
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
           : SafeArea(
               child: SingleChildScrollView(
@@ -231,6 +255,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
 =======
+=======
+>>>>>>> Stashed changes
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -291,6 +317,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                 ],
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
               ),
             ),

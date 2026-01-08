@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../providers/service_provider.dart';
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import 'service_detail_screen.dart'; // 👈 importa la pantalla de detalle
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 

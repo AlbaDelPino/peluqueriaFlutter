@@ -17,6 +17,7 @@ class AuthProvider with ChangeNotifier {
   int? get clienteId => _clienteId;
   bool get isAuthenticated => _token != null;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
   /// LOGIN
   Future<bool> login({required String username, required String password}) async {
@@ -57,6 +58,11 @@ class AuthProvider with ChangeNotifier {
 
   /// LOGIN
   Future<bool> login({required String username, required String password}) async {
+=======
+
+  /// LOGIN
+  Future<bool> login({required String username, required String password}) async {
+>>>>>>> Stashed changes
     _loading = true;
     notifyListeners();
 
@@ -90,6 +96,9 @@ class AuthProvider with ChangeNotifier {
         return false;
       }
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
       final prefs = UserPreferences();
       prefs.token = _token!;
@@ -100,6 +109,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } else {
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
       final errorMsg = jsonDecode(response.body)['message'] ?? 'Error desconocido';
       debugPrint("Error login: $errorMsg");
@@ -117,11 +127,20 @@ class AuthProvider with ChangeNotifier {
       return false;
     }
 >>>>>>> Stashed changes
+=======
+      debugPrint("Error login: ${response.statusCode} - ${response.body}");
+      notifyListeners();
+      return false;
+    }
+>>>>>>> Stashed changes
   }
 }
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
   /// SIGNUP
@@ -140,8 +159,12 @@ class AuthProvider with ChangeNotifier {
 
     final url = Uri.parse(
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         //'http://localhost:8082/api/auth/signup/cliente/public');
        'https://uninquisitorial-weariful-brayan.ngrok-free.dev/api/auth/signup/cliente/public');
+=======
+        'https://localhost:8082/api/auth/signup/cliente/public');
+>>>>>>> Stashed changes
 =======
         'https://localhost:8082/api/auth/signup/cliente/public');
 >>>>>>> Stashed changes

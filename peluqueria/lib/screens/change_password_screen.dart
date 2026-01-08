@@ -3,7 +3,10 @@ import 'package:provider/provider.dart';
 import '../providers/cliente_provider.dart';
 import '../shared_prefs/user_preferences.dart';
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import '../widgets/widget.dart'; // 👈 importa tus widgets reutilizables
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 
@@ -33,6 +36,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
       final clienteActualizado = {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         "id": prefs.clienteId,
         "username": provider.cliente!.username,
         "nombre": provider.cliente!.nombre,
@@ -47,6 +51,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         "imagen": provider.cliente!.imagen,
       };
 =======
+=======
+>>>>>>> Stashed changes
   "id": prefs.clienteId,
   "username": provider.cliente!.username,
   "nombre": provider.cliente!.nombre,
@@ -61,6 +67,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   "imagen": provider.cliente!.imagen,
 };
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
       await provider.actualizarCliente(clienteActualizado);
@@ -70,7 +79,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       );
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
       Navigator.pop(context); // volver a EditProfileScreen
+=======
+      Navigator.pop(context); // 👈 volver a EditProfileScreen
+>>>>>>> Stashed changes
 =======
       Navigator.pop(context); // 👈 volver a EditProfileScreen
 >>>>>>> Stashed changes
@@ -82,6 +95,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     const primary = Color(0xFFFF8B00);
 
     return Scaffold(
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -125,6 +139,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               ],
             ),
 =======
+=======
+>>>>>>> Stashed changes
       appBar: AppBar(
         backgroundColor: primary,
         title: const Text("Cambiar Contraseña", style: TextStyle(color: Colors.white)),
@@ -156,6 +172,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 child: const Text("Aceptar", style: TextStyle(color: Colors.white)),
               ),
             ],
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
           ),
         ),

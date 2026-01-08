@@ -9,7 +9,10 @@ class ClienteProvider with ChangeNotifier {
   Cliente? get cliente => _cliente;
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   /// Cargar cliente desde el backend usando el username
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
   Future<void> cargarClientePorUsername(String username) async {
@@ -19,8 +22,13 @@ class ClienteProvider with ChangeNotifier {
 
       final url = Uri.parse(
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         //"http://localhost:8082/clientes/username/$username");
         "https://uninquisitorial-weariful-brayan.ngrok-free.dev/clientes/username/$username");
+=======
+        "https://localhost:8082/clientes/username/$username",
+      );
+>>>>>>> Stashed changes
 =======
         "https://localhost:8082/clientes/username/$username",
       );
@@ -38,6 +46,7 @@ class ClienteProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         _cliente = Cliente.fromJson(data);
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         prefs.clienteId = _cliente!.id; // guardamos el id en preferencias
       } else {
         _cliente = null;
@@ -47,6 +56,8 @@ class ClienteProvider with ChangeNotifier {
       _cliente = null;
       debugPrint("❌ Error cargando cliente: $e");
 =======
+=======
+>>>>>>> Stashed changes
 
         prefs.clienteId = _cliente!.id; // 👈 guardamos id
       } else {
@@ -56,11 +67,15 @@ class ClienteProvider with ChangeNotifier {
     } catch (e) {
       _cliente = null;
       debugPrint("Error cargando cliente: $e");
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     }
     notifyListeners();
   }
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
   /// Actualizar cliente en el backend
   Future<void> actualizarCliente(Map<String, dynamic> clienteActualizado) async {
@@ -102,6 +117,8 @@ class ClienteProvider with ChangeNotifier {
   }
 }
 =======
+=======
+>>>>>>> Stashed changes
   Future<void> actualizarCliente(Map<String, dynamic> clienteActualizado) async {
   final prefs = UserPreferences();
   final id = prefs.clienteId;
@@ -145,4 +162,7 @@ class ClienteProvider with ChangeNotifier {
 }
 
 }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes

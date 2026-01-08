@@ -18,9 +18,13 @@ class ServiceProvider with ChangeNotifier {
 // config.dart
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     final url = Uri.parse(
       //'http://localhost:8082/servicio');
       'https://uninquisitorial-weariful-brayan.ngrok-free.dev/servicio');
+=======
+    final url = Uri.parse('https://localhost:8082/servicio');
+>>>>>>> Stashed changes
 =======
     final url = Uri.parse('https://localhost:8082/servicio');
 >>>>>>> Stashed changes
@@ -48,10 +52,14 @@ class ServiceProvider with ChangeNotifier {
 
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     final url = Uri.parse(
       // 'http://localhost:8082/tiposervicio');
             'https://uninquisitorial-weariful-brayan.ngrok-free.dev/tiposervicio');
 
+=======
+    final url = Uri.parse('https://localhost:8082/tiposervicio');
+>>>>>>> Stashed changes
 =======
     final url = Uri.parse('https://localhost:8082/tiposervicio');
 >>>>>>> Stashed changes

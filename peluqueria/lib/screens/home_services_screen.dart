@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/service_provider.dart';
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import '../widgets/widget.dart'; // 👈 aquí exportas CategoryCard
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 import 'category_services_screen.dart';
@@ -49,6 +52,7 @@ class _HomeServicesScreenState extends State<HomeServicesScreen> {
 
     return Scaffold(
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
         backgroundColor: primary,
@@ -57,6 +61,12 @@ class _HomeServicesScreenState extends State<HomeServicesScreen> {
           'Servicios por categoría',
           style: TextStyle(color: Colors.white, fontSize: 18),
         ),
+=======
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: primary,
+        title: const Text('Servicios por categoría', style: TextStyle(color: Colors.white)),
+>>>>>>> Stashed changes
 =======
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -76,6 +86,7 @@ class _HomeServicesScreenState extends State<HomeServicesScreen> {
           ),
         ],
       ),
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
       body: SafeArea(
         child: tipos.isEmpty
@@ -115,6 +126,8 @@ class _HomeServicesScreenState extends State<HomeServicesScreen> {
               ),
       ),
 =======
+=======
+>>>>>>> Stashed changes
       body: tipos.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView.separated(
@@ -155,6 +168,9 @@ class _HomeServicesScreenState extends State<HomeServicesScreen> {
                 );
               },
             ),
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     );
   }

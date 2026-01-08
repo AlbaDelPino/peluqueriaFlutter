@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'home_services_screen.dart';
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import 'news_screen.dart';
 import 'profile_screen.dart';
+=======
+import 'profile_screen.dart';
+import 'news_screen.dart'; // si tienes pantalla de noticias
+>>>>>>> Stashed changes
 =======
 import 'profile_screen.dart';
 import 'news_screen.dart'; // si tienes pantalla de noticias
@@ -28,9 +33,12 @@ class _MainNavigationState extends State<MainNavigation> {
     _tabs = const [
       HomeServicesScreen(),
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
       NewsScreen(),
       ProfileScreen(),
 =======
+=======
+>>>>>>> Stashed changes
       NewsScreen(), // pestaña Noticias
       ProfileScreen(), // pestaña Perfil
 >>>>>>> Stashed changes
