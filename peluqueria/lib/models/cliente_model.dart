@@ -1,8 +1,11 @@
+<<<<<<< Updated upstream
 import 'dart:typed_data';//datos binarios
 import 'dart:convert';//converson de cadena y binario
 
 /// Modelo de Cliente para sincronizar con el backend.
 //clase cCliente
+=======
+>>>>>>> Stashed changes
 class Cliente {
   final int id;
   final String username;
@@ -15,9 +18,14 @@ class Cliente {
   final String alergenos;
   final String direccion;
   final String observacion;
+<<<<<<< Updated upstream
   final Uint8List? imagen;   // Imagen en binario (BLOB en BD)
 
 //constructor
+=======
+  final String imagen;
+
+>>>>>>> Stashed changes
   Cliente({
     required this.id,
     required this.username,
@@ -30,10 +38,16 @@ class Cliente {
     required this.alergenos,
     required this.direccion,
     required this.observacion,
+<<<<<<< Updated upstream
     this.imagen,
   });
 
 //crear un objeto cliente a aprtir de un JSON
+=======
+    required this.imagen,
+  });
+
+>>>>>>> Stashed changes
   factory Cliente.fromJson(Map<String, dynamic> json) {
     return Cliente(
       id: json['id'] ?? 0,
@@ -47,6 +61,7 @@ class Cliente {
       alergenos: json['alergenos'] ?? '',
       direccion: json['direccion'] ?? '',
       observacion: json['observacion'] ?? '',
+<<<<<<< Updated upstream
       imagen: json['imagen'] != null && (json['imagen'] as String).isNotEmpty
           ? base64Decode(json['imagen'])
           : null,
@@ -54,6 +69,12 @@ class Cliente {
   }
 
 //convierte el objeto Cliente en un mapa JSON para enviarlo al backend
+=======
+      imagen: json['imagen'] ?? '',
+    );
+  }
+
+>>>>>>> Stashed changes
   Map<String, dynamic> toJson() {
     return {
       "id": id,
@@ -67,7 +88,11 @@ class Cliente {
       "alergenos": alergenos,
       "direccion": direccion,
       "observacion": observacion,
+<<<<<<< Updated upstream
       "imagen": imagen != null ? base64Encode(imagen!) : "",
+=======
+      "imagen": imagen,
+>>>>>>> Stashed changes
     };
   }
 }

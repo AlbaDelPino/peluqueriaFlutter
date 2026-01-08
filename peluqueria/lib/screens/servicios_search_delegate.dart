@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../providers/service_provider.dart';
+<<<<<<< Updated upstream
 import 'service_detail_screen.dart'; // 👈 importa la pantalla de detalle
+=======
+>>>>>>> Stashed changes
 
 class ServiciosSearchDelegate extends SearchDelegate {
   final ServiceProvider provider;
@@ -44,6 +47,7 @@ class ServiciosSearchDelegate extends SearchDelegate {
   @override
   Widget buildResults(BuildContext context) {
     final resultados = provider.buscarServicios(query);
+<<<<<<< Updated upstream
     if (resultados.isEmpty) {
       return const Center(
         child: Text("No se encontraron servicios",
@@ -102,12 +106,25 @@ class ServiciosSearchDelegate extends SearchDelegate {
           );
         },
       ),
+=======
+    return ListView.builder(
+      itemCount: resultados.length,
+      itemBuilder: (_, i) {
+        final servicio = resultados[i];
+        return ListTile(
+          title: Text(servicio.nombre),
+          subtitle: Text(servicio.descripcion),
+          trailing: Text("${servicio.precio} €"),
+        );
+      },
+>>>>>>> Stashed changes
     );
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
     final sugerencias = provider.buscarServicios(query);
+<<<<<<< Updated upstream
     return SafeArea(
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -151,6 +168,17 @@ class ServiciosSearchDelegate extends SearchDelegate {
           );
         },
       ),
+=======
+    return ListView.builder(
+      itemCount: sugerencias.length,
+      itemBuilder: (_, i) {
+        final servicio = sugerencias[i];
+        return ListTile(
+          title: Text(servicio.nombre),
+          subtitle: Text(servicio.descripcion),
+        );
+      },
+>>>>>>> Stashed changes
     );
   }
 }

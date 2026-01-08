@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/service_provider.dart';
+<<<<<<< Updated upstream
 import '../widgets/widget.dart'; // 👈 aquí exportas CategoryCard
+=======
+>>>>>>> Stashed changes
 import 'category_services_screen.dart';
 import 'servicios_search_delegate.dart';
 
@@ -45,6 +48,7 @@ class _HomeServicesScreenState extends State<HomeServicesScreen> {
     final tipos = context.watch<ServiceProvider>().tiposServicio;
 
     return Scaffold(
+<<<<<<< Updated upstream
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
         backgroundColor: primary,
@@ -53,6 +57,12 @@ class _HomeServicesScreenState extends State<HomeServicesScreen> {
           'Servicios por categoría',
           style: TextStyle(color: Colors.white, fontSize: 18),
         ),
+=======
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: primary,
+        title: const Text('Servicios por categoría', style: TextStyle(color: Colors.white)),
+>>>>>>> Stashed changes
         actions: [
           IconButton(
             icon: const Icon(Icons.search, color: Colors.white),
@@ -66,6 +76,7 @@ class _HomeServicesScreenState extends State<HomeServicesScreen> {
           ),
         ],
       ),
+<<<<<<< Updated upstream
       body: SafeArea(
         child: tipos.isEmpty
             ? const Center(child: CircularProgressIndicator())
@@ -103,6 +114,48 @@ class _HomeServicesScreenState extends State<HomeServicesScreen> {
                 },
               ),
       ),
+=======
+      body: tipos.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.separated(
+              itemCount: tipos.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (ctx, i) {
+                final tipo = tipos[i];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black12, blurRadius: 4, offset: const Offset(0, 2)),
+                      ],
+                    ),
+
+                  
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      leading: Icon(_iconForTipo(tipo.id), color: primary, size: 32),
+                      title: Text(tipo.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CategoryServicesScreen(
+                              idTipo: tipo.id,
+                              nombreCategoria: tipo.nombre,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+>>>>>>> Stashed changes
     );
   }
 }

@@ -16,6 +16,7 @@ class AuthProvider with ChangeNotifier {
   String? get email => _email;
   int? get clienteId => _clienteId;
   bool get isAuthenticated => _token != null;
+<<<<<<< Updated upstream
 
   /// LOGIN
   Future<bool> login({required String username, required String password}) async {
@@ -52,6 +53,44 @@ class AuthProvider with ChangeNotifier {
         return false;
       }
 //Persiste los datos en SharedPreferences.
+=======
+
+  /// LOGIN
+  Future<bool> login({required String username, required String password}) async {
+    _loading = true;
+    notifyListeners();
+
+    final url = Uri.parse(
+      //uninquisitorial-weariful-brayan.ngrok-free.dev
+        'https://localhost:8082/api/auth/signin');
+
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        "username": username,
+        "contrasenya": password,
+      }),
+    );
+
+    _loading = false;
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      debugPrint("Login response: $data");
+
+      _token = data['token'];
+      _username = data['username'];
+      _email = data['email'];
+      _clienteId = data['id']; // 👈 backend debe devolver id
+
+      if (_token == null || _username == null || _clienteId == null) {
+        debugPrint("Login JSON no contiene token/username/id");
+        return false;
+      }
+
+>>>>>>> Stashed changes
       final prefs = UserPreferences();
       prefs.token = _token!;
       prefs.username = _username!;
@@ -61,6 +100,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } else {
+<<<<<<< Updated upstream
       final errorMsg = jsonDecode(response.body)['message'] ?? 'Error desconocido';
       debugPrint("Error login: $errorMsg");
       notifyListeners();
@@ -71,10 +111,19 @@ class AuthProvider with ChangeNotifier {
     debugPrint("Excepción login: $e");
     notifyListeners();
     return false;
+=======
+      debugPrint("Error login: ${response.statusCode} - ${response.body}");
+      notifyListeners();
+      return false;
+    }
+>>>>>>> Stashed changes
   }
 }
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
   /// SIGNUP
   Future<bool> signup({
     required String username,
@@ -90,8 +139,12 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     final url = Uri.parse(
+<<<<<<< Updated upstream
         //'http://localhost:8082/api/auth/signup/cliente/public');
        'https://uninquisitorial-weariful-brayan.ngrok-free.dev/api/auth/signup/cliente/public');
+=======
+        'https://localhost:8082/api/auth/signup/cliente/public');
+>>>>>>> Stashed changes
 
     final response = await http.post(
       url,
