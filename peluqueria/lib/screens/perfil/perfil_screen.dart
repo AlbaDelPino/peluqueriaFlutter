@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../models/usuario/cliente_model.dart';
 import '../../services/user_preferences.dart';
-import '../../main.dart'; // Asegúrate de importar donde definiste el routeObserver
+import 'editar_perfil_screen.dart';
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -12,62 +12,50 @@ class PerfilScreen extends StatefulWidget {
   State<PerfilScreen> createState() => _PerfilScreenState();
 }
 
-// Usamos RouteAware para detectar el regreso a la pantalla
-class _PerfilScreenState extends State<PerfilScreen> with RouteAware {
+class _PerfilScreenState extends State<PerfilScreen> {
+  final prefs = UserPreferences();
   ClienteModel? cliente;
-  bool _isLoading = true;
+  bool _cargando = true;
+
   final Color naranjaLogo = const Color(0xFFFF6B00);
+  final Color negroSuave = const Color(0xFF2D2D2D);
 
   @override
   void initState() {
     super.initState();
-    _fetchUserProfile();
+    _cargarDatos();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Registramos esta pantalla en el observador de rutas
-    routeObserver.subscribe(this, ModalRoute.of(context)!);
-  }
-
-  @override
-  void dispose() {
-    routeObserver.unsubscribe(this); // Limpiamos al salir
-    super.dispose();
-  }
-
-  // ESTO SE EJECUTA CUANDO VUELVES DE EDITAR (AL HACER POP)
-  @override
-  void didPopNext() {
-    _fetchUserProfile(); // Refresco automático al regresar
-  }
-
-  Future<void> _fetchUserProfile() async {
-    final prefs = UserPreferences();
-
-    // Si ya tenemos datos, no mostramos el loader para que no parpadee
-    if (cliente == null) setState(() => _isLoading = true);
-
+  Future<void> _cargarDatos() async {
     try {
+      // Forzamos el estado de carga al empezar
+      setState(() => _cargando = true);
+
+      final String tokenActual = await prefs.token;
+
       final response = await http.get(
-        Uri.parse('http://10.103.246.95:8082/api/auth/me'),
+        Uri.parse('http://localhost:8082/api/auth/me'),
         headers: {
+          'Authorization': 'Bearer $tokenActual',
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${prefs.token}',
         },
-      );
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        if (mounted) {
-          setState(() {
-            cliente = ClienteModel.fromJson(jsonDecode(response.body));
-            _isLoading = false;
-          });
-        }
+        final decodedData = jsonDecode(response.body);
+        // Mapeamos los datos al modelo
+        cliente = ClienteModel.fromJson(decodedData);
+      } else {
+        debugPrint("Error servidor: ${response.statusCode}");
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
+      debugPrint("Error de conexión en Perfil: $e");
+    } finally {
+      // ESTO ES LO QUE ARREGLA LA CARGA INFINITA:
+      // Se ejecuta siempre, incluso si hay error o el servidor no responde.
+      if (mounted) {
+        setState(() => _cargando = false);
+      }
     }
   }
 
@@ -76,111 +64,112 @@ class _PerfilScreenState extends State<PerfilScreen> with RouteAware {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: Text(
           "MI PERFIL",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: negroSuave,
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+          ),
         ),
-        backgroundColor: naranjaLogo,
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.edit_calendar_rounded, color: naranjaLogo),
+            onPressed: () async {
+              // Navegamos a editar y esperamos si hubo cambios
+              final cambio = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const EditarPerfilScreen()),
+              );
+              if (cambio == true) {
+                _cargarDatos(); // Refrescamos si se guardó algo
+              }
+            },
+          ),
+        ],
       ),
-      body: _isLoading && cliente == null
+      body: _cargando
           ? Center(child: CircularProgressIndicator(color: naranjaLogo))
-          : (cliente == null)
-          ? const Center(child: Text("Error al cargar datos"))
-          : RefreshIndicator(
-              onRefresh: _fetchUserProfile,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  children: [
-                    _buildHeader(),
-                    _buildInfoItem(Icons.person, "Usuario", cliente!.username),
-                    _buildInfoItem(Icons.badge, "Nombre", cliente!.nombre),
-                    _buildInfoItem(Icons.email, "Email", cliente!.email),
-                    _buildInfoItem(
-                      Icons.phone,
-                      "Teléfono",
-                      cliente!.telefono.toString(),
-                    ),
-                    _buildInfoItem(
-                      Icons.location_on,
-                      "Dirección",
-                      cliente!.direccion,
-                    ),
-                    const SizedBox(height: 20),
-                    _buildLogoutButton(),
-                  ],
-                ),
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(30),
+              child: Column(
+                children: [
+                  _buildAvatarView(),
+                  const SizedBox(height: 40),
+                  _buildDato("Nombre completo", cliente?.nombre ?? "No disponible", Icons.person_outline),
+                  _buildDato("Correo electrónico", cliente?.email ?? "No disponible", Icons.mail_outline),
+                  _buildDato("Teléfono móvil", cliente?.telefono?.toString() ?? "No disponible", Icons.phone_iphone_rounded),
+                  _buildDato("Dirección", cliente?.direccion ?? "No disponible", Icons.location_on_outlined),
+                  _buildDato("Alérgenos", cliente?.alergenos ?? "Ninguno", Icons.warning_amber_rounded),
+                  const SizedBox(height: 30),
+                  _buildBotonCerrarSesion(),
+                ],
               ),
             ),
     );
   }
 
-  // ... (Tus métodos _buildHeader, _buildInfoItem, _buildLogoutButton aquí)
-  Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 30),
-      decoration: BoxDecoration(
-        color: naranjaLogo,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 55,
-            backgroundColor: Colors.white,
-            backgroundImage: cliente!.imagen.isNotEmpty
-                ? MemoryImage(base64Decode(cliente!.imagen))
-                : null,
-            child: cliente!.imagen.isEmpty
-                ? Icon(Icons.person, size: 60, color: naranjaLogo)
-                : null,
-          ),
-          const SizedBox(height: 15),
-          Text(
-            cliente!.nombre.toUpperCase(),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoItem(IconData icon, String label, String value) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F8F8),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: ListTile(
-        leading: Icon(icon, color: naranjaLogo),
-        title: Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
-        subtitle: Text(
-          value,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLogoutButton() {
+  // --- MANTENIENDO TU DISEÑO DE "DATO" ---
+  Widget _buildDato(String label, String valor, IconData icono) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25),
-      child: OutlinedButton(
-        onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
-        child: const Text("CERRAR SESIÓN"),
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7F7F7),
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Row(
+          children: [
+            Icon(icono, color: naranjaLogo),
+            const SizedBox(width: 15),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  valor,
+                  style: TextStyle(color: negroSuave, fontSize: 15, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatarView() {
+    return Center(
+      child: CircleAvatar(
+        radius: 65,
+        backgroundColor: const Color(0xFFF7F7F7),
+        backgroundImage: (cliente?.imagen != null && cliente!.imagen.isNotEmpty)
+            ? MemoryImage(base64Decode(cliente!.imagen))
+            : null,
+        child: (cliente?.imagen == null || cliente!.imagen.isEmpty)
+            ? Icon(Icons.person, size: 60, color: naranjaLogo.withOpacity(0.3))
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildBotonCerrarSesion() {
+    return TextButton(
+      onPressed: () async {
+        await prefs.logout();
+        if (mounted) Navigator.pushReplacementNamed(context, 'login');
+      },
+      child: const Text(
+        "CERRAR SESIÓN",
+        style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
       ),
     );
   }

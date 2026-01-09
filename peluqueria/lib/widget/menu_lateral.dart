@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import '../../services/user_preferences.dart';
 import '../screens/perfil/editar_perfil_screen.dart';
-import '../screens/perfil/cambiar_password_screen.dart'; // Import correcto
+import '../screens/perfil/cambiar_password_screen.dart';
 
 class MenuLateral extends StatelessWidget {
   const MenuLateral({super.key});
@@ -14,108 +14,121 @@ class MenuLateral extends StatelessWidget {
   Widget build(BuildContext context) {
     final prefs = UserPreferences();
 
-    return Drawer(
-      backgroundColor: Colors.white,
-      child: Column(
-        children: [
-          UserAccountsDrawerHeader(
-            decoration: BoxDecoration(color: naranjaLogo),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: Colors.white,
-              backgroundImage: prefs.imagenUsuario.isNotEmpty
-                  ? MemoryImage(base64Decode(prefs.imagenUsuario))
-                  : null,
-              child: prefs.imagenUsuario.isEmpty
-                  ? const Icon(Icons.person, size: 45, color: Color(0xFFFF6B00))
-                  : null,
-            ),
-            accountName: Text(
-              prefs.nombreUsuario,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            accountEmail: const Text(
-              "Cliente Bernat Experience",
-              style: TextStyle(color: Colors.white70),
-            ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                _buildMenuItem(
-                  icon: Icons.home_outlined,
-                  title: 'Inicio',
-                  onTap: () => Navigator.pop(context),
-                ),
-                _buildMenuItem(
-                  icon: Icons.edit_note_rounded,
-                  title: 'Editar mis Datos',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const EditarPerfilScreen(),
-                      ),
-                    );
-                  },
-                ),
-                // --- OPCIÓN DE SEGURIDAD ACTUALIZADA ---
-                _buildMenuItem(
-                  icon: Icons.lock_reset_outlined,
-                  title: 'Seguridad y Contraseña',
-                  onTap: () {
-                    // 1. Cerramos el Drawer
-                    Navigator.pop(context);
+    // Usamos FutureBuilder porque obtener datos de Secure Storage es asíncrono
+    return FutureBuilder(
+      future: Future.wait([
+        prefs.nombreUsuario,
+        prefs.imagenUsuario,
+      ]),
+      builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
+        // Mientras carga, mostramos un Drawer vacío con un loader
+        if (!snapshot.hasData) {
+          return const Drawer(child: Center(child: CircularProgressIndicator()));
+        }
 
-                    // 2. Navegamos a la pantalla de cambiar contraseña
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CambiarPasswordScreen(),
-                      ),
-                    );
-                  },
+        final String nombre = snapshot.data![0];
+        final String imagen = snapshot.data![1];
+
+        return Drawer(
+          backgroundColor: Colors.white,
+          child: Column(
+            children: [
+              UserAccountsDrawerHeader(
+                decoration: BoxDecoration(color: naranjaLogo),
+                currentAccountPicture: CircleAvatar(
+                  backgroundColor: Colors.white,
+                  backgroundImage: imagen.isNotEmpty
+                      ? MemoryImage(base64Decode(imagen))
+                      : null,
+                  child: imagen.isEmpty
+                      ? Icon(Icons.person, size: 45, color: naranjaLogo)
+                      : null,
                 ),
-                const Divider(indent: 20, endIndent: 20),
-                _buildMenuItem(
-                  icon: Icons.support_agent_outlined,
-                  title: 'Ayuda y Soporte',
-                  onTap: () => Navigator.pop(context),
+                accountName: Text(
+                  nombre,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
-              ],
-            ),
-          ),
-          SafeArea(
-            child: Column(
-              children: [
-                const Divider(),
-                ListTile(
-                  leading: const Icon(Icons.logout, color: Colors.redAccent),
-                  title: const Text(
-                    'Cerrar Sesión',
-                    style: TextStyle(
-                      color: Colors.redAccent,
-                      fontWeight: FontWeight.bold,
+                accountEmail: const Text(
+                  "Cliente Bernat Experience",
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    _buildMenuItem(
+                      icon: Icons.home_outlined,
+                      title: 'Inicio',
+                      onTap: () => Navigator.pop(context),
                     ),
-                  ),
-                  onTap: () async {
-                    await prefs.logout();
-                    if (context.mounted) {
-                      Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        '/login',
-                        (route) => false,
-                      );
-                    }
-                  },
+                    _buildMenuItem(
+                      icon: Icons.edit_note_rounded,
+                      title: 'Editar mis Datos',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const EditarPerfilScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildMenuItem(
+                      icon: Icons.lock_reset_outlined,
+                      title: 'Seguridad y Contraseña',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const CambiarPasswordScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(indent: 20, endIndent: 20),
+                    _buildMenuItem(
+                      icon: Icons.support_agent_outlined,
+                      title: 'Ayuda y Soporte',
+                      onTap: () => Navigator.pop(context),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 10),
-              ],
-            ),
+              ),
+              SafeArea(
+                child: Column(
+                  children: [
+                    const Divider(),
+                    ListTile(
+                      leading: const Icon(Icons.logout, color: Colors.redAccent),
+                      title: const Text(
+                        'Cerrar Sesión',
+                        style: TextStyle(
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      onTap: () async {
+                        await prefs.logout();
+                        if (context.mounted) {
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/login',
+                            (route) => false,
+                          );
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

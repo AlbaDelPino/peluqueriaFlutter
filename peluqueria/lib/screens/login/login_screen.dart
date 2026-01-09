@@ -25,8 +25,37 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // --- NUEVO MÉTODO PARA GOOGLE ---
+  void _loginConGoogle() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final String? response = await AuthService().iniciarSesionConGoogle();
+
+      if (response == null) {
+        // El usuario canceló o cerró el popup de Google
+        return;
+      }
+
+      if (response == "ERROR_SERVIDOR" || response == "ERROR_CONEXION") {
+        _mostrarSnackBar("Error al conectar con Google", Colors.redAccent);
+      } else {
+        // ÉXITO: Guardamos la sesión (la contraseña se guarda vacía o como 'GOOGLE_AUTH')
+        final prefs = UserPreferences();
+        await prefs.guardarSesion(response, "GOOGLE_AUTH");
+
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      }
+    } catch (e) {
+      _mostrarSnackBar("Ocurrió un error inesperado", Colors.redAccent);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   void _login() async {
-    // 1. Validación básica local
     if (_userController.text.isEmpty || _passController.text.isEmpty) {
       _mostrarSnackBar("Por favor, rellena todos los campos", Colors.orange);
       return;
@@ -40,8 +69,6 @@ class _LoginScreenState extends State<LoginScreen> {
         _passController.text.trim(),
       );
 
-      // --- VALIDACIÓN ANTI-COLAPSO ---
-      // Si la respuesta es nula o contiene el texto de error de tu servidor
       if (response == null ||
           response == "CREDENCIALES_MAL" ||
           response.contains("ERROR")) {
@@ -52,7 +79,6 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else {
-        // Si no es el error plano, procedemos a guardar (es un JSON válido)
         final prefs = UserPreferences();
         await prefs.guardarSesion(response, _passController.text.trim());
 
@@ -61,7 +87,6 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     } catch (e) {
-      // Captura errores de red o formato inesperado
       _mostrarSnackBar("Error de conexión con el servidor", Colors.redAccent);
     } finally {
       if (mounted) {
@@ -92,7 +117,6 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 1. LOGO CON SOMBRA
               Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
@@ -112,8 +136,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 25),
-
-              // 2. TEXTO CORPORATIVO
               Text(
                 "BERNAT",
                 style: TextStyle(
@@ -133,8 +155,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 50),
-
-              // 3. CAMPOS DE ENTRADA
               _buildModernInput(
                 controller: _userController,
                 label: "Nombre de usuario",
@@ -147,7 +167,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 icon: Icons.lock_outline_rounded,
                 isPassword: true,
               ),
-
               const SizedBox(height: 10),
               Align(
                 alignment: Alignment.centerRight,
@@ -160,15 +179,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-
-              // 4. BOTÓN DE ACCESO
+              
+              // BOTONES DE ACCESO
               _isLoading
                   ? CircularProgressIndicator(color: naranjaLogo)
-                  : _buildBotonEntrar(),
+                  : Column(
+                      children: [
+                        _buildBotonEntrar(),
+                        const SizedBox(height: 15),
+                        _buildBotonGoogle(), // Botón de Google añadido
+                      ],
+                    ),
 
               const SizedBox(height: 40),
-
-              // 5. ENLACE DE REGISTRO
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -227,6 +250,40 @@ class _LoginScreenState extends State<LoginScreen> {
             color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 16,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- BOTÓN CORPORATIVO DE GOOGLE ---
+  Widget _buildBotonGoogle() {
+    return Container(
+      width: double.infinity,
+      height: 55,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: OutlinedButton.icon(
+        onPressed: _loginConGoogle,
+        icon: Image.network(
+          'https://rotulosmatesanz.com/wp-content/uploads/2017/09/2000px-Google_G_Logo.svg_.png',
+          height: 24,
+        ),
+        label: const Text(
+          "Continuar con Google",
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide.none,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
           ),
         ),
       ),

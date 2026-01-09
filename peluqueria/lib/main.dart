@@ -4,17 +4,16 @@ import 'package:peluqueria/screens/login/login_screen.dart';
 import 'package:peluqueria/screens/home_screens.dart';
 import 'package:peluqueria/screens/login/signup_screen.dart';
 
-// 1. DEFINICIÓN DEL OBSERVADOR DE RUTAS (Debe ser global para acceder desde Perfil)
-final RouteObserver<ModalRoute<void>> routeObserver =
-    RouteObserver<ModalRoute<void>>();
+// 1. DEFINICIÓN DEL OBSERVADOR DE RUTAS
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
 
 void main() async {
-  // Aseguramos que los bindings de Flutter estén listos
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Inicializamos las preferencias
+  
+  // Nota: Con Secure Storage, el initPrefs ya no es estrictamente necesario 
+  // si no usas SharedPreferences, pero lo dejamos si tienes lógica mixta.
   final prefs = UserPreferences();
-  await prefs.initPrefs();
+  // await prefs.initPrefs(); 
 
   runApp(const MyApp());
 }
@@ -33,12 +32,32 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.orange,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-
-      // 2. REGISTRO DEL OBSERVADOR
-      // Esto permite que pantallas como Perfil sepan cuándo vuelven a estar visibles
       navigatorObservers: [routeObserver],
 
-      initialRoute: (prefs.esSesionValida) ? '/home' : '/login',
+      // Usamos home con un FutureBuilder para validar el token contra el servidor
+      home: FutureBuilder<bool>(
+        future: prefs.verificarTokenEnServidor(),
+        builder: (context, snapshot) {
+          // Mientras comprueba con el backend, mostramos una pantalla de carga
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(color: Colors.orange),
+              ),
+            );
+          }
+
+          // Si el token es válido (200 OK en el server), vamos a Home
+          if (snapshot.hasData && snapshot.data == true) {
+            return const HomeScreens();
+          } else {
+            // Si el token ha caducado o no existe, limpiamos y vamos a Login
+            // Hacemos el logout para asegurar que no queden datos corruptos
+            prefs.logout(); 
+            return const LoginScreen();
+          }
+        },
+      ),
 
       routes: {
         '/login': (context) => const LoginScreen(),

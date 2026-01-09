@@ -1,49 +1,46 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class UserPreferences {
   static final UserPreferences _instancia = UserPreferences._internal();
   factory UserPreferences() => _instancia;
   UserPreferences._internal();
 
-  late SharedPreferences _prefs;
+  final _storage = const FlutterSecureStorage();
 
-  Future<void> initPrefs() async {
-    _prefs = await SharedPreferences.getInstance();
-  }
-
-  // 1. GUARDAR TODO AL INICIAR SESIÓN
-  // Dentro de UserPreferences.dart
-  Future<void> guardarSesion(
-    String jsonResponse,
-    String passwordEscrita,
-  ) async {
+  // --- 1. GUARDAR SESIÓN AL HACER LOGIN ---
+  Future<void> guardarSesion(String jsonResponse, String passwordEscrita) async {
     try {
-      // Intentamos decodificar
       final Map<String, dynamic> decodedData = json.decode(jsonResponse);
 
-      await _prefs.setString('token_jwt', decodedData['token'] ?? '');
-      await _prefs.setString('user_password', passwordEscrita);
-      await _prefs.setInt('user_id', decodedData['id'] ?? 0);
-      await _prefs.setString('nombre_usuario', decodedData['nombre'] ?? '');
-      await _prefs.setString('username', decodedData['username'] ?? '');
-      await _prefs.setString('user_email', decodedData['email'] ?? '');
-      await _prefs.setString('user_imagen', decodedData['imagen'] ?? '');
-      await _prefs.setString(
-        'user_telefono',
-        decodedData['telefono']?.toString() ?? '',
-      );
-      await _prefs.setString('user_direccion', decodedData['direccion'] ?? '');
-      await _prefs.setString('user_alergenos', decodedData['alergenos'] ?? '');
-      await _prefs.setInt('fecha_login', DateTime.now().millisecondsSinceEpoch);
-      await _prefs.setBool('estaLogueado', true);
+      await _storage.write(key: 'token_jwt', value: decodedData['token'] ?? '');
+      await _storage.write(key: 'user_id', value: (decodedData['id'] ?? 0).toString());
+      await _storage.write(key: 'user_password', value: passwordEscrita);
+      await _storage.write(key: 'nombre_usuario', value: decodedData['nombre'] ?? '');
+      await _storage.write(key: 'username', value: decodedData['username'] ?? '');
+      await _storage.write(key: 'user_email', value: decodedData['email'] ?? '');
+      await _storage.write(key: 'user_imagen', value: decodedData['imagen'] ?? '');
+      await _storage.write(key: 'user_telefono', value: decodedData['telefono']?.toString() ?? '');
+      await _storage.write(key: 'user_direccion', value: decodedData['direccion'] ?? '');
+      await _storage.write(key: 'estaLogueado', value: 'true');
+      
     } catch (e) {
-      // Si algo falla aquí, imprimimos pero no rompemos la app
-      print("Error crítico en guardarSesion: $e");
+      print("Error en guardarSesion: $e");
     }
   }
 
-  // 2. ACTUALIZAR PERFIL (Cuando el usuario edita sus datos)
+  // --- 2. GETTERS ASÍNCRONOS (Soluciona el error de passwordSegura) ---
+  Future<String> get token async => await _storage.read(key: 'token_jwt') ?? '';
+  Future<String> get passwordSegura async => await _storage.read(key: 'user_password') ?? '';
+  Future<int> get userId async {
+    String? id = await _storage.read(key: 'user_id');
+    return int.tryParse(id ?? '0') ?? 0;
+  }
+  Future<String> get nombreUsuario async => await _storage.read(key: 'nombre_usuario') ?? '';
+  Future<String> get imagenUsuario async => await _storage.read(key: 'user_imagen') ?? '';
+
+  // --- 3. ACTUALIZAR PERFIL (Soluciona los errores de telefono y direccion) ---
   Future<void> actualizarPerfilLocal({
     required String nombre,
     required String imagen,
@@ -51,36 +48,35 @@ class UserPreferences {
     String? telefono,
     String? direccion,
   }) async {
-    await _prefs.setString('nombre_usuario', nombre);
-    await _prefs.setString('user_imagen', imagen);
-    if (email != null) await _prefs.setString('user_email', email);
-    if (telefono != null) await _prefs.setString('user_telefono', telefono);
-    if (direccion != null) await _prefs.setString('user_direccion', direccion);
+    await _storage.write(key: 'nombre_usuario', value: nombre);
+    await _storage.write(key: 'user_imagen', value: imagen);
+    if (email != null) await _storage.write(key: 'user_email', value: email);
+    if (telefono != null) await _storage.write(key: 'user_telefono', value: telefono);
+    if (direccion != null) await _storage.write(key: 'user_direccion', value: direccion);
   }
 
-  // 3. GETTERS (Para leer los datos desde cualquier pantalla)
-  String get token => _prefs.getString('token_jwt') ?? '';
-  String get passwordSegura => _prefs.getString('user_password') ?? '';
-  String get nombreUsuario => _prefs.getString('nombre_usuario') ?? 'Usuario';
-  String get imagenUsuario => _prefs.getString('user_imagen') ?? '';
-  String get emailUsuario => _prefs.getString('user_email') ?? '';
-  // Añade estos a tu lista de getters existentes
-  int get userId => _prefs.getInt('user_id') ?? 0;
-  String get username => _prefs.getString('username') ?? '';
-  String get telefonoUsuario => _prefs.getString('user_telefono') ?? '';
-  String get direccionUsuario => _prefs.getString('user_direccion') ?? '';
-  String get alergenosUsuario => _prefs.getString('user_alergenos') ?? '';
+  // --- 4. VALIDACIÓN CONTRA EL BACKEND ---
+  Future<bool> verificarTokenEnServidor() async {
+    final String currentToken = await token;
+    if (currentToken.isEmpty) return false;
 
-  bool get esSesionValida {
-    final int fechaLogin = _prefs.getInt('fecha_login') ?? 0;
-    if (fechaLogin == 0) return false;
-    final int diferenciaHoras = DateTime.now()
-        .difference(DateTime.fromMillisecondsSinceEpoch(fechaLogin))
-        .inHours;
-    return diferenciaHoras < 24;
+    try {
+      final response = await http.get(
+        Uri.parse('http://10.103.246.95:8082/api/auth/me'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $currentToken',
+        },
+      ).timeout(const Duration(seconds: 5));
+
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
   }
 
+  // --- 5. LOGOUT ---
   Future<void> logout() async {
-    await _prefs.clear();
+    await _storage.deleteAll();
   }
 }

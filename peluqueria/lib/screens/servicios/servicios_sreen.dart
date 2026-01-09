@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Importante para el ID
 import '../../services/servicio_service.dart';
+import '../../services/user_preferences.dart';
 import '../../models/servicios/servicio_model.dart';
 import '../../models/servicios/tipo_servicio_model.dart';
 
@@ -12,6 +14,7 @@ class ServiciosScreen extends StatefulWidget {
 
 class _ServiciosScreenState extends State<ServiciosScreen> {
   final ServicioService _servicioService = ServicioService();
+  final UserPreferences _prefs = UserPreferences();
   final TextEditingController _searchController = TextEditingController();
 
   final Color naranjaLogo = const Color(0xFFFF6B00);
@@ -28,7 +31,7 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
   bool _filtroFavoritosActivo = false;
   int? _idServicioSeleccionado;
 
-  // Simulación de múltiples favoritos (Esto vendrá de tu BD después)
+  // Lista de favoritos real desde la BD
   final Set<int> _idsFavoritos = {};
 
   @override
@@ -38,29 +41,38 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
   }
 
   Future<void> _obtenerDatosDeAPI() async {
-    try {
-      final resultados = await Future.wait([
-        _servicioService.obtenerTodos(),
-        _servicioService.obtenerTipos(),
-      ]);
-      if (mounted) {
-        setState(() {
-          _todosLosServicios = resultados[0] as List<Servicio>;
-          _tiposDeServicio = resultados[1] as List<TipoServicio>;
-          _estaCargando = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) setState(() => _estaCargando = false);
-    }
-  }
+  try {
+    // CAMBIO CLAVE: Ahora lleva el 'await' porque es Future
+    final int clienteId = await _prefs.userId; 
 
+    print("Cargando favoritos para el usuario: $clienteId");
+
+    final resultados = await Future.wait([
+      _servicioService.obtenerTodos(),
+      _servicioService.obtenerTipos(),
+      _servicioService.obtenerIdsFavoritos(clienteId), 
+    ]);
+
+    if (mounted) {
+      setState(() {
+        _todosLosServicios = resultados[0] as List<Servicio>;
+        _tiposDeServicio = resultados[1] as List<TipoServicio>;
+        _idsFavoritos.clear();
+        _idsFavoritos.addAll(resultados[2] as List<int>);
+        _estaCargando = false;
+      });
+    }
+  } catch (e) {
+    print("Error cargando datos: $e");
+    if (mounted) setState(() => _estaCargando = false);
+  }
+}
   @override
   Widget build(BuildContext context) {
-    if (_estaCargando)
+    if (_estaCargando) {
       return Center(child: CircularProgressIndicator(color: naranjaLogo));
+    }
 
-    // Filtrado lógico
     final listaFiltrada = _todosLosServicios.where((s) {
       final coincideCategoria =
           _categoriaSeleccionada == null ||
@@ -96,7 +108,7 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
             ),
           ),
 
-          // 2. FILTROS (TAMAÑO UNIFICADO Y POSICIÓN FIJA)
+          // 2. FILTROS
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
@@ -242,16 +254,52 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // BOTÓN DE CORAZÓN INDEPENDIENTE
+            // BOTÓN DE CORAZÓN CON LÓGICA DE API
             GestureDetector(
-              onTap: () {
+              onTap: () async {
+                // CAMBIO CLAVE: Añadir await aquí
+                final int clienteId = await _prefs.userId;
+                final int idServicio = s.idServicio;
+
+                if (clienteId == 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Error: Sesión no válida. Inicia sesión de nuevo.")),
+                  );
+                  return;
+                }
+
+                // Guardamos el estado actual por si hay que revertir (esFavorito ya viene del build)
+                final bool eraFavorito = esFavorito;
+
+                // Lógica visual instantánea (Optimista)
                 setState(() {
-                  if (esFavorito) {
-                    _idsFavoritos.remove(s.idServicio);
+                  if (eraFavorito) {
+                    _idsFavoritos.remove(idServicio);
                   } else {
-                    _idsFavoritos.add(s.idServicio);
+                    _idsFavoritos.add(idServicio);
                   }
                 });
+
+                // Llamada al servidor
+                bool exito;
+                if (eraFavorito) {
+                  exito = await _servicioService.eliminarFavorito(clienteId, idServicio);
+                } else {
+                  exito = await _servicioService.agregarFavorito(clienteId, idServicio);
+                }
+
+                // Si la API falla, revertimos el cambio visual
+                if (!exito) {
+                  if (mounted) {
+                    setState(() {
+                      if (eraFavorito) _idsFavoritos.add(idServicio);
+                      else _idsFavoritos.remove(idServicio);
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Error al sincronizar favorito")),
+                    );
+                  }
+                }
               },
               child: Icon(
                 esFavorito ? Icons.favorite : Icons.favorite_border,

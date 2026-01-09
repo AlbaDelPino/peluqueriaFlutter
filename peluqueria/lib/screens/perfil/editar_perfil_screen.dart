@@ -18,14 +18,17 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   final prefs = UserPreferences();
   ClienteModel? cliente;
 
-  late TextEditingController _nombreCtrl,
-      _emailCtrl,
-      _telefonoCtrl,
-      _direccionCtrl,
-      _alergenosCtrl;
+  // 1. Inicializamos controladores con valores vacíos para evitar errores de carga
+  final TextEditingController _nombreCtrl = TextEditingController();
+  final TextEditingController _emailCtrl = TextEditingController();
+  final TextEditingController _telefonoCtrl = TextEditingController();
+  final TextEditingController _direccionCtrl = TextEditingController();
+  final TextEditingController _alergenosCtrl = TextEditingController();
+
   String? _base64Image;
   File? _avatarFile;
-  bool _cargando = true, _enviando = false;
+  bool _cargando = true;
+  bool _enviando = false;
 
   final Color naranjaLogo = const Color(0xFFFF6B00);
   final Color negroSuave = const Color(0xFF2D2D2D);
@@ -36,61 +39,89 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     _fetchDatosUsuario();
   }
 
+  @override
+  void dispose() {
+    _nombreCtrl.dispose();
+    _emailCtrl.dispose();
+    _telefonoCtrl.dispose();
+    _direccionCtrl.dispose();
+    _alergenosCtrl.dispose();
+    super.dispose();
+  }
+
+  // --- CARGAR DATOS ---
   Future<void> _fetchDatosUsuario() async {
     try {
+      setState(() => _cargando = true);
+      
+      final String tokenActual = await prefs.token;
+
+      // Usamos localhost si te funciona en servicios, pero con timeout
       final response = await http.get(
-        Uri.parse('http://10.103.246.95:8082/api/auth/me'),
-        headers: {'Authorization': 'Bearer ${prefs.token}'},
-      );
+        Uri.parse('http://localhost:8082/api/auth/me'),
+        headers: {'Authorization': 'Bearer $tokenActual'},
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        cliente = ClienteModel.fromJson(jsonDecode(response.body));
-        _nombreCtrl = TextEditingController(text: cliente!.nombre);
-        _emailCtrl = TextEditingController(text: cliente!.email);
-        _telefonoCtrl = TextEditingController(
-          text: cliente!.telefono.toString(),
-        );
-        _direccionCtrl = TextEditingController(text: cliente!.direccion);
-        _alergenosCtrl = TextEditingController(text: cliente!.alergenos ?? '');
-        _base64Image = cliente!.imagen;
-        setState(() => _cargando = false);
+        final decodedData = jsonDecode(response.body);
+        cliente = ClienteModel.fromJson(decodedData);
+
+        // Rellenamos los controladores
+        _nombreCtrl.text = cliente?.nombre ?? '';
+        _emailCtrl.text = cliente?.email ?? '';
+        _telefonoCtrl.text = cliente?.telefono?.toString() ?? '';
+        _direccionCtrl.text = cliente?.direccion ?? '';
+        _alergenosCtrl.text = cliente?.alergenos ?? '';
+        _base64Image = cliente?.imagen;
+      } else {
+        _mostrarMsg("Error de servidor: ${response.statusCode}", Colors.red);
       }
     } catch (e) {
-      _mostrarMsg("Error de conexión", Colors.red);
+      debugPrint("ERROR EN EDITAR_PERFIL: $e");
+      _mostrarMsg("No se pudieron cargar los datos", Colors.red);
+    } finally {
+      // ESTO QUITA LA RUEDA DE CARGA SIEMPRE
+      if (mounted) {
+        setState(() => _cargando = false);
+      }
     }
   }
 
+  // --- GUARDAR CAMBIOS ---
   Future<void> _guardarCambios() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _enviando = true);
 
     try {
+      final String tokenActual = await prefs.token;
+      final String passActual = await prefs.passwordSegura;
+      final int idUsuario = await prefs.userId;
+
       final Map<String, dynamic> body = {
-        "id": cliente!.id,
-        "username": cliente!.username,
+        "id": idUsuario,
+        "username": cliente?.username,
         "nombre": _nombreCtrl.text.trim(),
         "email": _emailCtrl.text.trim(),
         "telefono": int.tryParse(_telefonoCtrl.text.trim()) ?? 0,
         "direccion": _direccionCtrl.text.trim(),
         "imagen": _base64Image ?? "",
-        "contrasenya": prefs.passwordSegura, // Recuperada de prefs
-        "role": cliente!.role,
-        "estado": cliente!.estado,
+        "contrasenya": passActual,
+        "role": cliente?.role,
+        "estado": cliente?.estado,
         "alergenos": _alergenosCtrl.text.trim(),
-        "observacion": cliente!.observacion,
+        "observacion": cliente?.observacion,
       };
 
       final response = await http.put(
-        Uri.parse('http://10.103.246.95:8082/clientes/${cliente!.id}'),
+        Uri.parse('http://localhost:8082/clientes/$idUsuario'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${prefs.token}',
+          'Authorization': 'Bearer $tokenActual',
         },
         body: jsonEncode(body),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // 🔥 ACTUALIZAMOS TODO EN USER_PREFERENCES
         await prefs.actualizarPerfilLocal(
           nombre: _nombreCtrl.text.trim(),
           imagen: _base64Image ?? "",
@@ -100,22 +131,27 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         );
 
         if (mounted) {
-          _mostrarMsg("✅ Perfil actualizado correctamente", Colors.green);
+          _mostrarMsg("✅ Perfil actualizado", Colors.green);
           Navigator.pop(context, true);
         }
       } else {
-        _mostrarMsg("Error al guardar: ${response.statusCode}", Colors.red);
+        _mostrarMsg("Error: ${response.statusCode}", Colors.red);
       }
     } catch (e) {
-      _mostrarMsg("Error de red", Colors.red);
+      _mostrarMsg("Error de conexión al guardar", Colors.red);
     } finally {
       if (mounted) setState(() => _enviando = false);
     }
   }
 
-  void _mostrarMsg(String t, Color c) => ScaffoldMessenger.of(
-    context,
-  ).showSnackBar(SnackBar(content: Text(t), backgroundColor: c));
+  void _mostrarMsg(String t, Color c) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(t),
+      backgroundColor: c,
+      duration: const Duration(seconds: 2),
+    ));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -128,18 +164,12 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
           icon: Icon(Icons.arrow_back_ios_new, color: negroSuave),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          "EDITAR PERFIL",
-          style: TextStyle(
-            color: negroSuave,
-            fontWeight: FontWeight.w900,
-            fontSize: 18,
-          ),
-        ),
+        title: Text("EDITAR PERFIL", 
+          style: TextStyle(color: negroSuave, fontWeight: FontWeight.w900, fontSize: 18)),
         centerTitle: true,
       ),
       body: _cargando
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: naranjaLogo))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(30),
               child: Form(
@@ -148,34 +178,11 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                   children: [
                     _buildAvatarPicker(),
                     const SizedBox(height: 40),
-                    _buildInput(
-                      _nombreCtrl,
-                      "Nombre completo",
-                      Icons.person_outline,
-                    ),
-                    _buildInput(
-                      _emailCtrl,
-                      "Correo electrónico",
-                      Icons.mail_outline,
-                      k: TextInputType.emailAddress,
-                    ),
-                    _buildInput(
-                      _telefonoCtrl,
-                      "Teléfono móvil",
-                      Icons.phone_iphone_rounded,
-                      k: TextInputType.phone,
-                    ),
-                    _buildInput(
-                      _direccionCtrl,
-                      "Dirección",
-                      Icons.location_on_outlined,
-                    ),
-                    _buildInput(
-                      _alergenosCtrl,
-                      "Alérgenos (Solo lectura)",
-                      Icons.warning_amber_rounded,
-                      enabled: false,
-                    ),
+                    _buildInput(_nombreCtrl, "Nombre completo", Icons.person_outline),
+                    _buildInput(_emailCtrl, "Correo electrónico", Icons.mail_outline, k: TextInputType.emailAddress),
+                    _buildInput(_telefonoCtrl, "Teléfono móvil", Icons.phone_iphone_rounded, k: TextInputType.phone),
+                    _buildInput(_direccionCtrl, "Dirección", Icons.location_on_outlined),
+                    _buildInput(_alergenosCtrl, "Alérgenos (Solo lectura)", Icons.warning_amber_rounded, enabled: false),
                     const SizedBox(height: 30),
                     _enviando
                         ? CircularProgressIndicator(color: naranjaLogo)
@@ -187,13 +194,8 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     );
   }
 
-  Widget _buildInput(
-    TextEditingController c,
-    String l,
-    IconData i, {
-    bool enabled = true,
-    TextInputType k = TextInputType.text,
-  }) {
+  // Componentes de Interfaz (Iguales a tu diseño original)
+  Widget _buildInput(TextEditingController c, String l, IconData i, {bool enabled = true, TextInputType k = TextInputType.text}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Container(
@@ -209,53 +211,27 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             labelText: l,
             prefixIcon: Icon(i, color: enabled ? naranjaLogo : Colors.grey),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 18,
-              horizontal: 20,
-            ),
+            contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
           ),
-          validator: (v) => (enabled && (v == null || v.isEmpty))
-              ? "Campo obligatorio"
-              : null,
+          validator: (v) => (enabled && (v == null || v.isEmpty)) ? "Campo obligatorio" : null,
         ),
       ),
     );
   }
 
   Widget _buildBotonGuardar() {
-    return Container(
+    return SizedBox(
       width: double.infinity,
       height: 55,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        gradient: LinearGradient(
-          colors: [naranjaLogo, const Color(0xFFFF8C32)],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: naranjaLogo.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
       child: ElevatedButton(
         onPressed: _guardarCambios,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
+          backgroundColor: naranjaLogo,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          elevation: 5,
         ),
-        child: const Text(
-          "GUARDAR CAMBIOS",
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
+        child: const Text("GUARDAR CAMBIOS", 
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
       ),
     );
   }
@@ -270,47 +246,37 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             backgroundImage: _avatarFile != null
                 ? FileImage(_avatarFile!)
                 : (_base64Image != null && _base64Image!.isNotEmpty
-                          ? MemoryImage(base64Decode(_base64Image!))
-                          : null)
-                      as ImageProvider?,
-            child: _base64Image == null && _avatarFile == null
-                ? Icon(
-                    Icons.person,
-                    size: 60,
-                    color: naranjaLogo.withOpacity(0.3),
-                  )
+                    ? MemoryImage(base64Decode(_base64Image!))
+                    : null) as ImageProvider?,
+            child: (_base64Image == null || _base64Image!.isEmpty) && _avatarFile == null
+                ? Icon(Icons.person, size: 60, color: naranjaLogo.withOpacity(0.3))
                 : null,
           ),
           Positioned(
             bottom: 0,
             right: 0,
             child: GestureDetector(
-              onTap: () async {
-                final p = await ImagePicker().pickImage(
-                  source: ImageSource.gallery,
-                  imageQuality: 40,
-                );
-                if (p != null) {
-                  final bytes = await File(p.path).readAsBytes();
-                  setState(() {
-                    _avatarFile = File(p.path);
-                    _base64Image = base64Encode(bytes);
-                  });
-                }
-              },
+              onTap: _pickImage,
               child: CircleAvatar(
                 backgroundColor: negroSuave,
                 radius: 20,
-                child: const Icon(
-                  Icons.camera_alt,
-                  color: Colors.white,
-                  size: 18,
-                ),
+                child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
               ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _pickImage() async {
+    final p = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 40);
+    if (p != null) {
+      final bytes = await File(p.path).readAsBytes();
+      setState(() {
+        _avatarFile = File(p.path);
+        _base64Image = base64Encode(bytes);
+      });
+    }
   }
 }
