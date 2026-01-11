@@ -37,20 +37,20 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
 
     try {
       final prefs = UserPreferences();
-      
+
       // 🔥 CORRECCIÓN: Ahora usamos await para obtener los datos de Secure Storage
       final int idCliente = await prefs.userId;
       final String tokenActual = await prefs.token;
 
       if (tokenActual.isEmpty || idCliente == 0) {
-         _mostrarMensaje("Sesión no válida", isError: true);
-         return;
+        _mostrarMensaje("Sesión no válida", isError: true);
+        return;
       }
 
       // 1. OBTENER DATOS ACTUALES DEL CLIENTE
       // Usamos la IP de tu servidor para evitar problemas con localhost
       final getResponse = await http.get(
-        Uri.parse('http://10.103.246.95:8082/api/auth/me'),
+        Uri.parse('http://10.50.183.95:8082/api/auth/me'),
         headers: {'Authorization': 'Bearer $tokenActual'},
       );
 
@@ -67,7 +67,7 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
 
       // 3. ENVIAR EL PUT AL BACKEND
       final response = await http.put(
-        Uri.parse('http://10.103.246.95:8082/clientes/$idCliente'),
+        Uri.parse('http://10.50.183.95:8082/clientes/$idCliente'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $tokenActual',
@@ -80,7 +80,7 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
         // para que las futuras peticiones PUT (como en editar perfil) no fallen.
         // Debes asegurarte de tener un método para esto o guardarlo directamente
         // En este caso, simplemente notificamos el éxito.
-        
+
         _mostrarMensaje("✅ Contraseña actualizada correctamente");
         if (mounted) Navigator.pop(context);
       } else {

@@ -5,15 +5,16 @@ import 'package:peluqueria/screens/home_screens.dart';
 import 'package:peluqueria/screens/login/signup_screen.dart';
 
 // 1. DEFINICIÓN DEL OBSERVADOR DE RUTAS
-final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
+final RouteObserver<ModalRoute<void>> routeObserver =
+    RouteObserver<ModalRoute<void>>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Nota: Con Secure Storage, el initPrefs ya no es estrictamente necesario 
+
+  // Nota: Con Secure Storage, el initPrefs ya no es estrictamente necesario
   // si no usas SharedPreferences, pero lo dejamos si tienes lógica mixta.
   final prefs = UserPreferences();
-  // await prefs.initPrefs(); 
+  // await prefs.initPrefs(); .0
 
   runApp(const MyApp());
 }
@@ -53,7 +54,7 @@ class MyApp extends StatelessWidget {
           } else {
             // Si el token ha caducado o no existe, limpiamos y vamos a Login
             // Hacemos el logout para asegurar que no queden datos corruptos
-            prefs.logout(); 
+            prefs.logout();
             return const LoginScreen();
           }
         },

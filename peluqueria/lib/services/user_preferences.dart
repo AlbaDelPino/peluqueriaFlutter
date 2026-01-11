@@ -1,6 +1,6 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class UserPreferences {
   static final UserPreferences _instancia = UserPreferences._internal();
@@ -9,38 +9,65 @@ class UserPreferences {
 
   final _storage = const FlutterSecureStorage();
 
-  // --- 1. GUARDAR SESIÓN AL HACER LOGIN ---
-  Future<void> guardarSesion(String jsonResponse, String passwordEscrita) async {
+  // --- GUARDAR SESIÓN ---
+  Future<void> guardarSesion(
+    String jsonResponse,
+    String passwordEscrita,
+  ) async {
     try {
       final Map<String, dynamic> decodedData = json.decode(jsonResponse);
 
       await _storage.write(key: 'token_jwt', value: decodedData['token'] ?? '');
-      await _storage.write(key: 'user_id', value: (decodedData['id'] ?? 0).toString());
+      await _storage.write(
+        key: 'user_id',
+        value: (decodedData['id'] ?? 0).toString(),
+      );
       await _storage.write(key: 'user_password', value: passwordEscrita);
-      await _storage.write(key: 'nombre_usuario', value: decodedData['nombre'] ?? '');
-      await _storage.write(key: 'username', value: decodedData['username'] ?? '');
-      await _storage.write(key: 'user_email', value: decodedData['email'] ?? '');
-      await _storage.write(key: 'user_imagen', value: decodedData['imagen'] ?? '');
-      await _storage.write(key: 'user_telefono', value: decodedData['telefono']?.toString() ?? '');
-      await _storage.write(key: 'user_direccion', value: decodedData['direccion'] ?? '');
+      await _storage.write(
+        key: 'nombre_usuario',
+        value: decodedData['nombre'] ?? '',
+      );
+      await _storage.write(
+        key: 'username',
+        value: decodedData['username'] ?? '',
+      );
+      await _storage.write(
+        key: 'user_email',
+        value: decodedData['email'] ?? '',
+      );
+      await _storage.write(
+        key: 'user_imagen',
+        value: decodedData['imagen'] ?? '',
+      );
+      await _storage.write(
+        key: 'user_telefono',
+        value: decodedData['telefono']?.toString() ?? '',
+      );
+      await _storage.write(
+        key: 'user_direccion',
+        value: decodedData['direccion'] ?? '',
+      );
       await _storage.write(key: 'estaLogueado', value: 'true');
-      
     } catch (e) {
       print("Error en guardarSesion: $e");
     }
   }
 
-  // --- 2. GETTERS ASÍNCRONOS (Soluciona el error de passwordSegura) ---
+  // --- GETTERS ASÍNCRONOS ---
   Future<String> get token async => await _storage.read(key: 'token_jwt') ?? '';
-  Future<String> get passwordSegura async => await _storage.read(key: 'user_password') ?? '';
+  Future<String> get passwordSegura async =>
+      await _storage.read(key: 'user_password') ?? '';
   Future<int> get userId async {
     String? id = await _storage.read(key: 'user_id');
     return int.tryParse(id ?? '0') ?? 0;
   }
-  Future<String> get nombreUsuario async => await _storage.read(key: 'nombre_usuario') ?? '';
-  Future<String> get imagenUsuario async => await _storage.read(key: 'user_imagen') ?? '';
 
-  // --- 3. ACTUALIZAR PERFIL (Soluciona los errores de telefono y direccion) ---
+  Future<String> get nombreUsuario async =>
+      await _storage.read(key: 'nombre_usuario') ?? '';
+  Future<String> get imagenUsuario async =>
+      await _storage.read(key: 'user_imagen') ?? '';
+
+  // --- ACTUALIZAR PERFIL ---
   Future<void> actualizarPerfilLocal({
     required String nombre,
     required String imagen,
@@ -51,23 +78,27 @@ class UserPreferences {
     await _storage.write(key: 'nombre_usuario', value: nombre);
     await _storage.write(key: 'user_imagen', value: imagen);
     if (email != null) await _storage.write(key: 'user_email', value: email);
-    if (telefono != null) await _storage.write(key: 'user_telefono', value: telefono);
-    if (direccion != null) await _storage.write(key: 'user_direccion', value: direccion);
+    if (telefono != null)
+      await _storage.write(key: 'user_telefono', value: telefono);
+    if (direccion != null)
+      await _storage.write(key: 'user_direccion', value: direccion);
   }
 
-  // --- 4. VALIDACIÓN CONTRA EL BACKEND ---
+  // --- VALIDACIÓN ---
   Future<bool> verificarTokenEnServidor() async {
     final String currentToken = await token;
     if (currentToken.isEmpty) return false;
 
     try {
-      final response = await http.get(
-        Uri.parse('http://10.103.246.95:8082/api/auth/me'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $currentToken',
-        },
-      ).timeout(const Duration(seconds: 5));
+      final response = await http
+          .get(
+            Uri.parse('http://10.50.183.95:8082/api/auth/me'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $currentToken',
+            },
+          )
+          .timeout(const Duration(seconds: 5));
 
       return response.statusCode == 200;
     } catch (e) {
@@ -75,7 +106,7 @@ class UserPreferences {
     }
   }
 
-  // --- 5. LOGOUT ---
+  // --- LOGOUT ---
   Future<void> logout() async {
     await _storage.deleteAll();
   }

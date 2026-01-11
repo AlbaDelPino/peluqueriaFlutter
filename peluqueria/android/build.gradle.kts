@@ -1,3 +1,13 @@
+plugins {
+    // Versiones específicas que pidió tu sistema
+    id("com.android.application") version "8.11.1" apply false
+    id("org.jetbrains.kotlin.android") version "2.2.20" apply false
+    id("com.google.gms.google-services") version "4.4.2" apply false
+    
+    // Al plugin de Flutter NO le ponemos versión, dejamos que él se gestione
+    id("dev.flutter.flutter-gradle-plugin") apply false
+}
+
 allprojects {
     repositories {
         google()
@@ -15,6 +25,7 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
+
 subprojects {
     project.evaluationDependsOn(":app")
 }

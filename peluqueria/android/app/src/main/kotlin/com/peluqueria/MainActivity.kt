@@ -1,4 +1,4 @@
-package com.example.peluqueria
+package com.peluqueria
 
 import io.flutter.embedding.android.FlutterActivity
 

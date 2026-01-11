@@ -36,7 +36,7 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isLoading = true);
 
     const String urlApi =
-        'http://localhost:8082/api/auth/signup/cliente/public';
+        'http://10.50.183.95:8082/api/auth/signup/cliente/public';
 
     final signupData = {
       "username": _userController.text.trim(),

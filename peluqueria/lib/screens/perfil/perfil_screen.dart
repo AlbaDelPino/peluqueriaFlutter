@@ -33,13 +33,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
       final String tokenActual = await prefs.token;
 
-      final response = await http.get(
-        Uri.parse('http://localhost:8082/api/auth/me'),
-        headers: {
-          'Authorization': 'Bearer $tokenActual',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse('http://10.50.183.95:8082/api/auth/me'),
+            headers: {
+              'Authorization': 'Bearer $tokenActual',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final decodedData = jsonDecode(response.body);
@@ -82,7 +84,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
               // Navegamos a editar y esperamos si hubo cambios
               final cambio = await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const EditarPerfilScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const EditarPerfilScreen(),
+                ),
               );
               if (cambio == true) {
                 _cargarDatos(); // Refrescamos si se guardó algo
@@ -99,11 +103,31 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 children: [
                   _buildAvatarView(),
                   const SizedBox(height: 40),
-                  _buildDato("Nombre completo", cliente?.nombre ?? "No disponible", Icons.person_outline),
-                  _buildDato("Correo electrónico", cliente?.email ?? "No disponible", Icons.mail_outline),
-                  _buildDato("Teléfono móvil", cliente?.telefono?.toString() ?? "No disponible", Icons.phone_iphone_rounded),
-                  _buildDato("Dirección", cliente?.direccion ?? "No disponible", Icons.location_on_outlined),
-                  _buildDato("Alérgenos", cliente?.alergenos ?? "Ninguno", Icons.warning_amber_rounded),
+                  _buildDato(
+                    "Nombre completo",
+                    cliente?.nombre ?? "No disponible",
+                    Icons.person_outline,
+                  ),
+                  _buildDato(
+                    "Correo electrónico",
+                    cliente?.email ?? "No disponible",
+                    Icons.mail_outline,
+                  ),
+                  _buildDato(
+                    "Teléfono móvil",
+                    cliente?.telefono?.toString() ?? "No disponible",
+                    Icons.phone_iphone_rounded,
+                  ),
+                  _buildDato(
+                    "Dirección",
+                    cliente?.direccion ?? "No disponible",
+                    Icons.location_on_outlined,
+                  ),
+                  _buildDato(
+                    "Alérgenos",
+                    cliente?.alergenos ?? "Ninguno",
+                    Icons.warning_amber_rounded,
+                  ),
                   const SizedBox(height: 30),
                   _buildBotonCerrarSesion(),
                 ],
@@ -132,11 +156,19 @@ class _PerfilScreenState extends State<PerfilScreen> {
               children: [
                 Text(
                   label,
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   valor,
-                  style: TextStyle(color: negroSuave, fontSize: 15, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: negroSuave,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),

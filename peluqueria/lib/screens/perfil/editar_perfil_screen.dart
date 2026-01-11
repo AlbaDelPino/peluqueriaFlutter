@@ -53,14 +53,16 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   Future<void> _fetchDatosUsuario() async {
     try {
       setState(() => _cargando = true);
-      
+
       final String tokenActual = await prefs.token;
 
       // Usamos localhost si te funciona en servicios, pero con timeout
-      final response = await http.get(
-        Uri.parse('http://localhost:8082/api/auth/me'),
-        headers: {'Authorization': 'Bearer $tokenActual'},
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse('http://10.50.183.95:8082/api/auth/me'),
+            headers: {'Authorization': 'Bearer $tokenActual'},
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final decodedData = jsonDecode(response.body);
@@ -146,11 +148,13 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
 
   void _mostrarMsg(String t, Color c) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(t),
-      backgroundColor: c,
-      duration: const Duration(seconds: 2),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(t),
+        backgroundColor: c,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
@@ -164,8 +168,14 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
           icon: Icon(Icons.arrow_back_ios_new, color: negroSuave),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text("EDITAR PERFIL", 
-          style: TextStyle(color: negroSuave, fontWeight: FontWeight.w900, fontSize: 18)),
+        title: Text(
+          "EDITAR PERFIL",
+          style: TextStyle(
+            color: negroSuave,
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+          ),
+        ),
         centerTitle: true,
       ),
       body: _cargando
@@ -178,11 +188,34 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                   children: [
                     _buildAvatarPicker(),
                     const SizedBox(height: 40),
-                    _buildInput(_nombreCtrl, "Nombre completo", Icons.person_outline),
-                    _buildInput(_emailCtrl, "Correo electrónico", Icons.mail_outline, k: TextInputType.emailAddress),
-                    _buildInput(_telefonoCtrl, "Teléfono móvil", Icons.phone_iphone_rounded, k: TextInputType.phone),
-                    _buildInput(_direccionCtrl, "Dirección", Icons.location_on_outlined),
-                    _buildInput(_alergenosCtrl, "Alérgenos (Solo lectura)", Icons.warning_amber_rounded, enabled: false),
+                    _buildInput(
+                      _nombreCtrl,
+                      "Nombre completo",
+                      Icons.person_outline,
+                    ),
+                    _buildInput(
+                      _emailCtrl,
+                      "Correo electrónico",
+                      Icons.mail_outline,
+                      k: TextInputType.emailAddress,
+                    ),
+                    _buildInput(
+                      _telefonoCtrl,
+                      "Teléfono móvil",
+                      Icons.phone_iphone_rounded,
+                      k: TextInputType.phone,
+                    ),
+                    _buildInput(
+                      _direccionCtrl,
+                      "Dirección",
+                      Icons.location_on_outlined,
+                    ),
+                    _buildInput(
+                      _alergenosCtrl,
+                      "Alérgenos (Solo lectura)",
+                      Icons.warning_amber_rounded,
+                      enabled: false,
+                    ),
                     const SizedBox(height: 30),
                     _enviando
                         ? CircularProgressIndicator(color: naranjaLogo)
@@ -195,7 +228,13 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   }
 
   // Componentes de Interfaz (Iguales a tu diseño original)
-  Widget _buildInput(TextEditingController c, String l, IconData i, {bool enabled = true, TextInputType k = TextInputType.text}) {
+  Widget _buildInput(
+    TextEditingController c,
+    String l,
+    IconData i, {
+    bool enabled = true,
+    TextInputType k = TextInputType.text,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Container(
@@ -211,9 +250,14 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             labelText: l,
             prefixIcon: Icon(i, color: enabled ? naranjaLogo : Colors.grey),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 18,
+              horizontal: 20,
+            ),
           ),
-          validator: (v) => (enabled && (v == null || v.isEmpty)) ? "Campo obligatorio" : null,
+          validator: (v) => (enabled && (v == null || v.isEmpty))
+              ? "Campo obligatorio"
+              : null,
         ),
       ),
     );
@@ -227,11 +271,19 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         onPressed: _guardarCambios,
         style: ElevatedButton.styleFrom(
           backgroundColor: naranjaLogo,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
           elevation: 5,
         ),
-        child: const Text("GUARDAR CAMBIOS", 
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+        child: const Text(
+          "GUARDAR CAMBIOS",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
       ),
     );
   }
@@ -246,10 +298,17 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             backgroundImage: _avatarFile != null
                 ? FileImage(_avatarFile!)
                 : (_base64Image != null && _base64Image!.isNotEmpty
-                    ? MemoryImage(base64Decode(_base64Image!))
-                    : null) as ImageProvider?,
-            child: (_base64Image == null || _base64Image!.isEmpty) && _avatarFile == null
-                ? Icon(Icons.person, size: 60, color: naranjaLogo.withOpacity(0.3))
+                          ? MemoryImage(base64Decode(_base64Image!))
+                          : null)
+                      as ImageProvider?,
+            child:
+                (_base64Image == null || _base64Image!.isEmpty) &&
+                    _avatarFile == null
+                ? Icon(
+                    Icons.person,
+                    size: 60,
+                    color: naranjaLogo.withOpacity(0.3),
+                  )
                 : null,
           ),
           Positioned(
@@ -260,7 +319,11 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
               child: CircleAvatar(
                 backgroundColor: negroSuave,
                 radius: 20,
-                child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                child: const Icon(
+                  Icons.camera_alt,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
             ),
           ),
@@ -270,7 +333,10 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   }
 
   Future<void> _pickImage() async {
-    final p = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 40);
+    final p = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 40,
+    );
     if (p != null) {
       final bytes = await File(p.path).readAsBytes();
       setState(() {

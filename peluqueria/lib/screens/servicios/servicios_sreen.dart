@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Importante para el ID
 import '../../services/servicio_service.dart';
 import '../../services/user_preferences.dart';
 import '../../models/servicios/servicio_model.dart';
@@ -23,16 +22,13 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
 
   List<Servicio> _todosLosServicios = [];
   List<TipoServicio> _tiposDeServicio = [];
+  final Set<int> _idsFavoritos = {};
 
-  // ESTADOS
   bool _estaCargando = true;
   String? _categoriaSeleccionada;
   String _textoBusqueda = "";
   bool _filtroFavoritosActivo = false;
   int? _idServicioSeleccionado;
-
-  // Lista de favoritos real desde la BD
-  final Set<int> _idsFavoritos = {};
 
   @override
   void initState() {
@@ -41,32 +37,39 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
   }
 
   Future<void> _obtenerDatosDeAPI() async {
-  try {
-    // CAMBIO CLAVE: Ahora lleva el 'await' porque es Future
-    final int clienteId = await _prefs.userId; 
+    try {
+      final int clienteId = await _prefs.userId;
 
-    print("Cargando favoritos para el usuario: $clienteId");
+      // Depuración: Si esto sale 0, el problema está en el guardado del Login
+      print("DEBUG: Cargando datos para cliente ID: $clienteId");
 
-    final resultados = await Future.wait([
-      _servicioService.obtenerTodos(),
-      _servicioService.obtenerTipos(),
-      _servicioService.obtenerIdsFavoritos(clienteId), 
-    ]);
+      final resultados = await Future.wait([
+        _servicioService.obtenerTodos(),
+        _servicioService.obtenerTipos(),
+        _servicioService.obtenerIdsFavoritos(clienteId),
+      ]);
 
-    if (mounted) {
-      setState(() {
-        _todosLosServicios = resultados[0] as List<Servicio>;
-        _tiposDeServicio = resultados[1] as List<TipoServicio>;
-        _idsFavoritos.clear();
-        _idsFavoritos.addAll(resultados[2] as List<int>);
-        _estaCargando = false;
-      });
+      if (mounted) {
+        setState(() {
+          _todosLosServicios = resultados[0] as List<Servicio>;
+          _tiposDeServicio = resultados[1] as List<TipoServicio>;
+          _idsFavoritos.clear();
+          _idsFavoritos.addAll(resultados[2] as List<int>);
+          _estaCargando = false;
+        });
+
+        if (_todosLosServicios.isEmpty) {
+          print("DEBUG: La lista de servicios llegó vacía del servidor.");
+        }
+      }
+    } catch (e) {
+      print("Error cargando datos en ServiciosScreen: $e");
+      if (mounted) setState(() => _estaCargando = false);
     }
-  } catch (e) {
-    print("Error cargando datos: $e");
-    if (mounted) setState(() => _estaCargando = false);
   }
-}
+
+  // --- MÉTODOS DE CONSTRUCCIÓN DE UI (Iguales a los tuyos pero optimizados) ---
+
   @override
   Widget build(BuildContext context) {
     if (_estaCargando) {
@@ -89,44 +92,13 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
       color: Colors.white,
       child: Column(
         children: [
-          // 1. BUSCADOR
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (value) => setState(() => _textoBusqueda = value),
-              decoration: InputDecoration(
-                hintText: "Buscar un servicio...",
-                prefixIcon: Icon(Icons.search, color: naranjaLogo),
-                filled: true,
-                fillColor: grisSuave,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ),
-
-          // 2. FILTROS
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(flex: 2, child: _buildModernDropdown()),
-                const SizedBox(width: 10),
-                Expanded(flex: 1, child: _buildFavoriteFilterButton()),
-              ],
-            ),
-          ),
-
+          _buildBuscador(),
+          _buildFiltros(),
           const SizedBox(height: 12),
           const Divider(height: 1),
-
-          // 3. LISTA
           Expanded(
             child: listaFiltrada.isEmpty
-                ? const Center(child: Text("No hay servicios disponibles"))
+                ? _buildEmptyState()
                 : ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: listaFiltrada.length,
@@ -134,6 +106,63 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
                         _buildServicioCard(listaFiltrada[index]),
                   ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off, size: 60, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          Text(
+            _textoBusqueda.isEmpty
+                ? "No hay servicios disponibles"
+                : "No se encontraron resultados",
+            style: TextStyle(color: Colors.grey[600], fontSize: 16),
+          ),
+          TextButton(
+            onPressed: _obtenerDatosDeAPI,
+            child: Text("Reintentar", style: TextStyle(color: naranjaLogo)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- COMPONENTES UI ---
+
+  Widget _buildBuscador() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (value) => setState(() => _textoBusqueda = value),
+        decoration: InputDecoration(
+          hintText: "Buscar un servicio...",
+          prefixIcon: Icon(Icons.search, color: naranjaLogo),
+          filled: true,
+          fillColor: grisSuave,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFiltros() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(flex: 2, child: _buildModernDropdown()),
+          const SizedBox(width: 10),
+          Expanded(flex: 1, child: _buildFavoriteFilterButton()),
         ],
       ),
     );
@@ -152,46 +181,22 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
         child: DropdownButton<String>(
           value: _categoriaSeleccionada,
           isExpanded: true,
-          menuMaxHeight: 300,
           hint: Text(
             "Categorías",
             style: TextStyle(
               color: naranjaLogo,
-              fontWeight: FontWeight.bold,
               fontSize: 13,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          icon: Icon(Icons.keyboard_arrow_down, color: naranjaLogo),
-          dropdownColor: Colors.white,
-          borderRadius: BorderRadius.circular(10),
           items: [
-            DropdownMenuItem(
-              value: null,
-              child: Text(
-                "Todas",
-                style: TextStyle(
-                  color: _categoriaSeleccionada == null
-                      ? naranjaLogo
-                      : textoPrincipal,
-                  fontWeight: _categoriaSeleccionada == null
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-                ),
+            DropdownMenuItem(value: null, child: Text("Todas")),
+            ..._tiposDeServicio.map(
+              (tipo) => DropdownMenuItem(
+                value: tipo.nombre,
+                child: Text(tipo.nombre),
               ),
             ),
-            ..._tiposDeServicio.map((tipo) {
-              bool selected = _categoriaSeleccionada == tipo.nombre;
-              return DropdownMenuItem(
-                value: tipo.nombre,
-                child: Text(
-                  tipo.nombre,
-                  style: TextStyle(
-                    color: selected ? naranjaLogo : textoPrincipal,
-                    fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-              );
-            }),
           ],
           onChanged: (val) => setState(() => _categoriaSeleccionada = val),
         ),
@@ -232,7 +237,6 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 12),
-        constraints: const BoxConstraints(minHeight: 110),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -243,9 +247,7 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: estaSeleccionado
-                  ? naranjaLogo.withOpacity(0.1)
-                  : Colors.black.withOpacity(0.04),
+              color: Colors.black.withOpacity(0.04),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -254,59 +256,7 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // BOTÓN DE CORAZÓN CON LÓGICA DE API
-            GestureDetector(
-              onTap: () async {
-                // CAMBIO CLAVE: Añadir await aquí
-                final int clienteId = await _prefs.userId;
-                final int idServicio = s.idServicio;
-
-                if (clienteId == 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Error: Sesión no válida. Inicia sesión de nuevo.")),
-                  );
-                  return;
-                }
-
-                // Guardamos el estado actual por si hay que revertir (esFavorito ya viene del build)
-                final bool eraFavorito = esFavorito;
-
-                // Lógica visual instantánea (Optimista)
-                setState(() {
-                  if (eraFavorito) {
-                    _idsFavoritos.remove(idServicio);
-                  } else {
-                    _idsFavoritos.add(idServicio);
-                  }
-                });
-
-                // Llamada al servidor
-                bool exito;
-                if (eraFavorito) {
-                  exito = await _servicioService.eliminarFavorito(clienteId, idServicio);
-                } else {
-                  exito = await _servicioService.agregarFavorito(clienteId, idServicio);
-                }
-
-                // Si la API falla, revertimos el cambio visual
-                if (!exito) {
-                  if (mounted) {
-                    setState(() {
-                      if (eraFavorito) _idsFavoritos.add(idServicio);
-                      else _idsFavoritos.remove(idServicio);
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Error al sincronizar favorito")),
-                    );
-                  }
-                }
-              },
-              child: Icon(
-                esFavorito ? Icons.favorite : Icons.favorite_border,
-                color: esFavorito ? naranjaLogo : Colors.grey[400],
-                size: 26,
-              ),
-            ),
+            _buildHeartIcon(s, esFavorito),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -319,9 +269,7 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
                       fontSize: 16,
                       color: estaSeleccionado ? naranjaLogo : textoPrincipal,
                     ),
-                    softWrap: true,
                   ),
-                  const SizedBox(height: 4),
                   Text(
                     s.tipoServicio.nombre.toUpperCase(),
                     style: TextStyle(
@@ -338,12 +286,10 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
                       fontSize: 13,
                       height: 1.4,
                     ),
-                    softWrap: true,
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
             Text(
               "${s.precio}€",
               style: TextStyle(
@@ -354,6 +300,40 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeartIcon(Servicio s, bool esFavorito) {
+    return GestureDetector(
+      onTap: () async {
+        final int clienteId = await _prefs.userId;
+        if (clienteId == 0) return;
+
+        setState(() {
+          if (esFavorito)
+            _idsFavoritos.remove(s.idServicio);
+          else
+            _idsFavoritos.add(s.idServicio);
+        });
+
+        bool exito = esFavorito
+            ? await _servicioService.eliminarFavorito(clienteId, s.idServicio)
+            : await _servicioService.agregarFavorito(clienteId, s.idServicio);
+
+        if (!exito && mounted) {
+          setState(() {
+            if (esFavorito)
+              _idsFavoritos.add(s.idServicio);
+            else
+              _idsFavoritos.remove(s.idServicio);
+          });
+        }
+      },
+      child: Icon(
+        esFavorito ? Icons.favorite : Icons.favorite_border,
+        color: esFavorito ? naranjaLogo : Colors.grey[400],
+        size: 26,
       ),
     );
   }

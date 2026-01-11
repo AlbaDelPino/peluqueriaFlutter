@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "355095242710",
-    "project_id": "peluqueria-18998",
-    "storage_bucket": "peluqueria-18998.firebasestorage.app"
+    "project_number": "1008130346590",
+    "project_id": "peluqueria-6b81f",
+    "storage_bucket": "peluqueria-6b81f.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:355095242710:android:63483d02c1c9d8a013e677",
+        "mobilesdk_app_id": "1:1008130346590:android:826379e1c846405652eecf",
         "android_client_info": {
           "package_name": "com.peluqueria"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyC82cR6W3xczaYAg0-jjZA_0hFpFUdC-KQ"
+          "current_key": "AIzaSyDqDTqhTQdvGn2-1yZRztg2s1K0jCqcvHw"
         }
       ],
       "services": {
