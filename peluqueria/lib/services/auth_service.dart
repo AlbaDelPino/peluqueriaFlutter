@@ -12,7 +12,7 @@ class AuthService {
   // Es necesario porque en Windows el plugin no detecta el archivo google-services.json de Android.
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId:
-        '467221784328-t4fo12n8mg58n0btjco40q31r1ripcs5.apps.googleusercontent.com',
+        '1008130346590-ltepl35eg0i3eqkakv42k5l7igqfe1ru.apps.googleusercontent.com',
   );
 
   /// Login tradicional con usuario y contraseña

@@ -12,7 +12,16 @@
           "package_name": "com.peluqueria"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1008130346590-ltepl35eg0i3eqkakv42k5l7igqfe1ru.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.peluqueria",
+            "certificate_hash": "03c27a8c5d13132502ae36d2671f749a884954d5"
+          }
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDqDTqhTQdvGn2-1yZRztg2s1K0jCqcvHw"
