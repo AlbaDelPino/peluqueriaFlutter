@@ -59,7 +59,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       // Usamos localhost si te funciona en servicios, pero con timeout
       final response = await http
           .get(
-            Uri.parse('http://10.50.183.95:8082/api/auth/me'),
+            Uri.parse('http://192.168.7.13:8082/api/auth/me'),
             headers: {'Authorization': 'Bearer $tokenActual'},
           )
           .timeout(const Duration(seconds: 10));

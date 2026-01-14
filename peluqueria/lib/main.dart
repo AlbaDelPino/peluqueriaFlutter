@@ -3,7 +3,7 @@ import 'package:peluqueria/services/user_preferences.dart';
 import 'package:peluqueria/screens/login/login_screen.dart';
 import 'package:peluqueria/screens/home_screens.dart';
 import 'package:peluqueria/screens/login/signup_screen.dart';
-
+import 'package:intl/date_symbol_data_local.dart';
 // 1. DEFINICIÓN DEL OBSERVADOR DE RUTAS
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
@@ -16,7 +16,9 @@ void main() async {
   final prefs = UserPreferences();
   // await prefs.initPrefs(); .0
 
-  runApp(const MyApp());
+  initializeDateFormatting('es_ES', null).then((_) {
+    runApp(const MyApp());
+  });
 }
 
 class MyApp extends StatelessWidget {

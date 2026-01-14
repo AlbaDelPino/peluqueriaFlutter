@@ -28,52 +28,100 @@ class _SignupScreenState extends State<SignupScreen> {
 
   final RegExp _emailPattern = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
   final RegExp _phonePattern = RegExp(r'^[0-9]{9}$');
+Future<void> _ejecutarRegistro() async {
+  if (!_formKey.currentState!.validate()) return;
+  FocusScope.of(context).unfocus();
 
-  Future<void> _ejecutarRegistro() async {
-    if (!_formKey.currentState!.validate()) return;
-    FocusScope.of(context).unfocus();
+  setState(() => _isLoading = true);
 
-    setState(() => _isLoading = true);
+  // Asegúrate de que esta IP sea la correcta de tu servidor actual
+  const String urlApi = 'http://192.168.7.13:8082/api/auth/signup/cliente/public';
 
-    const String urlApi =
-        'http://10.50.183.95:8082/api/auth/signup/cliente/public';
+  final signupData = {
+    "username": _userController.text.trim(),
+    "nombre": _nameController.text.trim(),
+    "email": _emailController.text.trim(),
+    "telefono": int.tryParse(_phoneController.text.trim()) ?? 0,
+    "contrasenya": _passController.text,
+    "estado": true, // El estado lógico es activo, pero "verificado" será false en BD
+    "rol": "ROLE_CLIENTE",
+    "direccion": _dirController.text.trim(),
+    "alergenos": "",
+    "imagen": null, 
+  };
 
-    final signupData = {
-      "username": _userController.text.trim(),
-      "nombre": _nameController.text.trim(),
-      "email": _emailController.text.trim(),
-      "telefono": int.tryParse(_phoneController.text.trim()) ?? 0,
-      "contrasenya": _passController.text,
-      "estado": true,
-      "rol": "ROLE_CLIENTE",
-      "direccion": _dirController.text.trim(),
-      "alergenos": "",
-      "imagen": "", // Cambiado a String vacío si tu backend espera String
-    };
+  try {
+    final response = await http.post(
+      Uri.parse(urlApi),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(signupData),
+    );
 
-    try {
-      final response = await http.post(
-        Uri.parse(urlApi),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(signupData),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        _mostrarMensaje("¡Bienvenido a la experiencia!", Colors.green);
-        await Future.delayed(const Duration(seconds: 2));
-        if (mounted) Navigator.pop(context);
-      } else {
-        _mostrarMensaje(
-          "El usuario o email ya están registrados",
-          Colors.redAccent,
-        );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      // ÉXITO: Mostramos un diálogo informativo en lugar de solo un mensaje rápido
+      if (mounted) {
+        _mostrarDialogoVerificacion();
       }
-    } catch (e) {
-      _mostrarMensaje("Error de conexión con el servidor", Colors.redAccent);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+    } else {
+      _mostrarMensaje(
+        "El usuario o email ya están registrados",
+        Colors.redAccent,
+      );
     }
+  } catch (e) {
+    _mostrarMensaje("Error de conexión con el servidor", Colors.redAccent);
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
   }
+}
+void _mostrarDialogoVerificacion() {
+  showDialog(
+    context: context,
+    barrierDismissible: false, // Obliga a interactuar con el botón
+    builder: (BuildContext context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Icon(Icons.mark_email_read_outlined, color: naranjaLogo, size: 50),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "¡REGISTRO CASI COMPLETADO!",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 15),
+            Text(
+              "Hemos enviado un enlace de activación a:\n${_emailController.text.trim()}",
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              "Por favor, revisa tu bandeja de entrada (o spam) y pulsa en el enlace para poder iniciar sesión.",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          Center(
+            child: TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Cierra el diálogo
+                Navigator.pop(context); // Vuelve a la pantalla de Login
+              },
+              child: Text(
+                "ENTENDIDO",
+                style: TextStyle(color: naranjaLogo, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
 
   void _mostrarMensaje(String msg, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(

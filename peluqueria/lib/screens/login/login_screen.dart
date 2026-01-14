@@ -56,44 +56,67 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _login() async {
-    if (_userController.text.isEmpty || _passController.text.isEmpty) {
-      _mostrarSnackBar("Por favor, rellena todos los campos", Colors.orange);
-      return;
-    }
+  if (_userController.text.isEmpty || _passController.text.isEmpty) {
+    _mostrarSnackBar("Por favor, rellena todos los campos", Colors.orange);
+    return;
+  }
 
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    try {
-      final String? response = await AuthService().intentarLogin(
-        _userController.text.trim(),
-        _passController.text.trim(),
-      );
+  try {
+    // Es importante que intentarLogin devuelva algo que nos permita
+    // distinguir entre "Error 401 (Credenciales)" y "Error 403 (No verificado)"
+    final String? response = await AuthService().intentarLogin(
+      _userController.text.trim(),
+      _passController.text.trim(),
+    );
 
-      if (response == null ||
-          response == "CREDENCIALES_MAL" ||
-          response.contains("ERROR")) {
-        if (mounted) {
-          _mostrarSnackBar(
-            "Usuario o contraseña incorrectos",
-            Colors.redAccent,
-          );
-        }
-      } else {
-        final prefs = UserPreferences();
-        await prefs.guardarSesion(response, _passController.text.trim());
-
-        if (mounted) {
-          Navigator.pushReplacementNamed(context, '/home');
-        }
-      }
-    } catch (e) {
-      _mostrarSnackBar("Error de conexión con el servidor", Colors.redAccent);
-    } finally {
+    if (response == "CUENTA_NO_VERIFICADA") {
+      // CASO ESPECÍFICO: El backend bloqueó el acceso por falta de verificación
+      _mostrarDialogoNoVerificado();
+    } else if (response == null || response == "CREDENCIALES_MAL" || response.contains("ERROR")) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        _mostrarSnackBar(
+          "Usuario o contraseña incorrectos",
+          Colors.redAccent,
+        );
       }
+    } else {
+      // ÉXITO
+      final prefs = UserPreferences();
+      await prefs.guardarSesion(response, _passController.text.trim());
+
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    }
+  } catch (e) {
+    _mostrarSnackBar("Error de conexión con el servidor", Colors.redAccent);
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
+}
+void _mostrarDialogoNoVerificado() {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      title: const Text("Cuenta no activa", style: TextStyle(fontWeight: FontWeight.bold)),
+      content: const Text(
+        "Tu cuenta aún no ha sido verificada. Por favor, revisa tu correo electrónico y pulsa el enlace de activación para poder entrar.",
+        style: TextStyle(fontSize: 14),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text("ENTENDIDO", style: TextStyle(color: naranjaLogo)),
+        ),
+      ],
+    ),
+  );
+}
 
   void _mostrarSnackBar(String mensaje, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
