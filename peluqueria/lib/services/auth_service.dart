@@ -5,7 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 class AuthService {
   // Al estar en Windows Desktop, localhost funciona.
   // Si pasas a un emulador de Android, recuerda cambiarlo a 10.0.2.2
-  final String baseUrl = 'http://192.168.7.13:8082/api/auth';
+  final String baseUrl = 'http://10.50.183.95:8082/api/auth';
 
   // CONFIGURACIÓN PARA WINDOWS:
   // Debes poner aquí el "ID de cliente" de tipo "Web" que creaste en Google Cloud/Firebase.
@@ -14,16 +14,18 @@ class AuthService {
 
   /// Login tradicional con usuario y contraseña
   // En auth_service.dart
-Future<String?> intentarLogin(String username, String password) async {
+  Future<String?> intentarLogin(String username, String password) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/signin'), // Eliminado el /api/auth repetido
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"username": username, "contrasenya": password}),
-      ).timeout(const Duration(seconds: 10)); // Añade un timeout
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/signin'), // Eliminado el /api/auth repetido
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({"username": username, "contrasenya": password}),
+          )
+          .timeout(const Duration(seconds: 10)); // Añade un timeout
 
       if (response.statusCode == 200) {
-        return response.body; 
+        return response.body;
       } else if (response.statusCode == 403) {
         return "CUENTA_NO_VERIFICADA";
       } else if (response.statusCode == 401) {
@@ -31,7 +33,9 @@ Future<String?> intentarLogin(String username, String password) async {
       }
       return "ERROR_DESCONOCIDO";
     } catch (e) {
-      print("Error detallado: $e"); // Esto te dirá en la consola de Flutter qué pasa exactamente
+      print(
+        "Error detallado: $e",
+      ); // Esto te dirá en la consola de Flutter qué pasa exactamente
       return "ERROR_CONEXION";
     }
   }

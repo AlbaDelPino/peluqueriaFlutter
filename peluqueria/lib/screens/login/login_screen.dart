@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../services/user_preferences.dart';
+import '../contraseña/olvide_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,8 +11,12 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  // CLAVE PARA EL FORMULARIO (Igual que en Signup)
+  final _formKey = GlobalKey<FormState>();
+
   final _userController = TextEditingController();
   final _passController = TextEditingController();
+
   bool _isLoading = false;
   bool _isPasswordVisible = false;
 
@@ -25,28 +30,53 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // --- NUEVO MÉTODO PARA GOOGLE ---
-  void _loginConGoogle() async {
+  // --- LÓGICA DE LOGIN CON VALIDACIÓN DE FORMULARIO ---
+  void _login() async {
+    // Validamos el formulario antes de seguir
+    if (!_formKey.currentState!.validate()) return;
+
+    // Cerramos el teclado
+    FocusScope.of(context).unfocus();
+
     setState(() => _isLoading = true);
 
     try {
-      final String? response = await AuthService().iniciarSesionConGoogle();
+      final String? response = await AuthService().intentarLogin(
+        _userController.text.trim(),
+        _passController.text.trim(),
+      );
 
-      if (response == null) {
-        // El usuario canceló o cerró el popup de Google
-        return;
+      if (response == "CUENTA_NO_VERIFICADA") {
+        _mostrarDialogoNoVerificado();
+      } else if (response == null ||
+          response == "CREDENCIALES_MAL" ||
+          response.contains("ERROR")) {
+        _mostrarSnackBar("Usuario o contraseña incorrectos", Colors.redAccent);
+      } else {
+        final prefs = UserPreferences();
+        await prefs.guardarSesion(response, _passController.text.trim());
+        if (mounted) Navigator.pushReplacementNamed(context, '/home');
       }
+    } catch (e) {
+      _mostrarSnackBar("Error de conexión con el servidor", Colors.redAccent);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // --- LÓGICA DE GOOGLE ---
+  void _loginConGoogle() async {
+    setState(() => _isLoading = true);
+    try {
+      final String? response = await AuthService().iniciarSesionConGoogle();
+      if (response == null) return;
 
       if (response == "ERROR_SERVIDOR" || response == "ERROR_CONEXION") {
         _mostrarSnackBar("Error al conectar con Google", Colors.redAccent);
       } else {
-        // ÉXITO: Guardamos la sesión (la contraseña se guarda vacía o como 'GOOGLE_AUTH')
         final prefs = UserPreferences();
         await prefs.guardarSesion(response, "GOOGLE_AUTH");
-
-        if (mounted) {
-          Navigator.pushReplacementNamed(context, '/home');
-        }
+        if (mounted) Navigator.pushReplacementNamed(context, '/home');
       }
     } catch (e) {
       _mostrarSnackBar("Ocurrió un error inesperado", Colors.redAccent);
@@ -55,68 +85,27 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _login() async {
-  if (_userController.text.isEmpty || _passController.text.isEmpty) {
-    _mostrarSnackBar("Por favor, rellena todos los campos", Colors.orange);
-    return;
-  }
-
-  setState(() => _isLoading = true);
-
-  try {
-    // Es importante que intentarLogin devuelva algo que nos permita
-    // distinguir entre "Error 401 (Credenciales)" y "Error 403 (No verificado)"
-    final String? response = await AuthService().intentarLogin(
-      _userController.text.trim(),
-      _passController.text.trim(),
-    );
-
-    if (response == "CUENTA_NO_VERIFICADA") {
-      // CASO ESPECÍFICO: El backend bloqueó el acceso por falta de verificación
-      _mostrarDialogoNoVerificado();
-    } else if (response == null || response == "CREDENCIALES_MAL" || response.contains("ERROR")) {
-      if (mounted) {
-        _mostrarSnackBar(
-          "Usuario o contraseña incorrectos",
-          Colors.redAccent,
-        );
-      }
-    } else {
-      // ÉXITO
-      final prefs = UserPreferences();
-      await prefs.guardarSesion(response, _passController.text.trim());
-
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
-      }
-    }
-  } catch (e) {
-    _mostrarSnackBar("Error de conexión con el servidor", Colors.redAccent);
-  } finally {
-    if (mounted) {
-      setState(() => _isLoading = false);
-    }
-  }
-}
-void _mostrarDialogoNoVerificado() {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      title: const Text("Cuenta no activa", style: TextStyle(fontWeight: FontWeight.bold)),
-      content: const Text(
-        "Tu cuenta aún no ha sido verificada. Por favor, revisa tu correo electrónico y pulsa el enlace de activación para poder entrar.",
-        style: TextStyle(fontSize: 14),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text("ENTENDIDO", style: TextStyle(color: naranjaLogo)),
+  void _mostrarDialogoNoVerificado() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: const Text(
+          "Cuenta no activa",
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
-      ],
-    ),
-  );
-}
+        content: const Text(
+          "Tu cuenta aún no ha sido verificada. Revisa tu correo electrónico.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("ENTENDIDO", style: TextStyle(color: naranjaLogo)),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _mostrarSnackBar(String mensaje, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -124,7 +113,6 @@ void _mostrarDialogoNoVerificado() {
         content: Text(mensaje),
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
@@ -137,106 +125,162 @@ void _mostrarDialogoNoVerificado() {
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 35),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: naranjaLogo.withOpacity(0.2),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Image.asset(
-                  'assets/iconPeluqueria.png',
-                  height: 110,
-                  errorBuilder: (context, error, stackTrace) =>
-                      Icon(Icons.cut, size: 80, color: naranjaLogo),
-                ),
-              ),
-              const SizedBox(height: 25),
-              Text(
-                "BERNAT",
-                style: TextStyle(
-                  fontSize: 38,
-                  fontWeight: FontWeight.w900,
-                  color: negroSuave,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              Text(
-                "EXPERIENCE",
-                style: TextStyle(
-                  fontSize: 12,
-                  letterSpacing: 6,
-                  fontWeight: FontWeight.w300,
-                  color: naranjaLogo,
-                ),
-              ),
-              const SizedBox(height: 50),
-              _buildModernInput(
-                controller: _userController,
-                label: "Nombre de usuario",
-                icon: Icons.alternate_email_rounded,
-              ),
-              const SizedBox(height: 20),
-              _buildModernInput(
-                controller: _passController,
-                label: "Contraseña",
-                icon: Icons.lock_outline_rounded,
-                isPassword: true,
-              ),
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {},
-                  child: Text(
-                    "¿Olvidaste tu clave?",
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+          child: Form(
+            key: _formKey, // ASIGNACIÓN DE LA LLAVE
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logo
+                _buildLogo(),
+                const SizedBox(height: 25),
+                Text(
+                  "BERNAT",
+                  style: TextStyle(
+                    fontSize: 38,
+                    fontWeight: FontWeight.w900,
+                    color: negroSuave,
+                    letterSpacing: 1.5,
                   ),
                 ),
-              ),
-              const SizedBox(height: 30),
-              
-              // BOTONES DE ACCESO
-              _isLoading
-                  ? CircularProgressIndicator(color: naranjaLogo)
-                  : Column(
-                      children: [
-                        _buildBotonEntrar(),
-                        const SizedBox(height: 15),
-                        _buildBotonGoogle(), // Botón de Google añadido
-                      ],
-                    ),
+                Text(
+                  "EXPERIENCE",
+                  style: TextStyle(
+                    fontSize: 12,
+                    letterSpacing: 6,
+                    fontWeight: FontWeight.w300,
+                    color: naranjaLogo,
+                  ),
+                ),
 
-              const SizedBox(height: 40),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "¿Eres nuevo aquí? ",
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                  GestureDetector(
-                    onTap: () => Navigator.pushNamed(context, '/registro'),
+                const SizedBox(height: 50),
+
+                // INPUT USUARIO CON VALIDATOR
+                _buildModernInput(
+                  controller: _userController,
+                  label: "NOMBRE DE USUARIO",
+                  icon: Icons.alternate_email_rounded,
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? "Introduce tu usuario" : null,
+                ),
+
+                const SizedBox(height: 20),
+
+                // INPUT PASSWORD CON VALIDATOR
+                _buildModernInput(
+                  controller: _passController,
+                  label: "CONTRASEÑA",
+                  icon: Icons.lock_outline_rounded,
+                  isPassword: true,
+                  validator: (v) => (v == null || v.length < 4)
+                      ? "Mínimo 4 caracteres"
+                      : null,
+                ),
+
+                // BOTÓN OLVIDAR CONTRASEÑA
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const OlvidePasswordScreen(),
+                        ),
+                      );
+                    },
                     child: Text(
-                      "Crea una cuenta",
-                      style: TextStyle(
-                        color: naranjaLogo,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      "¿Olvidaste tu clave?",
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+
+                const SizedBox(height: 20),
+
+                _isLoading
+                    ? CircularProgressIndicator(color: naranjaLogo)
+                    : Column(
+                        children: [
+                          _buildBotonEntrar(),
+                          const SizedBox(height: 15),
+                          _buildBotonGoogle(),
+                        ],
+                      ),
+
+                const SizedBox(height: 40),
+
+                // Registro
+                _buildFooterRegistro(),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  // --- WIDGET REUTILIZABLE (Estilo Signup) ---
+  Widget _buildModernInput({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool isPassword = false,
+    required String? Function(String?) validator,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F7F7),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: TextFormField(
+        controller: controller,
+        obscureText: isPassword ? !_isPasswordVisible : false,
+        validator: validator,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+          prefixIcon: Icon(icon, color: naranjaLogo, size: 20),
+          suffixIcon: isPassword
+              ? IconButton(
+                  icon: Icon(
+                    _isPasswordVisible
+                        ? Icons.visibility
+                        : Icons.visibility_off,
+                    color: Colors.grey,
+                    size: 20,
+                  ),
+                  onPressed: () =>
+                      setState(() => _isPasswordVisible = !_isPasswordVisible),
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 18,
+            horizontal: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLogo() {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: naranjaLogo.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Image.asset(
+        'assets/iconPeluqueria.png',
+        height: 110,
+        errorBuilder: (c, e, s) =>
+            Icon(Icons.cut, size: 80, color: naranjaLogo),
       ),
     );
   }
@@ -279,7 +323,6 @@ void _mostrarDialogoNoVerificado() {
     );
   }
 
-  // --- BOTÓN CORPORATIVO DE GOOGLE ---
   Widget _buildBotonGoogle() {
     return Container(
       width: double.infinity,
@@ -313,44 +356,19 @@ void _mostrarDialogoNoVerificado() {
     );
   }
 
-  Widget _buildModernInput({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    bool isPassword = false,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F7),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: isPassword ? !_isPasswordVisible : false,
-        cursorColor: naranjaLogo,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-          prefixIcon: Icon(icon, color: naranjaLogo, size: 20),
-          suffixIcon: isPassword
-              ? IconButton(
-                  icon: Icon(
-                    _isPasswordVisible
-                        ? Icons.visibility
-                        : Icons.visibility_off,
-                    color: Colors.grey,
-                  ),
-                  onPressed: () =>
-                      setState(() => _isPasswordVisible = !_isPasswordVisible),
-                )
-              : null,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 18,
-            horizontal: 20,
+  Widget _buildFooterRegistro() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text("¿Eres nuevo aquí? ", style: TextStyle(color: Colors.grey[600])),
+        GestureDetector(
+          onTap: () => Navigator.pushNamed(context, '/registro'),
+          child: Text(
+            "Crea una cuenta",
+            style: TextStyle(color: naranjaLogo, fontWeight: FontWeight.bold),
           ),
         ),
-      ),
+      ],
     );
   }
 }

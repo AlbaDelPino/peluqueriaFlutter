@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "1008130346590-ltepl35eg0i3eqkakv42k5l7igqfe1ru.apps.googleusercontent.com",
+          "client_id": "1008130346590-jlcj1eorkdl7map168mn76rfqtdnljdg.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.peluqueria",
-            "certificate_hash": "03c27a8c5d13132502ae36d2671f749a884954d5"
+            "certificate_hash": "d4d0fbf4910bf663b72b9715e03cb208cacff893"
           }
         }
       ],

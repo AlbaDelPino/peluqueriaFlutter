@@ -18,7 +18,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   final prefs = UserPreferences();
   ClienteModel? cliente;
 
-  // 1. Inicializamos controladores con valores vacíos para evitar errores de carga
   final TextEditingController _nombreCtrl = TextEditingController();
   final TextEditingController _emailCtrl = TextEditingController();
   final TextEditingController _telefonoCtrl = TextEditingController();
@@ -49,17 +48,80 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     super.dispose();
   }
 
-  // --- CARGAR DATOS ---
+  // --- LÓGICA DE IMAGEN ---
+
+  Future<void> _pickImage(ImageSource source) async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final XFile? pickedFile = await picker.pickImage(
+        source: source,
+        imageQuality: 40, // Comprimimos para que el Base64 no sea gigante
+      );
+
+      if (pickedFile != null) {
+        final File file = File(pickedFile.path);
+        final List<int> imageBytes = await file.readAsBytes();
+
+        setState(() {
+          _avatarFile = file;
+          _base64Image = base64Encode(imageBytes);
+        });
+      }
+    } catch (e) {
+      debugPrint("Error seleccionando imagen: $e");
+    }
+  }
+
+  void _showPickerOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "CAMBIAR FOTO DE PERFIL",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: Icon(Icons.camera_alt, color: naranjaLogo),
+                title: const Text("Tomar foto"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_library, color: naranjaLogo),
+                title: const Text("Elegir de galería"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- API Y PERSISTENCIA ---
+
   Future<void> _fetchDatosUsuario() async {
     try {
       setState(() => _cargando = true);
-
       final String tokenActual = await prefs.token;
 
-      // Usamos localhost si te funciona en servicios, pero con timeout
       final response = await http
           .get(
-            Uri.parse('http://192.168.7.13:8082/api/auth/me'),
+            Uri.parse('http://10.50.183.95:8082/api/auth/me'),
             headers: {'Authorization': 'Bearer $tokenActual'},
           )
           .timeout(const Duration(seconds: 10));
@@ -68,28 +130,20 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         final decodedData = jsonDecode(response.body);
         cliente = ClienteModel.fromJson(decodedData);
 
-        // Rellenamos los controladores
         _nombreCtrl.text = cliente?.nombre ?? '';
         _emailCtrl.text = cliente?.email ?? '';
         _telefonoCtrl.text = cliente?.telefono?.toString() ?? '';
         _direccionCtrl.text = cliente?.direccion ?? '';
         _alergenosCtrl.text = cliente?.alergenos ?? '';
         _base64Image = cliente?.imagen;
-      } else {
-        _mostrarMsg("Error de servidor: ${response.statusCode}", Colors.red);
       }
     } catch (e) {
-      debugPrint("ERROR EN EDITAR_PERFIL: $e");
-      _mostrarMsg("No se pudieron cargar los datos", Colors.red);
+      _mostrarMsg("Error cargando perfil", Colors.red);
     } finally {
-      // ESTO QUITA LA RUEDA DE CARGA SIEMPRE
-      if (mounted) {
-        setState(() => _cargando = false);
-      }
+      if (mounted) setState(() => _cargando = false);
     }
   }
 
-  // --- GUARDAR CAMBIOS ---
   Future<void> _guardarCambios() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _enviando = true);
@@ -114,8 +168,9 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         "observacion": cliente?.observacion,
       };
 
+      // Nota: Cambiado a la IP de tu server, asegúrate que localhost no sea el problema
       final response = await http.put(
-        Uri.parse('http://localhost:8082/clientes/$idUsuario'),
+        Uri.parse('http://10.50.183.95:8082/clientes/$idUsuario'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $tokenActual',
@@ -136,11 +191,9 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
           _mostrarMsg("✅ Perfil actualizado", Colors.green);
           Navigator.pop(context, true);
         }
-      } else {
-        _mostrarMsg("Error: ${response.statusCode}", Colors.red);
       }
     } catch (e) {
-      _mostrarMsg("Error de conexión al guardar", Colors.red);
+      _mostrarMsg("Error al conectar con el servidor", Colors.red);
     } finally {
       if (mounted) setState(() => _enviando = false);
     }
@@ -148,13 +201,9 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
 
   void _mostrarMsg(String t, Color c) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(t),
-        backgroundColor: c,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(t), backgroundColor: c));
   }
 
   @override
@@ -168,10 +217,10 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
           icon: Icon(Icons.arrow_back_ios_new, color: negroSuave),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
+        title: const Text(
           "EDITAR PERFIL",
           style: TextStyle(
-            color: negroSuave,
+            color: Color(0xFF2D2D2D),
             fontWeight: FontWeight.w900,
             fontSize: 18,
           ),
@@ -180,54 +229,103 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       ),
       body: _cargando
           ? Center(child: CircularProgressIndicator(color: naranjaLogo))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(30),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    _buildAvatarPicker(),
-                    const SizedBox(height: 40),
-                    _buildInput(
-                      _nombreCtrl,
-                      "Nombre completo",
-                      Icons.person_outline,
-                    ),
-                    _buildInput(
-                      _emailCtrl,
-                      "Correo electrónico",
-                      Icons.mail_outline,
-                      k: TextInputType.emailAddress,
-                    ),
-                    _buildInput(
-                      _telefonoCtrl,
-                      "Teléfono móvil",
-                      Icons.phone_iphone_rounded,
-                      k: TextInputType.phone,
-                    ),
-                    _buildInput(
-                      _direccionCtrl,
-                      "Dirección",
-                      Icons.location_on_outlined,
-                    ),
-                    _buildInput(
-                      _alergenosCtrl,
-                      "Alérgenos (Solo lectura)",
-                      Icons.warning_amber_rounded,
-                      enabled: false,
-                    ),
-                    const SizedBox(height: 30),
-                    _enviando
-                        ? CircularProgressIndicator(color: naranjaLogo)
-                        : _buildBotonGuardar(),
-                  ],
+          : SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(30),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      _buildAvatarPicker(),
+                      const SizedBox(height: 40),
+                      _buildInput(
+                        _nombreCtrl,
+                        "Nombre completo",
+                        Icons.person_outline,
+                      ),
+                      _buildInput(
+                        _emailCtrl,
+                        "Correo electrónico",
+                        Icons.mail_outline,
+                        k: TextInputType.emailAddress,
+                      ),
+                      _buildInput(
+                        _telefonoCtrl,
+                        "Teléfono móvil",
+                        Icons.phone_iphone_rounded,
+                        k: TextInputType.phone,
+                      ),
+                      _buildInput(
+                        _direccionCtrl,
+                        "Dirección",
+                        Icons.location_on_outlined,
+                      ),
+                      _buildInput(
+                        _alergenosCtrl,
+                        "Alérgenos (Solo lectura)",
+                        Icons.warning_amber_rounded,
+                        enabled: false,
+                      ),
+                      const SizedBox(height: 30),
+                      _enviando
+                          ? CircularProgressIndicator(color: naranjaLogo)
+                          : _buildBotonGuardar(),
+                    ],
+                  ),
                 ),
               ),
             ),
     );
   }
 
-  // Componentes de Interfaz (Iguales a tu diseño original)
+  Widget _buildAvatarPicker() {
+    ImageProvider? imageProvider;
+    if (_avatarFile != null) {
+      imageProvider = FileImage(_avatarFile!);
+    } else if (_base64Image != null && _base64Image!.isNotEmpty) {
+      try {
+        imageProvider = MemoryImage(base64Decode(_base64Image!));
+      } catch (e) {
+        imageProvider = null;
+      }
+    }
+
+    return Center(
+      child: Stack(
+        children: [
+          CircleAvatar(
+            radius: 65,
+            backgroundColor: const Color(0xFFF7F7F7),
+            backgroundImage: imageProvider,
+            child: imageProvider == null
+                ? Icon(
+                    Icons.person,
+                    size: 60,
+                    color: naranjaLogo.withOpacity(0.3),
+                  )
+                : null,
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: _showPickerOptions,
+              child: CircleAvatar(
+                backgroundColor: negroSuave,
+                radius: 20,
+                child: const Icon(
+                  Icons.camera_alt,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildInput(
     TextEditingController c,
     String l,
@@ -286,63 +384,5 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         ),
       ),
     );
-  }
-
-  Widget _buildAvatarPicker() {
-    return Center(
-      child: Stack(
-        children: [
-          CircleAvatar(
-            radius: 65,
-            backgroundColor: const Color(0xFFF7F7F7),
-            backgroundImage: _avatarFile != null
-                ? FileImage(_avatarFile!)
-                : (_base64Image != null && _base64Image!.isNotEmpty
-                          ? MemoryImage(base64Decode(_base64Image!))
-                          : null)
-                      as ImageProvider?,
-            child:
-                (_base64Image == null || _base64Image!.isEmpty) &&
-                    _avatarFile == null
-                ? Icon(
-                    Icons.person,
-                    size: 60,
-                    color: naranjaLogo.withOpacity(0.3),
-                  )
-                : null,
-          ),
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: GestureDetector(
-              onTap: _pickImage,
-              child: CircleAvatar(
-                backgroundColor: negroSuave,
-                radius: 20,
-                child: const Icon(
-                  Icons.camera_alt,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _pickImage() async {
-    final p = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 40,
-    );
-    if (p != null) {
-      final bytes = await File(p.path).readAsBytes();
-      setState(() {
-        _avatarFile = File(p.path);
-        _base64Image = base64Encode(bytes);
-      });
-    }
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/user_preferences.dart';
 import '../widget/menu_lateral.dart';
 import 'servicios/servicios_sreen.dart';
+import 'citas/mis_citas_screen.dart';
 import 'perfil/perfil_screen.dart';
 import 'inicio_contenido.dart';
 
@@ -21,6 +22,7 @@ class _HomeScreensState extends State<HomeScreens> {
   final List<Widget> _paginas = [
     InicioContenido(), // Índice 0
     const ServiciosScreen(), // Índice 1
+    const MisCitasScreen(),
     const PerfilScreen(), // Índice 2
   ];
 
@@ -92,6 +94,11 @@ class _HomeScreensState extends State<HomeScreens> {
               icon: Icon(Icons.content_cut_rounded),
               activeIcon: Icon(Icons.content_cut_rounded),
               label: 'Servicios',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.event_note_outlined),
+              activeIcon: Icon(Icons.event_note_rounded),
+              label: 'Mis citas',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_rounded),
