@@ -5,7 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 class AuthService {
   // Al estar en Windows Desktop, localhost funciona.
   // Si pasas a un emulador de Android, recuerda cambiarlo a 10.0.2.2
-  final String baseUrl = 'http://10.50.183.95:8082/api/auth';
+  final String baseUrl = 'http://10.217.44.95:8082/api/auth';
 
   // CONFIGURACIÓN PARA WINDOWS:
   // Debes poner aquí el "ID de cliente" de tipo "Web" que creaste en Google Cloud/Firebase.

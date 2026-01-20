@@ -6,7 +6,7 @@ import '../../models/horario/horario_model.dart';
 import 'user_preferences.dart'; // Tu clase que usa FlutterSecureStorage
 
 class ServicioService {
-  final String _baseUrl = 'http://10.50.183.95:8082';
+  final String _baseUrl = 'http://10.217.44.95:8082';
   final UserPreferences _prefs = UserPreferences();
 
   // Función privada para no repetir código: obtiene los headers con el Token
@@ -84,16 +84,26 @@ class ServicioService {
     }
   }
 
+  // En lib/services/servicio_service.dart
+
   Future<bool> agregarFavorito(int clienteId, int servicioId) async {
     try {
       final headers = await _getAuthHeaders();
+      // REVISA: ¿Tu backend usa 'favoritos' o 'favorito'?
+      // REVISA: ¿La ruta empieza por /api o va directo?
       final url = Uri.parse(
         '$_baseUrl/api/favoritos/cliente/$clienteId/servicio/$servicioId',
       );
 
+      print('Intentando POST: $url'); // Log para depurar
+
       final response = await http.post(url, headers: headers);
+
+      print('Status Code: ${response.statusCode}');
+
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
+      print('Error en agregarFavorito: $e');
       return false;
     }
   }
@@ -105,9 +115,15 @@ class ServicioService {
         '$_baseUrl/api/favoritos/cliente/$clienteId/servicio/$servicioId',
       );
 
+      print('Intentando DELETE: $url'); // Log para depurar
+
       final response = await http.delete(url, headers: headers);
-      return response.statusCode == 200;
+
+      print('Status Code: ${response.statusCode}');
+
+      return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
+      print('Error en eliminarFavorito: $e');
       return false;
     }
   }
