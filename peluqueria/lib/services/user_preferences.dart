@@ -92,7 +92,7 @@ class UserPreferences {
     try {
       final response = await http
           .get(
-            Uri.parse('http://10.50.183.95:8082/api/auth/me'),
+            Uri.parse('http://192.168.123.1:8082/api/auth/me'),
             headers: {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer $currentToken',
