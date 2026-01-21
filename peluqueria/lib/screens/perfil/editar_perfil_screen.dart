@@ -121,7 +121,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
 
       final response = await http
           .get(
-            Uri.parse('http://10.50.183.95:8082/api/auth/me'),
+            Uri.parse('http://10.217.44.95:8082/api/auth/me'),
             headers: {'Authorization': 'Bearer $tokenActual'},
           )
           .timeout(const Duration(seconds: 10));
