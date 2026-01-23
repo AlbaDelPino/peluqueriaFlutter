@@ -6,7 +6,7 @@ import '../../models/horario/horario_model.dart';
 import 'user_preferences.dart'; // Tu clase que usa FlutterSecureStorage
 
 class ServicioService {
-  final String _baseUrl = 'http://10.50.183.95:8082';
+  final String _baseUrl = 'http://localhost:8082';
   final UserPreferences _prefs = UserPreferences();
 
   // Función privada para no repetir código: obtiene los headers con el Token

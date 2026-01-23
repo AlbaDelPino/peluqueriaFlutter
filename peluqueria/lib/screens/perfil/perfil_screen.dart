@@ -35,7 +35,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
       final response = await http
           .get(
-            Uri.parse('http://10.50.183.95:8082/api/auth/me'),
+            Uri.parse('http://localhost:8082/api/auth/me'),
             headers: {
               'Authorization': 'Bearer $tokenActual',
               'Content-Type': 'application/json',

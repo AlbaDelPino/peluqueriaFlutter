@@ -36,7 +36,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
     // Asegúrate de que esta IP sea la correcta de tu servidor actual
     const String urlApi =
-        'http://10.50.183.95:8082/api/auth/signup/cliente/public';
+        'http://localhost:8082/api/auth/signup/cliente/public';
 
     final signupData = {
       "username": _userController.text.trim(),
