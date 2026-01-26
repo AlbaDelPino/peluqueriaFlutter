@@ -30,7 +30,7 @@ class _OlvidePasswordScreenState extends State<OlvidePasswordScreen> {
     setState(() => _isLoading = true);
 
     final urlString =
-        'http://10.50.183.95:8082/api/auth/forgot-password?email=$email';
+        'http://192.168.7.13:8082/api/auth/forgot-password?email=$email';
 
     try {
       final response = await http.post(Uri.parse(urlString));

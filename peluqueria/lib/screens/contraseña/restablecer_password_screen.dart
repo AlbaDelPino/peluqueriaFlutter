@@ -32,7 +32,7 @@ class _RestablecerPasswordScreenState extends State<RestablecerPasswordScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://10.50.183.95:8082/api/auth/reset-password'),
+        Uri.parse('http://192.168.7.13:8082/api/auth/reset-password'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           "email": widget.email,

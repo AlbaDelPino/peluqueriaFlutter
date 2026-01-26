@@ -50,7 +50,7 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
       // 1. OBTENER DATOS ACTUALES DEL CLIENTE
       // Usamos la IP de tu servidor para evitar problemas con localhost
       final getResponse = await http.get(
-        Uri.parse('http://10.50.183.95:8082/api/auth/me'),
+        Uri.parse('http://192.168.7.13:8082/api/auth/me'),
         headers: {'Authorization': 'Bearer $tokenActual'},
       );
 
@@ -67,7 +67,7 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
 
       // 3. ENVIAR EL PUT AL BACKEND
       final response = await http.put(
-        Uri.parse('http://10.50.183.95:8082/clientes/$idCliente'),
+        Uri.parse('http://192.168.7.13:8082/clientes/$idCliente'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $tokenActual',

@@ -30,7 +30,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://10.217.44.95:8082/citas/cliente/$clienteId'),
+        Uri.parse('http://192.168.7.13:8082/citas/cliente/$clienteId'),
         headers: {'Authorization': 'Bearer $token'},
       );
 

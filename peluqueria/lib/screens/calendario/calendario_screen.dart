@@ -76,7 +76,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
     try {
       final token = await _prefs.token;
       final url =
-          'http://10.217.44.95:8082/citas/disponible?fecha=$fecha&horarioId=$horarioId';
+          'http://192.168.7.13:8082/citas/disponible?fecha=$fecha&horarioId=$horarioId';
       final response = await http.get(
         Uri.parse(url),
         headers: {'Authorization': 'Bearer $token'},
@@ -114,7 +114,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
     try {
       final token = await _prefs.token;
       final response = await http.post(
-        Uri.parse('http://10.217.44.95:8082/citas/reservar'),
+        Uri.parse('http://192.168.7.13:8082/citas/reservar'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',

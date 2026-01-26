@@ -5,6 +5,7 @@ import '../widget/menu_lateral.dart';
 import 'servicios/servicios_sreen.dart';
 import 'citas/mis_citas_screen.dart';
 import 'perfil/perfil_screen.dart';
+import 'galeriaImagen/galeria_screens.dart';
 import 'inicio_contenido.dart';
 
 class HomeScreens extends StatefulWidget {
@@ -23,6 +24,7 @@ class _HomeScreensState extends State<HomeScreens> {
     InicioContenido(), // Índice 0
     const ServiciosScreen(), // Índice 1
     const MisCitasScreen(),
+    const GaleriaServiciosScreen(),
     const PerfilScreen(), // Índice 2
   ];
 
@@ -99,6 +101,11 @@ class _HomeScreensState extends State<HomeScreens> {
               icon: Icon(Icons.event_note_outlined),
               activeIcon: Icon(Icons.event_note_rounded),
               label: 'Mis citas',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_rounded),
+              activeIcon: Icon(Icons.person_rounded),
+              label: 'Galeria',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_rounded),

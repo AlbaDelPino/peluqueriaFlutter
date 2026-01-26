@@ -121,7 +121,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
 
       final response = await http
           .get(
-            Uri.parse('http://10.217.44.95:8082/api/auth/me'),
+            Uri.parse('http://192.168.7.13:8082/api/auth/me'),
             headers: {'Authorization': 'Bearer $tokenActual'},
           )
           .timeout(const Duration(seconds: 10));
@@ -170,7 +170,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
 
       // Nota: Cambiado a la IP de tu server, asegúrate que localhost no sea el problema
       final response = await http.put(
-        Uri.parse('http://10.50.183.95:8082/clientes/$idUsuario'),
+        Uri.parse('http://192.168.7.13:8082/clientes/$idUsuario'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $tokenActual',
