@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../services/user_preferences.dart';
+import '../../config/api_config.dart';
+import '../../services/auth_service.dart';
+
 
 class CambiarPasswordScreen extends StatefulWidget {
   const CambiarPasswordScreen({super.key});
@@ -14,7 +17,7 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _passNuevaCtrl = TextEditingController();
   final _passConfirmaCtrl = TextEditingController();
-
+final AuthService _authService = AuthService();
   bool _isLoading = false;
   final Color naranjaLogo = const Color(0xFFFF6B00);
 
@@ -36,58 +39,14 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final prefs = UserPreferences();
+      // Llamada limpia al servicio
+      final exitoso = await _authService.updateInternalPassword(_passNuevaCtrl.text.trim());
 
-      // 🔥 CORRECCIÓN: Ahora usamos await para obtener los datos de Secure Storage
-      final int idCliente = await prefs.userId;
-      final String tokenActual = await prefs.token;
-
-      if (tokenActual.isEmpty || idCliente == 0) {
-        _mostrarMensaje("Sesión no válida", isError: true);
-        return;
-      }
-
-      // 1. OBTENER DATOS ACTUALES DEL CLIENTE
-      // Usamos la IP de tu servidor para evitar problemas con localhost
-      final getResponse = await http.get(
-        Uri.parse('http://192.168.7.13:8082/api/auth/me'),
-        headers: {'Authorization': 'Bearer $tokenActual'},
-      );
-
-      if (getResponse.statusCode != 200) {
-        _mostrarMensaje("Error al obtener datos del servidor", isError: true);
-        return;
-      }
-
-      final Map<String, dynamic> clienteActual = jsonDecode(getResponse.body);
-
-      // 2. ACTUALIZAR LA CONTRASEÑA EN EL OBJETO
-      final String nuevaPass = _passNuevaCtrl.text.trim();
-      clienteActual['contrasenya'] = nuevaPass;
-
-      // 3. ENVIAR EL PUT AL BACKEND
-      final response = await http.put(
-        Uri.parse('http://192.168.7.13:8082/clientes/$idCliente'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $tokenActual',
-        },
-        body: jsonEncode(clienteActual),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        // 🔥 IMPORTANTE: Actualizamos también la contraseña guardada localmente
-        // para que las futuras peticiones PUT (como en editar perfil) no fallen.
-        // Debes asegurarte de tener un método para esto o guardarlo directamente
-        // En este caso, simplemente notificamos el éxito.
-
+      if (exitoso) {
         _mostrarMensaje("✅ Contraseña actualizada correctamente");
         if (mounted) Navigator.pop(context);
       } else {
-        _mostrarMensaje(
-          "El servidor rechazó el cambio (${response.statusCode})",
-          isError: true,
-        );
+        _mostrarMensaje("Error al actualizar. Revisa tu sesión.", isError: true);
       }
     } catch (e) {
       _mostrarMensaje("Error de conexión", isError: true);

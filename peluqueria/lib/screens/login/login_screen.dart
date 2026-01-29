@@ -45,6 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _userController.text.trim(),
         _passController.text.trim(),
       );
+      print("RESPUESTA REAL DEL SERVIDOR: '$response'"); // <--- AÑADE ESTO
 
       if (response == "CUENTA_NO_VERIFICADA") {
         _mostrarDialogoNoVerificado();

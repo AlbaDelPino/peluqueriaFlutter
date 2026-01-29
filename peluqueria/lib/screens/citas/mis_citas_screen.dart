@@ -4,6 +4,8 @@ import 'dart:convert';
 import '../../services/user_preferences.dart';
 import 'detalle_cita_screen.dart';
 import 'package:intl/intl.dart';
+import '../../config/api_config.dart';
+
 
 class MisCitasScreen extends StatefulWidget {
   const MisCitasScreen({super.key});
@@ -25,24 +27,27 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
   }
 
   Future<void> _fetchCitas() async {
-    final int? clienteId = await _prefs.userId;
-    final String? token = await _prefs.token;
+    final int clienteId = await _prefs.userId;
+    final String token = await _prefs.token;
 
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.7.13:8082/citas/cliente/$clienteId'),
-        headers: {'Authorization': 'Bearer $token'},
+      Uri.parse(ApiConfig.getCitasByCliente(clienteId)),        headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200) {
         setState(() {
           _citas = json.decode(response.body);
+          // Ordenar por fecha descendente (más recientes primero)
           _citas.sort((a, b) => b['fecha'].compareTo(a['fecha']));
           _isLoading = false;
         });
+      } else {
+        setState(() => _isLoading = false);
       }
     } catch (e) {
       setState(() => _isLoading = false);
+      debugPrint("Error fetching citas: $e");
     }
   }
 
@@ -50,38 +55,50 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 100.0,
-            floating: false,
-            pinned: true,
-            elevation: 0,
-            backgroundColor: naranjaBernat,
-            // Quitamos el título de aquí para que quede más limpio
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(color: naranjaBernat),
-            ),
-          ),
-
-          _isLoading
-              ? const SliverFillRemaining(
-                  child: Center(
-                    child: CircularProgressIndicator(color: Color(0xFFFF6B00)),
-                  ),
-                )
-              : _citas.isEmpty
-              ? SliverFillRemaining(child: _buildEmptyState())
-              : SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) => _buildModernCitaCard(_citas[index]),
-                      childCount: _citas.length,
-                    ),
+      body: RefreshIndicator(
+        onRefresh: _fetchCitas,
+        color: naranjaBernat,
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 120.0,
+              floating: false,
+              pinned: true,
+              elevation: 0,
+              backgroundColor: naranjaBernat,
+              flexibleSpace: FlexibleSpaceBar(
+                title: const Text(
+                  "MIS CITAS",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                    fontSize: 16,
                   ),
                 ),
-        ],
+                centerTitle: true,
+                background: Container(color: naranjaBernat),
+              ),
+            ),
+            _isLoading
+                ? const SliverFillRemaining(
+                    child: Center(
+                      child: CircularProgressIndicator(color: Color(0xFFFF6B00)),
+                    ),
+                  )
+                : _citas.isEmpty
+                    ? SliverFillRemaining(child: _buildEmptyState())
+                    : SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) => _buildModernCitaCard(_citas[index]),
+                            childCount: _citas.length,
+                          ),
+                        ),
+                      ),
+          ],
+        ),
       ),
     );
   }
@@ -91,19 +108,11 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.calendar_month_outlined,
-            size: 80,
-            color: Colors.grey[300],
-          ),
+          Icon(Icons.calendar_month_outlined, size: 80, color: Colors.grey[300]),
           const SizedBox(height: 20),
           Text(
             "No tienes citas programadas",
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(color: Colors.grey[600], fontSize: 16, fontWeight: FontWeight.w500),
           ),
         ],
       ),
@@ -111,21 +120,21 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
   }
 
   Widget _buildModernCitaCard(dynamic cita) {
+    // Parsing de fecha y hora desde el backend
     DateTime fechaParsed = DateTime.parse(cita['fecha']);
-    String diaSemana = DateFormat(
-      "EEEE",
-      'es',
-    ).format(fechaParsed).toUpperCase();
+    String diaSemana = DateFormat("EEEE", 'es').format(fechaParsed).toUpperCase();
     String diaMes = DateFormat("d 'de' MMMM", 'es').format(fechaParsed);
-    String hora = cita['horario']['horaInicio'].substring(0, 5);
+    
+    // La hora viene del objeto cita directamente como LocalTime (HH:mm:ss)
+    String hora = cita['horaInicio'].toString().substring(0, 5);
 
-    // OBTENEMOS EL NOMBRE DEL SERVICIO DESDE EL JSON ANIDADO
-    // Asegúrate de que tu JSON de Spring Boot tiene: "servicio": { "nombre": "Corte de pelo" }
-    String nombreServicio = cita['servicio'] != null
-        ? cita['servicio']['nombre']
-        : "Servicio";
+    // Acceso correcto al servicio: cita -> horario -> servicio -> nombre
+    String nombreServicio = "Servicio";
+    if (cita['horario'] != null && cita['horario']['servicio'] != null) {
+      nombreServicio = cita['horario']['servicio']['nombre'];
+    }
 
-    bool estaConfirmada = cita['estado'] == true || cita['estado'] == "true";
+    String estado = cita['estado'] ?? "CONFIRMADO";
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -146,17 +155,21 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
           child: Row(
             children: [
               Container(
-                width: 5,
-                color: estaConfirmada ? Colors.green : Colors.redAccent,
+                width: 6,
+                color: _getStatusColor(estado),
               ),
               Expanded(
                 child: InkWell(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DetalleCitaScreen(cita: cita),
-                    ),
-                  ),
+                  onTap: () async {
+                    // Si regresamos de la pantalla de detalle, refrescamos por si se canceló la cita
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DetalleCitaScreen(cita: cita),
+                      ),
+                    );
+                    if (result == true) _fetchCitas();
+                  },
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -174,7 +187,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                                 letterSpacing: 1.1,
                               ),
                             ),
-                            _buildStatusBadge(cita['estado']),
+                            _buildStatusBadge(estado),
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -189,27 +202,15 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            const Icon(
-                              Icons.access_time_rounded,
-                              size: 15,
-                              color: Colors.grey,
-                            ),
+                            const Icon(Icons.access_time_rounded, size: 16, color: Colors.grey),
                             const SizedBox(width: 5),
                             Text(
                               "$hora h",
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: const TextStyle(fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(width: 15),
-                            const Icon(
-                              Icons.content_cut_rounded,
-                              size: 15,
-                              color: Colors.grey,
-                            ),
+                            const Icon(Icons.content_cut_rounded, size: 16, color: Colors.grey),
                             const SizedBox(width: 5),
-                            // AQUÍ SE MUESTRA EL NOMBRE REAL DEL SERVICIO
                             Expanded(
                               child: Text(
                                 nombreServicio,
@@ -231,20 +232,28 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
     );
   }
 
-  Widget _buildStatusBadge(dynamic estado) {
-    bool activo = estado == true || estado == "true";
+  Color _getStatusColor(String estado) {
+    switch (estado) {
+      case "CONFIRMADO": return Colors.green;
+      case "COMPLETADO": return Colors.blue;
+      case "CANCELADO": return Colors.redAccent;
+      default: return Colors.grey;
+    }
+  }
+
+  Widget _buildStatusBadge(String estado) {
+    Color color = _getStatusColor(estado);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: activo
-            ? Colors.green.withOpacity(0.1)
-            : Colors.red.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(6),
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Text(
-        activo ? "CONFIRMADA" : "CANCELADA",
+        estado,
         style: TextStyle(
-          color: activo ? Colors.green[700] : Colors.red[700],
+          color: color,
           fontSize: 9,
           fontWeight: FontWeight.w900,
         ),

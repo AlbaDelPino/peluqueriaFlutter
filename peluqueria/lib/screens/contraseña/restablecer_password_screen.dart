@@ -2,6 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Necesario para FilteringTextInputFormatter
 import 'package:http/http.dart' as http;
+import '../../config/api_config.dart';
+import '../../services/auth_service.dart';
+
+
 
 class RestablecerPasswordScreen extends StatefulWidget {
   final String email;
@@ -16,6 +20,7 @@ class _RestablecerPasswordScreenState extends State<RestablecerPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _codigoCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  final AuthService _authService = AuthService();
 
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -31,14 +36,10 @@ class _RestablecerPasswordScreenState extends State<RestablecerPasswordScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await http.post(
-        Uri.parse('http://192.168.7.13:8082/api/auth/reset-password'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "email": widget.email,
-          "codigo": _codigoCtrl.text.trim(),
-          "nuevaPassword": _passCtrl.text.trim(),
-        }),
+      final response = await _authService.resetPassword(
+        widget.email,
+        _codigoCtrl.text.trim(),
+        _passCtrl.text.trim(),
       );
 
       if (response.statusCode == 200) {

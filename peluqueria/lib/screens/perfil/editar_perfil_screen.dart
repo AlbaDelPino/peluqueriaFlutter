@@ -5,6 +5,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import '../../models/usuario/cliente_model.dart';
 import '../../services/user_preferences.dart';
+import '../../config/api_config.dart';
+import '../../services/auth_service.dart';
+
 
 class EditarPerfilScreen extends StatefulWidget {
   const EditarPerfilScreen({super.key});
@@ -15,13 +18,13 @@ class EditarPerfilScreen extends StatefulWidget {
 
 class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   final _formKey = GlobalKey<FormState>();
-  final prefs = UserPreferences();
+  final _prefs = UserPreferences();
+  final _authService = AuthService(); // Servicio centralizado
   ClienteModel? cliente;
 
   final TextEditingController _nombreCtrl = TextEditingController();
   final TextEditingController _emailCtrl = TextEditingController();
   final TextEditingController _telefonoCtrl = TextEditingController();
-  final TextEditingController _direccionCtrl = TextEditingController();
   final TextEditingController _alergenosCtrl = TextEditingController();
 
   String? _base64Image;
@@ -43,7 +46,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     _nombreCtrl.dispose();
     _emailCtrl.dispose();
     _telefonoCtrl.dispose();
-    _direccionCtrl.dispose();
     _alergenosCtrl.dispose();
     super.dispose();
   }
@@ -115,33 +117,23 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   // --- API Y PERSISTENCIA ---
 
   Future<void> _fetchDatosUsuario() async {
-    try {
+   
       setState(() => _cargando = true);
-      final String tokenActual = await prefs.token;
-
-      final response = await http
-          .get(
-            Uri.parse('http://192.168.7.13:8082/api/auth/me'),
-            headers: {'Authorization': 'Bearer $tokenActual'},
-          )
-          .timeout(const Duration(seconds: 10));
-
-      if (response.statusCode == 200) {
-        final decodedData = jsonDecode(response.body);
-        cliente = ClienteModel.fromJson(decodedData);
-
-        _nombreCtrl.text = cliente?.nombre ?? '';
-        _emailCtrl.text = cliente?.email ?? '';
-        _telefonoCtrl.text = cliente?.telefono?.toString() ?? '';
-        _direccionCtrl.text = cliente?.direccion ?? '';
-        _alergenosCtrl.text = cliente?.alergenos ?? '';
-        _base64Image = cliente?.imagen;
-      }
-    } catch (e) {
-      _mostrarMsg("Error cargando perfil", Colors.red);
-    } finally {
-      if (mounted) setState(() => _cargando = false);
-    }
+     final perfil = await _authService.getProfile();
+      if (perfil != null) {
+          setState(() {
+            cliente = perfil;
+            _nombreCtrl.text = cliente?.nombre ?? '';
+            _emailCtrl.text = cliente?.email ?? '';
+            _telefonoCtrl.text = cliente?.telefono?.toString() ?? '';
+            _alergenosCtrl.text = cliente?.alergenos ?? '';
+            _base64Image = cliente?.imagen;
+          });
+        } else {
+          _mostrarMsg("Error cargando perfil", Colors.red);
+        }
+        if (mounted) setState(() => _cargando = false);
+  
   }
 
   Future<void> _guardarCambios() async {
@@ -149,17 +141,17 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     setState(() => _enviando = true);
 
     try {
-      final String tokenActual = await prefs.token;
-      final String passActual = await prefs.passwordSegura;
-      final int idUsuario = await prefs.userId;
+      final String passActual = await _prefs.passwordSegura;
+      final int idUsuario = await _prefs.userId;
 
-      final Map<String, dynamic> body = {
+      // Preparamos el mapa de datos para el servicio
+      final Map<String, dynamic> datosActualizados = {
         "id": idUsuario,
         "username": cliente?.username,
         "nombre": _nombreCtrl.text.trim(),
         "email": _emailCtrl.text.trim(),
         "telefono": int.tryParse(_telefonoCtrl.text.trim()) ?? 0,
-        "direccion": _direccionCtrl.text.trim(),
+        
         "imagen": _base64Image ?? "",
         "contrasenya": passActual,
         "role": cliente?.role,
@@ -168,32 +160,25 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         "observacion": cliente?.observacion,
       };
 
-      // Nota: Cambiado a la IP de tu server, asegúrate que localhost no sea el problema
-      final response = await http.put(
-        Uri.parse('http://192.168.7.13:8082/clientes/$idUsuario'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $tokenActual',
-        },
-        body: jsonEncode(body),
-      );
+      final exito = await _authService.updateProfile(datosActualizados);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        await prefs.actualizarPerfilLocal(
+      if (exito) {
+        await _prefs.actualizarPerfilLocal(
           nombre: _nombreCtrl.text.trim(),
           imagen: _base64Image ?? "",
           email: _emailCtrl.text.trim(),
           telefono: _telefonoCtrl.text.trim(),
-          direccion: _direccionCtrl.text.trim(),
         );
 
         if (mounted) {
           _mostrarMsg("✅ Perfil actualizado", Colors.green);
           Navigator.pop(context, true);
         }
+      } else {
+        _mostrarMsg("Error al actualizar perfil", Colors.red);
       }
     } catch (e) {
-      _mostrarMsg("Error al conectar con el servidor", Colors.red);
+      _mostrarMsg("Error de conexión", Colors.red);
     } finally {
       if (mounted) setState(() => _enviando = false);
     }
@@ -255,17 +240,8 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                         Icons.phone_iphone_rounded,
                         k: TextInputType.phone,
                       ),
-                      _buildInput(
-                        _direccionCtrl,
-                        "Dirección",
-                        Icons.location_on_outlined,
-                      ),
-                      _buildInput(
-                        _alergenosCtrl,
-                        "Alérgenos (Solo lectura)",
-                        Icons.warning_amber_rounded,
-                        enabled: false,
-                      ),
+                      
+                      
                       const SizedBox(height: 30),
                       _enviando
                           ? CircularProgressIndicator(color: naranjaLogo)

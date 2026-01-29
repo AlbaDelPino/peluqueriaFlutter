@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:peluqueria/config/api_config.dart';
 import 'restablecer_password_screen.dart';
+import '../../config/api_config.dart';
+import '../../services/auth_service.dart';
+
+
 
 class OlvidePasswordScreen extends StatefulWidget {
   const OlvidePasswordScreen({super.key});
@@ -14,6 +19,7 @@ class _OlvidePasswordScreenState extends State<OlvidePasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   bool _isLoading = false;
+  final AuthService _authService = AuthService();
 
   // Paleta de colores BERNAT
   final Color naranjaLogo = const Color(0xFFFF6B00);
@@ -29,11 +35,10 @@ class _OlvidePasswordScreenState extends State<OlvidePasswordScreen> {
 
     setState(() => _isLoading = true);
 
-    final urlString =
-        'http://192.168.7.13:8082/api/auth/forgot-password?email=$email';
+   
 
     try {
-      final response = await http.post(Uri.parse(urlString));
+      final response = await _authService.sendForgotPasswordEmail(email);
 
       if (response.statusCode == 200) {
         _mostrarMensaje("Código enviado correctamente", Colors.green);

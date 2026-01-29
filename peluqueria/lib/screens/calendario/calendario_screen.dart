@@ -4,11 +4,12 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-// Importaciones de tus modelos y servicios
 import '../../models/servicios/servicio_model.dart';
 import '../../models/horario/horario_model.dart';
 import '../../services/servicio_service.dart';
 import '../../services/user_preferences.dart';
+import '../../config/api_config.dart';
+
 
 class CalendarioScreen extends StatefulWidget {
   final Servicio servicio;
@@ -24,11 +25,10 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
 
   DateTime _diaEnfocado = DateTime.now();
   DateTime? _diaSeleccionado;
-  List<HorarioSemanal> _horarios = [];
-  Map<int, int> _plazasReales = {};
+  
+  List<Map<String, dynamic>> _bloquesFinales = []; 
   bool _estaCargando = false;
 
-  // Paleta de colores consistente con tu Login
   final Color naranjaLogo = const Color(0xFFFF6B00);
   final Color grisFondo = const Color(0xFFF4F7F9);
   final Color negroSuave = const Color(0xFF2D2D2D);
@@ -37,74 +37,69 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   void initState() {
     super.initState();
     _diaSeleccionado = _diaEnfocado;
-    // Cargar datos iniciales si no es fin de semana
-    if (_diaEnfocado.weekday < 6) {
-      _cargarDatosDia(_diaSeleccionado!);
-    }
+    _cargarDatosDia(_diaSeleccionado!);
   }
 
-  // --- MÉTODOS DE API ---
+  // --- LÓGICA DE API ---
 
   Future<void> _cargarDatosDia(DateTime date) async {
     setState(() => _estaCargando = true);
     final String fechaStr = DateFormat('yyyy-MM-dd').format(date);
 
     try {
-      final horarios = await _servicioService.buscarHorariosPorDiaYServicio(
+      final token = await _prefs.token;
+      
+      final horariosBase = await _servicioService.buscarHorariosPorDiaYServicio(
         _getDiaBackend(date),
         widget.servicio.idServicio,
       );
 
-      Map<int, int> disponibilidad = {};
-      for (var h in horarios) {
-        int libres = await _consultarPlazasApi(fechaStr, h.id);
-        disponibilidad[h.id] = libres;
+      List<Map<String, dynamic>> listaTemporal = [];
+
+      for (var h in horariosBase) {
+        final url = Uri.parse(ApiConfig.getDisponibilidad(fechaStr, h.id));
+        final response = await http.get(
+          url,
+          headers: {'Authorization': 'Bearer $token'},
+        );
+
+        if (response.statusCode == 200) {
+          Map<String, dynamic> bloquesMap = jsonDecode(response.body);
+          
+          bloquesMap.forEach((hora, plazas) {
+            listaTemporal.add({
+              'hora': hora,
+              'plazas': plazas,
+              'horarioObj': h,
+            });
+          });
+        }
       }
 
+      listaTemporal.sort((a, b) => a['hora'].compareTo(b['hora']));
+
       setState(() {
-        _horarios = horarios;
-        _plazasReales = disponibilidad;
+        _bloquesFinales = listaTemporal;
         _estaCargando = false;
       });
     } catch (e) {
       setState(() => _estaCargando = false);
-      _mostrarSnackBar("Error al cargar horarios", Colors.redAccent);
+      _mostrarSnackBar("Error al conectar con el servidor", Colors.redAccent);
     }
   }
 
-  Future<int> _consultarPlazasApi(String fecha, int horarioId) async {
-    try {
-      final token = await _prefs.token;
-      final url =
-          'http://192.168.7.13:8082/citas/disponible?fecha=$fecha&horarioId=$horarioId';
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-      if (response.statusCode == 200) return int.parse(response.body);
-    } catch (e) {
-      debugPrint("Error plazas: $e");
-    }
-    return 0;
-  }
-
-  // MÉTODO CLAVE: Envío del JSON mapeado para Spring Boot
-  Future<void> _confirmarReserva(HorarioSemanal h) async {
+  Future<void> _confirmarReserva(HorarioSemanal h, String horaBloque) async {
     final int? clienteId = await _prefs.userId;
     final String fechaStr = DateFormat('yyyy-MM-dd').format(_diaSeleccionado!);
 
     if (clienteId == null) {
-      _mostrarSnackBar(
-        "Error: No se encontró el ID del usuario",
-        Colors.redAccent,
-      );
+      _mostrarSnackBar("Error: Sesión no válida", Colors.redAccent);
       return;
     }
 
-    // MAPEO DEL JSON (Coincide con tu @RequestBody Cita en Java)
     final Map<String, dynamic> citaRequest = {
       "fecha": fechaStr,
-      "estado": true,
+      "horaInicio": horaBloque.substring(0, 5),
       "horario": {"id": h.id},
       "cliente": {"id": clienteId},
     };
@@ -122,48 +117,99 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
         body: jsonEncode(citaRequest),
       );
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        _mostrarSnackBar("¡Cita reservada con éxito!", Colors.green);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _mostrarSnackBar("¡Reserva confirmada!", Colors.green);
         if (mounted) Navigator.pop(context, true);
-        ;
       } else {
         _mostrarSnackBar("No se pudo realizar la reserva", Colors.orange);
       }
     } catch (e) {
-      _mostrarSnackBar("Error de conexión con el servidor", Colors.redAccent);
+      _mostrarSnackBar("Error de red", Colors.redAccent);
     } finally {
       if (mounted) setState(() => _estaCargando = false);
     }
   }
 
-  String _getDiaBackend(DateTime date) {
-    List<String> dias = [
-      "LUNES",
-      "MARTES",
-      "MIERCOLES",
-      "JUEVES",
-      "VIERNES",
-      "SABADO",
-      "DOMINGO",
-    ];
-    return dias[date.weekday - 1];
+  // --- COMPONENTES DE CONFIRMACIÓN (BOTTOM SHEET) ---
+
+  void _mostrarPantallaConfirmacion(HorarioSemanal h, String horaBloque) {
+    final String fechaFormateada = DateFormat('dd/MM/yyyy').format(_diaSeleccionado!);
+    final String horaLimpia = horaBloque.substring(0, 5);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(25),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 50, height: 5, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
+              const SizedBox(height: 20),
+              const Text("Confirmar Reserva", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 25),
+              _buildDetalleFila(Icons.content_cut, "Servicio", widget.servicio.nombre),
+              _buildDetalleFila(Icons.calendar_month, "Fecha", fechaFormateada),
+              _buildDetalleFila(Icons.access_time, "Hora", "$horaLimpia H"),
+              const SizedBox(height: 30),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("Cancelar", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _confirmarReserva(h, horaBloque);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: naranjaLogo,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      ),
+                      child: const Text("CONFIRMAR", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
+    );
   }
 
-  void _mostrarSnackBar(String mensaje, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          mensaje,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: color,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+  Widget _buildDetalleFila(IconData icono, String titulo, String valor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icono, color: naranjaLogo, size: 24),
+          const SizedBox(width: 15),
+          Text("$titulo:", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+          const SizedBox(width: 10),
+          Expanded(child: Text(valor, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), overflow: TextOverflow.ellipsis)),
+        ],
       ),
     );
   }
 
-  // --- DISEÑO DE INTERFAZ ---
+  // --- INTERFAZ PRINCIPAL ---
 
   @override
   Widget build(BuildContext context) {
@@ -172,237 +218,121 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: naranjaLogo,
+        title: const Text("Reserva tu cita", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Colors.white,
-            size: 20,
-          ),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // SECCIÓN TÍTULO Y CALENDARIO (FONDO BLANCO)
-          Container(
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(25, 10, 25, 15),
-                  child: Text(
-                    widget.servicio.nombre.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      color: negroSuave,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ),
-                TableCalendar(
-                  locale: 'es_ES',
-                  firstDay: DateTime.now(),
-                  lastDay: DateTime.now().add(const Duration(days: 90)),
-                  focusedDay: _diaEnfocado,
-                  startingDayOfWeek: StartingDayOfWeek.monday,
-                  calendarFormat: CalendarFormat.month,
-                  headerStyle: const HeaderStyle(
-                    titleCentered: true,
-                    formatButtonVisible: false,
-                    titleTextStyle: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  selectedDayPredicate: (day) =>
-                      isSameDay(_diaSeleccionado, day),
-                  enabledDayPredicate: (day) => day.weekday < 6,
-                  calendarStyle: CalendarStyle(
-                    weekendTextStyle: const TextStyle(
-                      color: Colors.redAccent,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    selectedDecoration: BoxDecoration(
-                      color: naranjaLogo,
-                      shape: BoxShape.circle,
-                    ),
-                    todayDecoration: BoxDecoration(
-                      color: naranjaLogo.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    todayTextStyle: TextStyle(
-                      color: naranjaLogo,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  onDaySelected: (sel, foc) {
-                    setState(() {
-                      _diaSeleccionado = sel;
-                      _diaEnfocado = foc;
-                    });
-                    _cargarDatosDia(sel);
-                  },
-                ),
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
-
+          _buildCalendarioHeader(),
           const Padding(
-            padding: EdgeInsets.fromLTRB(25, 25, 25, 10),
-            child: Text(
-              "HORARIOS DISPONIBLES",
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-                letterSpacing: 1.1,
-              ),
+            padding: EdgeInsets.fromLTRB(25, 20, 25, 10),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text("BLOQUES DISPONIBLES", 
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.2)),
             ),
           ),
-
           Expanded(
-            child: _estaCargando
-                ? Center(child: CircularProgressIndicator(color: naranjaLogo))
-                : _buildListaHorarios(),
+            child: _estaCargando 
+              ? Center(child: CircularProgressIndicator(color: naranjaLogo))
+              : _buildListaBloques(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildListaHorarios() {
-    if (_horarios.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.calendar_today_outlined,
-              size: 50,
-              color: Colors.grey[300],
+  Widget _buildCalendarioHeader() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))],
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Text(widget.servicio.nombre.toUpperCase(), 
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: negroSuave)),
+          ),
+          TableCalendar(
+            locale: 'es_ES',
+            firstDay: DateTime.now(),
+            lastDay: DateTime.now().add(const Duration(days: 60)),
+            focusedDay: _diaEnfocado,
+            startingDayOfWeek: StartingDayOfWeek.monday,
+            selectedDayPredicate: (day) => isSameDay(_diaSeleccionado, day),
+            calendarFormat: CalendarFormat.month,
+            headerStyle: const HeaderStyle(formatButtonVisible: false, titleCentered: true),
+            calendarStyle: CalendarStyle(
+              selectedDecoration: BoxDecoration(color: naranjaLogo, shape: BoxShape.circle),
+              todayDecoration: BoxDecoration(color: naranjaLogo.withOpacity(0.2), shape: BoxShape.circle),
+              todayTextStyle: TextStyle(color: naranjaLogo, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 10),
-            const Text(
-              "No hay turnos disponibles",
-              style: TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
-      );
+            onDaySelected: (sel, foc) {
+              setState(() { _diaSeleccionado = sel; _diaEnfocado = foc; });
+              _cargarDatosDia(sel);
+            },
+          ),
+          const SizedBox(height: 15),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListaBloques() {
+    if (_bloquesFinales.isEmpty) {
+      return const Center(child: Text("No hay turnos disponibles.", style: TextStyle(color: Colors.grey)));
     }
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      itemCount: _horarios.length,
+      itemCount: _bloquesFinales.length,
       itemBuilder: (context, i) {
-        final h = _horarios[i];
-        final libres = _plazasReales[h.id] ?? 0;
-        return _buildCardHorario(h, libres);
+        final bloque = _bloquesFinales[i];
+        final String hora = bloque['hora'].substring(0, 5);
+        final int plazas = bloque['plazas'];
+        final bool disponible = plazas > 0;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            title: Text(hora, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            subtitle: Text(disponible ? "$plazas plazas libres" : "Agotado", 
+              style: TextStyle(color: disponible ? Colors.green : Colors.red, fontWeight: FontWeight.w600)),
+            trailing: ElevatedButton(
+              onPressed: disponible ? () => _mostrarPantallaConfirmacion(bloque['horarioObj'], bloque['hora']) : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: naranjaLogo,
+                disabledBackgroundColor: Colors.grey.shade300,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: Text(disponible ? "RESERVAR" : "LLENO", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        );
       },
     );
   }
 
-  Widget _buildCardHorario(HorarioSemanal h, int libres) {
-    bool disponible = libres > 0;
+  String _getDiaBackend(DateTime date) {
+    List<String> dias = ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"];
+    return dias[date.weekday - 1];
+  }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 15),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18.0),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    h.horaInicio.substring(0, 5),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    children: [
-                      Icon(
-                        disponible ? Icons.check_circle : Icons.error_outline,
-                        size: 14,
-                        color: disponible
-                            ? (libres == 1 ? Colors.orange : Colors.green)
-                            : Colors.red,
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        libres == 1 ? "1 cita libre" : "$libres citas libres",
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: disponible
-                              ? (libres == 1
-                                    ? Colors.orange[800]
-                                    : Colors.green[700])
-                              : Colors.red[700],
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            ElevatedButton(
-              onPressed: disponible ? () => _confirmarReserva(h) : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: naranjaLogo,
-                disabledBackgroundColor: Colors.grey[200],
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-              ),
-              child: Text(
-                disponible ? "RESERVAR" : "LLENO",
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+  void _mostrarSnackBar(String mensaje, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(mensaje), backgroundColor: color, behavior: SnackBarBehavior.floating),
     );
   }
 }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../config/api_config.dart';
+import '../../services/auth_service.dart';
+
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -11,6 +14,8 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
+
+  final AuthService _authService = AuthService();
 
   final _userController = TextEditingController();
   final _nameController = TextEditingController();
@@ -35,9 +40,6 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isLoading = true);
 
     // Asegúrate de que esta IP sea la correcta de tu servidor actual
-    const String urlApi =
-        'http://192.168.7.13:8082/api/auth/signup/cliente/public';
-
     final signupData = {
       "username": _userController.text.trim(),
       "nombre": _nameController.text.trim(),
@@ -53,11 +55,7 @@ class _SignupScreenState extends State<SignupScreen> {
     };
 
     try {
-      final response = await http.post(
-        Uri.parse(urlApi),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(signupData),
-      );
+      final response = await _authService.register(signupData);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         // ÉXITO: Mostramos un diálogo informativo en lugar de solo un mensaje rápido

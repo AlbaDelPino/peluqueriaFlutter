@@ -11,7 +11,7 @@ class ClienteModel {
   final bool estado;
   final String role;
   final String? alergenos;
-  final String direccion;
+  final bool verificado;
   final String observacion;
   final String
   imagen; // 👈 Mantenlo como String (Base64) para facilitar el envío/recepción
@@ -23,10 +23,11 @@ class ClienteModel {
     required this.email,
     required this.telefono,
     required this.contrasenya,
+    required this.verificado, 
     required this.estado,
     required this.role,
     this.alergenos,
-    required this.direccion,
+
     required this.observacion,
     this.imagen = "",
   });
@@ -45,10 +46,11 @@ class ClienteModel {
       estado: json['estado'] ?? false,
       role: json['role'] ?? '',
       alergenos: json['alergenos'] ?? '',
-      direccion: json['direccion'] ?? '',
+ 
       observacion: json['observacion'] ?? '',
       // Lo guardamos directamente como el String Base64 que viene del JSON
       imagen: json['imagen']?.toString() ?? '',
+      verificado: json['verificado'] ?? false,
     );
   }
 
@@ -63,7 +65,7 @@ class ClienteModel {
       "estado": estado,
       "role": role,
       "alergenos": alergenos,
-      "direccion": direccion,
+      "verificado": verificado,
       "observacion": observacion,
       "imagen": imagen, // Ya es un String Base64
     };

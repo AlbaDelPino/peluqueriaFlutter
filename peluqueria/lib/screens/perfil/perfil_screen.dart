@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../../models/usuario/cliente_model.dart';
 import '../../services/user_preferences.dart';
 import 'editar_perfil_screen.dart';
+import '../../config/api_config.dart';
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -33,15 +34,13 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
       final String tokenActual = await prefs.token;
 
-      final response = await http
-          .get(
-            Uri.parse('http://192.168.7.13:8082/api/auth/me'),
-            headers: {
-              'Authorization': 'Bearer $tokenActual',
-              'Content-Type': 'application/json',
-            },
-          )
-          .timeout(const Duration(seconds: 10));
+      final response = await http.get(
+        Uri.parse(ApiConfig.meUrl), // <-- Cambiado
+        headers: {
+          'Authorization': 'Bearer $tokenActual',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final decodedData = jsonDecode(response.body);
@@ -118,14 +117,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     cliente?.telefono?.toString() ?? "No disponible",
                     Icons.phone_iphone_rounded,
                   ),
-                  _buildDato(
-                    "Dirección",
-                    cliente?.direccion ?? "No disponible",
-                    Icons.location_on_outlined,
-                  ),
+                  
                   _buildDato(
                     "Alérgenos",
                     cliente?.alergenos ?? "Ninguno",
+                    Icons.warning_amber_rounded,
+                  ),
+                  _buildDato(
+                    "observaciones",
+                    cliente?.observacion ?? "Ninguno",
                     Icons.warning_amber_rounded,
                   ),
                   const SizedBox(height: 30),

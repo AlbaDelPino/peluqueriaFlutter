@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../config/api_config.dart';
+
 
 class UserPreferences {
   static final UserPreferences _instancia = UserPreferences._internal();
@@ -43,10 +45,7 @@ class UserPreferences {
         key: 'user_telefono',
         value: decodedData['telefono']?.toString() ?? '',
       );
-      await _storage.write(
-        key: 'user_direccion',
-        value: decodedData['direccion'] ?? '',
-      );
+      
       await _storage.write(key: 'estaLogueado', value: 'true');
     } catch (e) {
       print("Error en guardarSesion: $e");
@@ -73,15 +72,13 @@ class UserPreferences {
     required String imagen,
     String? email,
     String? telefono,
-    String? direccion,
   }) async {
     await _storage.write(key: 'nombre_usuario', value: nombre);
     await _storage.write(key: 'user_imagen', value: imagen);
     if (email != null) await _storage.write(key: 'user_email', value: email);
     if (telefono != null)
       await _storage.write(key: 'user_telefono', value: telefono);
-    if (direccion != null)
-      await _storage.write(key: 'user_direccion', value: direccion);
+   
   }
 
   // --- VALIDACIÓN ---
@@ -92,7 +89,7 @@ class UserPreferences {
     try {
       final response = await http
           .get(
-            Uri.parse('http://192.168.123.1:8082/api/auth/me'),
+            Uri.parse(ApiConfig.meUrl),
             headers: {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer $currentToken',

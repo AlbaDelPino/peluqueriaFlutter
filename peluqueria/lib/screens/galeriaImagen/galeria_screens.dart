@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../models/ServicioImagen/servicio_imagen_model.dart';
+import '../../config/api_config.dart';
+
 
 class GaleriaServiciosScreen extends StatelessWidget {
   final int? servicioId;
@@ -11,10 +13,9 @@ class GaleriaServiciosScreen extends StatelessWidget {
 
   Future<List<ServicioImagen>> fetchImagenes(int? id) async {
     // Si no hay ID, pedimos todas las imágenes para la galería general
-    String urlFinal = (id == null) 
-        ? 'http://192.168.7.13:8082/api/imagenes' 
-        : 'http://192.168.7.13:8082/api/imagenes/servicio/$id';
-
+   final String urlFinal = (id == null) 
+        ? ApiConfig.todasImagenesUrl 
+        : ApiConfig.imagenesPorServicio(id);
     final url = Uri.parse(urlFinal);
     try {
       final response = await http.get(url);

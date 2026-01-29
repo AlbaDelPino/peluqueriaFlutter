@@ -4,9 +4,10 @@ import '../../models/servicios/servicio_model.dart';
 import '../../models/servicios/tipo_servicio_model.dart';
 import '../../models/horario/horario_model.dart';
 import 'user_preferences.dart'; // Tu clase que usa FlutterSecureStorage
+import '../../config/api_config.dart';
 
 class ServicioService {
-  final String _baseUrl = 'http://192.168.7.13:8082';
+
   final UserPreferences _prefs = UserPreferences();
 
   // Función privada para no repetir código: obtiene los headers con el Token
@@ -23,7 +24,7 @@ class ServicioService {
     try {
       final headers = await _getAuthHeaders();
       final response = await http.get(
-        Uri.parse('$_baseUrl/servicio'),
+         Uri.parse(ApiConfig.serviciosUrl),
         headers: headers,
       );
 
@@ -45,7 +46,7 @@ class ServicioService {
     try {
       final headers = await _getAuthHeaders();
       final response = await http.get(
-        Uri.parse('$_baseUrl/tiposervicio'),
+         Uri.parse(ApiConfig.tiposServicioUrl),
         headers: headers,
       );
 
@@ -66,8 +67,7 @@ class ServicioService {
       if (clienteId == 0) return [];
 
       final headers = await _getAuthHeaders();
-      final url = Uri.parse('$_baseUrl/api/favoritos/cliente/$clienteId');
-
+final url = Uri.parse(ApiConfig.favoritosCliente(clienteId));
       final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
@@ -87,9 +87,7 @@ class ServicioService {
   Future<bool> agregarFavorito(int clienteId, int servicioId) async {
     try {
       final headers = await _getAuthHeaders();
-      final url = Uri.parse(
-        '$_baseUrl/api/favoritos/cliente/$clienteId/servicio/$servicioId',
-      );
+      final url = Uri.parse(ApiConfig.favoritoAccion(clienteId, servicioId));
 
       final response = await http.post(url, headers: headers);
       return response.statusCode == 200 || response.statusCode == 201;
@@ -101,9 +99,7 @@ class ServicioService {
   Future<bool> eliminarFavorito(int clienteId, int servicioId) async {
     try {
       final headers = await _getAuthHeaders();
-      final url = Uri.parse(
-        '$_baseUrl/api/favoritos/cliente/$clienteId/servicio/$servicioId',
-      );
+      final url = Uri.parse(ApiConfig.favoritoAccion(clienteId, servicioId));
 
       final response = await http.delete(url, headers: headers);
       return response.statusCode == 200;
@@ -120,8 +116,8 @@ class ServicioService {
     try {
       final token = await _prefs.token;
       // Construimos la URL con los QueryParams que pide tu controlador
-      final url = Uri.parse('$_baseUrl/horarios/buscar').replace(
-        queryParameters: {
+final url = Uri.parse(ApiConfig.buscarHorariosUrl).replace(
+       queryParameters: {
           'diaSemana': diaSemana.toUpperCase(), // Ej: "LUNES"
           'idServicio': idServicio.toString(),
         },
@@ -156,7 +152,7 @@ class ServicioService {
     try {
       final token = await _prefs.token;
       final response = await http.post(
-        Uri.parse('$_baseUrl/reservas'),
+        Uri.parse(ApiConfig.reservasUrl),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -184,7 +180,7 @@ class ServicioService {
     try {
       final headers = await _getAuthHeaders();
       // URL: /citas/disponible?fecha=2026-01-19&horarioId=1
-      final url = Uri.parse('$_baseUrl/citas/disponible').replace(
+      final url = Uri.parse(ApiConfig.plazasDisponiblesUrl).replace(
         queryParameters: {'fecha': fecha, 'horarioId': horarioId.toString()},
       );
 
