@@ -120,11 +120,11 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
 flutter_native_splash:
-  color: "#FF8B00"
+  color: "#FFFFFF"
   image: assets/iconPeluqueria.png
-  icon_background_color: "#FF8B00"
+  icon_background_color: "#FFFFFF"
 
   android_12:
-    color: "#FF8B00"
+    color: "#FFFFFF"
     image: assets/iconPeluqueria.png
-    icon_background_color: "#FF8B00"
+    icon_background_color: "#FFFFFF"
