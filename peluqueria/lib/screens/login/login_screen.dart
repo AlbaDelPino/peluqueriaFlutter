@@ -333,25 +333,29 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: Colors.grey.shade300),
       ),
-      child: OutlinedButton.icon(
+      child: OutlinedButton(
         onPressed: _loginConGoogle,
-        icon: Image.network(
-          'https://rotulosmatesanz.com/wp-content/uploads/2017/09/2000px-Google_G_Logo.svg_.png',
-          height: 24,
-        ),
-        label: const Text(
-          "Continuar con Google",
-          style: TextStyle(
-            color: Colors.black87,
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
         style: OutlinedButton.styleFrom(
-          side: BorderSide.none,
+          side: BorderSide
+              .none, // Quitamos el borde del botón porque el Container ya tiene uno
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
           ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildGoogleIcon(), // <--- Aquí llamamos a tu nuevo widget de imagen
+            const SizedBox(width: 12),
+            const Text(
+              "Continuar con Google",
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -370,6 +374,24 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildGoogleIcon() {
+    return Image.network(
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png',
+      height: 24,
+      width: 24,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return const SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) =>
+          const Icon(Icons.g_mobiledata, color: Colors.blue, size: 30),
     );
   }
 }
