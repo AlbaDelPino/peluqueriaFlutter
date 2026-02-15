@@ -4,6 +4,7 @@ import '../../services/user_preferences.dart';
 import '../../models/servicios/servicio_model.dart';
 import '../../models/servicios/tipo_servicio_model.dart';
 import '../calendario/calendario_screen.dart';
+import 'package:peluqueria/widget/texto_automatico.dart';
 import 'detalle_tipo_screen.dart';
 
 class ServiciosScreen extends StatefulWidget {
@@ -117,14 +118,16 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 45, 20, 15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        width: double.infinity, // Asegura que ocupe todo el ancho para poder centrar
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 15),      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text(
-            "Nuestros Servicios",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+          const TextoAutomatico(
+            "NUESTROS SERVICIOS",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+          textAlign: TextAlign.center,
           ),
+          
           const SizedBox(height: 15),
           Row(
             children: [
@@ -224,7 +227,7 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
                   size: 35,
                 ),
                 const SizedBox(height: 10),
-                Text(
+                TextoAutomatico(
                   tipo.nombre,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
@@ -274,11 +277,11 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    TextoAutomatico(
                       s.nombre,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    Text(
+                    TextoAutomatico(
                       "${s.precio}€",
                       style: TextStyle(
                         color: naranjaLogo,
@@ -308,7 +311,7 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text(
+                child: const TextoAutomatico(
                   "Reservar",
                   style: TextStyle(color: Colors.white, fontSize: 12),
                 ),

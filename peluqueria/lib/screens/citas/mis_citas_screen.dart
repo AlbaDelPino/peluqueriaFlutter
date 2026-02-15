@@ -5,6 +5,7 @@ import '../../services/user_preferences.dart';
 import 'detalle_cita_screen.dart';
 import 'package:intl/intl.dart';
 import '../../config/api_config.dart';
+import 'package:peluqueria/widget/texto_automatico.dart';
 
 class MisCitasScreen extends StatefulWidget {
   const MisCitasScreen({super.key});
@@ -18,6 +19,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
   List<dynamic> _citas = [];
   bool _isLoading = true;
   final Color naranjaBernat = const Color(0xFFFF6B00);
+  final Color negroSuave = const Color(0xFF2D2D2D);
 
   @override
   void initState() {
@@ -56,12 +58,16 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
     return Scaffold(
       backgroundColor: Colors.white, // Fondo blanco para toda la pantalla
       appBar: AppBar(
-        title: const Text(
-          "Mis Citas",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: TextoAutomatico(
+          "MIS CITAS",
+          style: TextStyle(
+            color: negroSuave,
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+          ),
         ),
         centerTitle: true,
-        backgroundColor: naranjaBernat, // Naranja Bernat
+        backgroundColor: Colors.white, // Naranja Bernat
         elevation: 0,
         iconTheme: const IconThemeData(
           color: Colors.white,
@@ -95,7 +101,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
             color: Colors.grey[300],
           ),
           const SizedBox(height: 20),
-          Text(
+          TextoAutomatico(
             "No tienes citas programadas",
             style: TextStyle(
               color: Colors.grey[600],
@@ -167,7 +173,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
+                            TextoAutomatico(
                               diaSemana,
                               style: TextStyle(
                                 color: naranjaBernat,
@@ -180,7 +186,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text(
+                        TextoAutomatico(
                           diaMes,
                           style: const TextStyle(
                             fontSize: 17,
@@ -197,7 +203,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                               color: Colors.grey,
                             ),
                             const SizedBox(width: 5),
-                            Text(
+                            TextoAutomatico(
                               "$hora h",
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
@@ -211,7 +217,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                             ),
                             const SizedBox(width: 5),
                             Expanded(
-                              child: Text(
+                              child: TextoAutomatico(
                                 nombreServicio,
                                 style: const TextStyle(color: Colors.black87),
                                 overflow: TextOverflow.ellipsis,
@@ -253,7 +259,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withOpacity(0.2)),
       ),
-      child: Text(
+      child: TextoAutomatico(
         estado,
         style: TextStyle(
           color: color,

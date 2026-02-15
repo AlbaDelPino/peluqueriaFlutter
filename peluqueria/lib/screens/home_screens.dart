@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
 import '../services/user_preferences.dart';
 import '../widget/menu_lateral.dart';
 import 'servicios/servicios_sreen.dart';
 import 'citas/mis_citas_screen.dart';
 import 'perfil/perfil_screen.dart';
 import 'galeriaImagen/galeria_screens.dart';
+import '../providers/locale_provider.dart';
 import 'inicio_contenido.dart';
 
 class HomeScreens extends StatefulWidget {
@@ -52,6 +53,23 @@ class _HomeScreensState extends State<HomeScreens> {
             fontSize: 18,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.language),
+            onPressed: () {
+  // Usamos listen: false porque solo queremos ejecutar la función, no redibujar el botón en sí mismo
+                final provider = Provider.of<LocaleProvider>(context, listen: false);
+                
+                if (provider.locale.languageCode == 'es') {
+                  provider.setLocale(const Locale('en'));
+                  print("Cambiando a Inglés"); // Esto te ayudará a ver en la consola si el botón funciona
+                } else {
+                  provider.setLocale(const Locale('es'));
+                  print("Cambiando a Español");
+                }
+              },
+          ),
+        ],
         centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: naranjaLogo,

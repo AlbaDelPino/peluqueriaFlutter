@@ -4,7 +4,7 @@ import 'package:peluqueria/config/api_config.dart';
 import 'restablecer_password_screen.dart';
 import '../../config/api_config.dart';
 import '../../services/auth_service.dart';
-
+import 'package:peluqueria/widget/texto_automatico.dart';
 
 
 class OlvidePasswordScreen extends StatefulWidget {
@@ -66,7 +66,7 @@ class _OlvidePasswordScreenState extends State<OlvidePasswordScreen> {
   void _mostrarMensaje(String msg, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg),
+        content: TextoAutomatico(msg),
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -85,7 +85,7 @@ class _OlvidePasswordScreenState extends State<OlvidePasswordScreen> {
           icon: Icon(Icons.arrow_back_ios_new, color: negroSuave, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
+        title: TextoAutomatico(
           "RECUPERAR CUENTA",
           style: TextStyle(
             color: negroSuave,
@@ -104,7 +104,7 @@ class _OlvidePasswordScreenState extends State<OlvidePasswordScreen> {
               const SizedBox(height: 20),
               Icon(Icons.mail_lock_outlined, size: 100, color: naranjaLogo),
               const SizedBox(height: 30),
-              Text(
+              TextoAutomatico(
                 "Introduce tu email y te enviaremos un código para restablecer tu contraseña.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -196,7 +196,7 @@ class _OlvidePasswordScreenState extends State<OlvidePasswordScreen> {
             borderRadius: BorderRadius.circular(15),
           ),
         ),
-        child: const Text(
+        child: const TextoAutomatico(
           "ENVIAR CÓDIGO",
           style: TextStyle(
             color: Colors.white,

@@ -1,30 +1,37 @@
 import 'package:flutter/material.dart';
-// 1. IMPORTA ESTE PAQUETE
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart'; 
+import 'package:flutter_localizations/flutter_localizations.dart'; 
 import 'package:peluqueria/services/user_preferences.dart';
 import 'package:peluqueria/screens/login/login_screen.dart';
 import 'package:peluqueria/screens/home_screens.dart';
 import 'package:peluqueria/screens/login/signup_screen.dart';
+import 'package:peluqueria/providers/locale_provider.dart'; 
 import 'package:intl/date_symbol_data_local.dart';
 
-final RouteObserver<ModalRoute<void>> routeObserver =
-    RouteObserver<ModalRoute<void>>();
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
 
 void main() async {
-  // Asegura que los bindings estén listos antes de llamar a SystemChrome
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 2. CONFIGURA LA ORIENTACIÓN VERTICAL AQUÍ
+  // Bloquear orientación vertical
   await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp, // Vertical normal
-    DeviceOrientation.portraitDown, // Vertical invertido (opcional)
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
   ]);
 
-  final prefs = UserPreferences();
+  // Cargamos los formatos de fecha para español e inglés
+  await Future.wait([
+    initializeDateFormatting('es', null),
+    initializeDateFormatting('en', null),
+  ]);
 
-  initializeDateFormatting('es_ES', null).then((_) {
-    runApp(const MyApp());
-  });
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => LocaleProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -33,12 +40,25 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final prefs = UserPreferences();
+    final localeProvider = Provider.of<LocaleProvider>(context);
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Bernat Experience',
+      
+      // CONFIGURACIÓN DE IDIOMA
+      locale: localeProvider.locale, 
+      supportedLocales: const [
+        Locale('es'),
+        Locale('en'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+
       theme: ThemeData(
-        // Usamos el color hexadecimal para ser consistentes con tu diseño
         primarySwatch: Colors.orange,
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFFF6B00)),
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -58,7 +78,6 @@ class MyApp extends StatelessWidget {
           if (snapshot.hasData && snapshot.data == true) {
             return const HomeScreens();
           } else {
-            prefs.logout();
             return const LoginScreen();
           }
         },
@@ -70,6 +89,6 @@ class MyApp extends StatelessWidget {
       },
     );
   }
-
-  
 }
+
+

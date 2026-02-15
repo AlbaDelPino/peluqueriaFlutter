@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:peluqueria/widget/texto_automatico.dart';
 
 class DetallesScreen extends StatelessWidget {
   final String nombreRecibido;

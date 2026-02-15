@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/servicios/servicio_model.dart';
 import '../calendario/calendario_screen.dart';
+import 'package:peluqueria/widget/texto_automatico.dart';
 
 class DetalleTipoScreen extends StatefulWidget {
   final String titulo;
@@ -45,7 +46,7 @@ class _DetalleTipoScreenState extends State<DetalleTipoScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: Text(
+        title: TextoAutomatico(
           widget.titulo,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
@@ -76,14 +77,14 @@ class _DetalleTipoScreenState extends State<DetalleTipoScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      TextoAutomatico(
                         s.nombre,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                         ),
                       ),
-                      Text(
+                      TextoAutomatico(
                         "${s.precio}€(DONACIÓN)",
                         style: const TextStyle(
                           color: Color(0xFFFF6B00),
@@ -115,7 +116,7 @@ class _DetalleTipoScreenState extends State<DetalleTipoScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text(
+                  child: const TextoAutomatico(
                     "Reservar",
                     style: TextStyle(color: Colors.white),
                   ),

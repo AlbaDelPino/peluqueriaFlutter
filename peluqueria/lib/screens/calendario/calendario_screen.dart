@@ -3,7 +3,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
+import 'package:peluqueria/widget/texto_automatico.dart';
 import '../../models/servicios/servicio_model.dart';
 import '../../models/horario/horario_model.dart';
 import '../../services/servicio_service.dart';
@@ -160,7 +160,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: naranjaLogo,
-        title: const Text(
+        title: const TextoAutomatico(
           "Reserva tu cita",
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
@@ -173,7 +173,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
             padding: EdgeInsets.fromLTRB(25, 20, 25, 10),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
+              child: TextoAutomatico(
                 "BLOQUES DISPONIBLES",
                 style: TextStyle(
                   fontSize: 12,
@@ -214,7 +214,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Text(
+            child: TextoAutomatico(
               widget.servicio.nombre.toUpperCase(),
               style: TextStyle(
                 fontSize: 22,
@@ -241,7 +241,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
               defaultBuilder: (context, day, focusedDay) {
                 if (_diasConPlazas.contains(_getNombreDiaEspanol(day))) {
                   return Center(
-                    child: Text(
+                    child: TextoAutomatico(
                       '${day.day}',
                       style: TextStyle(
                         color: naranjaLogo,
@@ -288,7 +288,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   Widget _buildListaBloques() {
     if (_bloquesFinales.isEmpty) {
       return const Center(
-        child: Text(
+        child: TextoAutomatico(
           "No hay turnos disponibles.",
           style: TextStyle(color: Colors.grey),
         ),
@@ -305,11 +305,11 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
             borderRadius: BorderRadius.circular(15),
           ),
           child: ListTile(
-            title: Text(
+            title: TextoAutomatico(
               bloque['hora'].substring(0, 5),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
-            subtitle: Text(
+            subtitle: TextoAutomatico(
               "${bloque['plazas']} plazas libres",
               style: const TextStyle(color: Colors.green),
             ),
@@ -317,7 +317,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
               style: ElevatedButton.styleFrom(backgroundColor: naranjaLogo),
               onPressed: () =>
                   _confirmarReserva(bloque['horarioObj'], bloque['hora']),
-              child: const Text(
+              child: const TextoAutomatico(
                 "RESERVAR",
                 style: TextStyle(color: Colors.white),
               ),
@@ -368,6 +368,6 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   void _mostrarSnackBar(String mensaje, Color color) {
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text(mensaje), backgroundColor: color));
+    ).showSnackBar(SnackBar(content: TextoAutomatico(mensaje), backgroundColor: color));
   }
 }

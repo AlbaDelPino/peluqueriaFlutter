@@ -5,6 +5,7 @@ import '../../models/servicios/tipo_servicio_model.dart';
 import '../../models/horario/horario_model.dart';
 import 'user_preferences.dart'; // Tu clase que usa FlutterSecureStorage
 import '../../config/api_config.dart';
+import 'package:peluqueria/widget/texto_automatico.dart';
 
 class ServicioService {
   final UserPreferences _prefs = UserPreferences();

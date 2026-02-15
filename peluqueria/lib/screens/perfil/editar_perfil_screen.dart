@@ -2,12 +2,13 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
 import '../../models/usuario/cliente_model.dart';
 import '../../services/user_preferences.dart';
 import '../../config/api_config.dart';
 import '../../services/auth_service.dart';
-
+import 'package:peluqueria/widget/texto_automatico.dart';
+import 'package:translator/translator.dart';
+import 'package:peluqueria/config/traducciones.dart'; // <--- ESTO ARREGLA EL ERROR
 
 class EditarPerfilScreen extends StatefulWidget {
   const EditarPerfilScreen({super.key});
@@ -86,14 +87,14 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              const TextoAutomatico(
                 "CAMBIAR FOTO DE PERFIL",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 20),
               ListTile(
                 leading: Icon(Icons.camera_alt, color: naranjaLogo),
-                title: const Text("Tomar foto"),
+                title: const TextoAutomatico("Tomar foto"),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.camera);
@@ -101,7 +102,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
               ),
               ListTile(
                 leading: Icon(Icons.photo_library, color: naranjaLogo),
-                title: const Text("Elegir de galería"),
+                title: const TextoAutomatico("Elegir de galería"),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.gallery);
@@ -188,7 +189,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text(t), backgroundColor: c));
+    ).showSnackBar(SnackBar(content: TextoAutomatico(t), backgroundColor: c));
   }
 
   @override
@@ -202,7 +203,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
           icon: Icon(Icons.arrow_back_ios_new, color: negroSuave),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: const TextoAutomatico(
           "EDITAR PERFIL",
           style: TextStyle(
             color: Color(0xFF2D2D2D),
@@ -225,18 +226,18 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                       const SizedBox(height: 40),
                       _buildInput(
                         _nombreCtrl,
-                        "Nombre completo",
+                        const TextoAutomatico("Nombre completo"),
                         Icons.person_outline,
                       ),
                       _buildInput(
                         _emailCtrl,
-                        "Correo electrónico",
+                        const TextoAutomatico("Correo electrónico"),
                         Icons.mail_outline,
                         k: TextInputType.emailAddress,
                       ),
                       _buildInput(
                         _telefonoCtrl,
-                        "Teléfono móvil",
+                        const TextoAutomatico("Teléfono móvil"),
                         Icons.phone_iphone_rounded,
                         k: TextInputType.phone,
                       ),
@@ -302,9 +303,9 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     );
   }
 
-  Widget _buildInput(
+ Widget _buildInput(
     TextEditingController c,
-    String l,
+    Widget labelWidget, // <--- Ahora acepta el Widget TextoAutomatico directamente
     IconData i, {
     bool enabled = true,
     TextInputType k = TextInputType.text,
@@ -321,7 +322,8 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
           enabled: enabled,
           keyboardType: k,
           decoration: InputDecoration(
-            labelText: l,
+            // USAMOS 'label' porque acepta el widget que le pasamos
+            label: labelWidget, 
             prefixIcon: Icon(i, color: enabled ? naranjaLogo : Colors.grey),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(
@@ -330,7 +332,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             ),
           ),
           validator: (v) => (enabled && (v == null || v.isEmpty))
-              ? "Campo obligatorio"
+              ? "Campo obligatorio".tr(context) // El validador siempre devuelve String
               : null,
         ),
       ),
@@ -350,7 +352,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
           ),
           elevation: 5,
         ),
-        child: const Text(
+        child: const TextoAutomatico(
           "GUARDAR CAMBIOS",
           style: TextStyle(
             color: Colors.white,

@@ -5,6 +5,7 @@ import '../../models/usuario/cliente_model.dart';
 import '../../services/user_preferences.dart';
 import 'editar_perfil_screen.dart';
 import '../../config/api_config.dart';
+import 'package:peluqueria/widget/texto_automatico.dart';
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -67,7 +68,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(
+        title: TextoAutomatico(
           "MI PERFIL",
           style: TextStyle(
             color: negroSuave,
@@ -154,7 +155,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                TextoAutomatico(
                   label,
                   style: TextStyle(
                     color: Colors.grey.shade500,
@@ -162,7 +163,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text(
+                TextoAutomatico(
                   valor,
                   style: TextStyle(
                     color: negroSuave,
@@ -199,7 +200,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
         await prefs.logout();
         if (mounted) Navigator.pushReplacementNamed(context, 'login');
       },
-      child: const Text(
+      child: const TextoAutomatico(
         "CERRAR SESIÓN",
         style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
       ),

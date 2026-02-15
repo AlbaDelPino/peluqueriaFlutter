@@ -1,6 +1,6 @@
 class ApiConfig {
   // Base URL - El corazón de tu conexión
-  static const String baseUrl = 'http://10.48.100.95:8082';
+  static const String baseUrl = 'http://192.168.1.11:8082';
 
   // --- AUTENTICACIÓN Y REGISTRO ---
   static const String loginUrl = '$baseUrl/api/auth/signin';

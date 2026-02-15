@@ -5,6 +5,7 @@ import '../../services/user_preferences.dart';
 import '../../config/api_config.dart';
 import '../screens/perfil/editar_perfil_screen.dart';
 import '../screens/perfil/cambiar_password_screen.dart';
+import 'package:peluqueria/widget/texto_automatico.dart';
 
 class MenuLateral extends StatelessWidget {
   const MenuLateral({super.key});
@@ -83,14 +84,14 @@ class MenuLateral extends StatelessWidget {
                       ? Icon(Icons.person, size: 45, color: naranjaLogo)
                       : null,
                 ),
-                accountName: Text(
+                accountName: TextoAutomatico(
                   nombre,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
                 ),
-                accountEmail: const Text(
+                accountEmail: const TextoAutomatico(
                   "Cliente Bernat Experience",
                   style: TextStyle(color: Colors.white70),
                 ),
@@ -149,7 +150,7 @@ class MenuLateral extends StatelessWidget {
                         Icons.logout,
                         color: Colors.redAccent,
                       ),
-                      title: const Text(
+                      title: const TextoAutomatico(
                         'Cerrar Sesión',
                         style: TextStyle(
                           color: Colors.redAccent,
@@ -186,7 +187,7 @@ class MenuLateral extends StatelessWidget {
   }) {
     return ListTile(
       leading: Icon(icon, color: naranjaLogo),
-      title: Text(
+      title: TextoAutomatico(
         title,
         style: TextStyle(
           color: textoPrincipal,

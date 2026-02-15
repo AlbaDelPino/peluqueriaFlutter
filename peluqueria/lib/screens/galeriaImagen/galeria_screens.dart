@@ -3,10 +3,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../models/ServicioImagen/servicio_imagen_model.dart';
 import '../../config/api_config.dart';
+import 'package:peluqueria/widget/texto_automatico.dart';
 
 class GaleriaServiciosScreen extends StatelessWidget {
   final int? servicioId;
   final String? nombreServicio;
+  final Color negroSuave = const Color(0xFF2D2D2D);
 
   const GaleriaServiciosScreen({
     super.key,
@@ -34,61 +36,57 @@ class GaleriaServiciosScreen extends StatelessWidget {
       throw Exception("Error de red: $e");
     }
   }
-
-  @override
-  Widget build(BuildContext context) {
-    // Obtenemos el tamaño de la pantalla para ajustar proporciones
-    final size = MediaQuery.of(context).size;
-
-    return Scaffold(
-      backgroundColor: const Color(
-        0xFFF5F5F5,
-      ), // Gris muy claro de fondo para resaltar las tarjetas
-      appBar: AppBar(
-        title: Text(
-          nombreServicio ?? "Nuestros Trabajos",
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    // 1. Fondo principal blanco
+    backgroundColor: Colors.white, 
+    appBar: AppBar(
+      title: TextoAutomatico(
+        "NUESTRO TRABAJO",
+        style: TextStyle(
+          color: negroSuave,
+          fontWeight: FontWeight.w900,
+          fontSize: 18,
         ),
-        centerTitle: true,
-        backgroundColor: const Color(0xFFFF6B00),
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: FutureBuilder<List<ServicioImagen>>(
-        future: fetchImagenes(servicioId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFFFF6B00)),
-            );
-          } else if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("No hay fotos disponibles."));
-          }
+      centerTitle: true,
+      backgroundColor: Colors.white,
+      elevation: 0,
+      // Cambiamos el icono a negro para que se vea sobre el fondo blanco
+      iconTheme: IconThemeData(color: negroSuave),
+    ),
+    body: FutureBuilder<List<ServicioImagen>>(
+      future: fetchImagenes(servicioId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFFFF6B00)),
+          );
+        } else if (snapshot.hasError) {
+          return Center(child: TextoAutomatico("Error: ${snapshot.error}"));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: TextoAutomatico("No hay fotos disponibles."));
+        }
 
-          final imagenes = snapshot.data!;
+        final imagenes = snapshot.data!;
 
-          return Column(
-            children: [
-              const SizedBox(height: 20),
-              // Texto indicativo
-              const Text(
-                "Desliza para ver más",
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w500,
-                ),
+        return Column(
+          children: [
+            const SizedBox(height: 20),
+            const TextoAutomatico(
+              "Desliza para ver más",
+              style: TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
               ),
-
-              // Contenedor principal del carrusel
-              Expanded(
+            ),
+            Expanded(
+              child: Container(
+                // 2. Forzamos blanco también en el contenedor del PageView
+                color: Colors.white, 
                 child: PageView.builder(
                   itemCount: imagenes.length,
-                  // viewportFraction 0.85 permite ver un poco de la siguiente imagen
                   controller: PageController(viewportFraction: 0.85),
                   itemBuilder: (context, index) {
                     final img = imagenes[index];
@@ -96,19 +94,19 @@ class GaleriaServiciosScreen extends StatelessWidget {
                     return AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeInOut,
-                      // Margen para separar las imágenes entre sí y de los bordes
                       margin: const EdgeInsets.symmetric(
-                        vertical: 40, // Espacio arriba y abajo
-                        horizontal: 10, // Espacio entre tarjetas
+                        vertical: 40,
+                        horizontal: 10,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
+                          // 3. Sombra muy sutil negra para dar profundidad sobre el blanco
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
                           ),
                         ],
                       ),
@@ -117,30 +115,26 @@ class GaleriaServiciosScreen extends StatelessWidget {
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            // 1. Imagen optimizada
                             Image.memory(
                               base64Decode(img.datos),
                               fit: BoxFit.cover,
                             ),
-
-                            // 2. Gradiente inferior más sutil
+                            // Gradiente para que el texto sea legible
                             Positioned.fill(
                               child: DecoratedBox(
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     begin: Alignment.topCenter,
                                     end: Alignment.bottomCenter,
-                                    stops: const [0.6, 1.0],
+                                    stops: const [0.7, 1.0],
                                     colors: [
                                       Colors.transparent,
-                                      Colors.black.withOpacity(0.85),
+                                      Colors.black.withOpacity(0.7),
                                     ],
                                   ),
                                 ),
                               ),
                             ),
-
-                            // 3. Información del servicio
                             Positioned(
                               bottom: 30,
                               left: 20,
@@ -148,7 +142,7 @@ class GaleriaServiciosScreen extends StatelessWidget {
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(
+                                  TextoAutomatico(
                                     img.nombreServicio.toUpperCase(),
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
@@ -177,11 +171,12 @@ class GaleriaServiciosScreen extends StatelessWidget {
                   },
                 ),
               ),
-              const SizedBox(height: 40),
-            ],
-          );
-        },
-      ),
-    );
-  }
+            ),
+            const SizedBox(height: 40),
+          ],
+        );
+      },
+    ),
+  );
+}
 }

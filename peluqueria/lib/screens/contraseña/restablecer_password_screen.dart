@@ -4,7 +4,7 @@ import 'package:flutter/services.dart'; // Necesario para FilteringTextInputForm
 import 'package:http/http.dart' as http;
 import '../../config/api_config.dart';
 import '../../services/auth_service.dart';
-
+import 'package:peluqueria/widget/texto_automatico.dart';
 
 
 class RestablecerPasswordScreen extends StatefulWidget {
@@ -63,7 +63,7 @@ class _RestablecerPasswordScreenState extends State<RestablecerPasswordScreen> {
   void _mostrarMensaje(String msg, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg),
+        content: TextoAutomatico(msg),
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -82,7 +82,7 @@ class _RestablecerPasswordScreenState extends State<RestablecerPasswordScreen> {
           icon: Icon(Icons.arrow_back_ios_new, color: negroSuave, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
+        title: TextoAutomatico(
           "NUEVA CONTRASEÑA",
           style: TextStyle(
             color: negroSuave,
@@ -100,7 +100,7 @@ class _RestablecerPasswordScreenState extends State<RestablecerPasswordScreen> {
             children: [
               Icon(Icons.lock_reset_rounded, size: 80, color: naranjaLogo),
               const SizedBox(height: 20),
-              Text(
+              TextoAutomatico(
                 "Introduce el código enviado a\n${widget.email}",
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey[600], fontSize: 14),
@@ -233,7 +233,7 @@ class _RestablecerPasswordScreenState extends State<RestablecerPasswordScreen> {
             borderRadius: BorderRadius.circular(15),
           ),
         ),
-        child: const Text(
+        child: const TextoAutomatico(
           "RESTABLECER",
           style: TextStyle(
             color: Colors.white,

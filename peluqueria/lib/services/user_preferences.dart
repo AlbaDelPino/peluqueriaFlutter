@@ -11,6 +11,18 @@ class UserPreferences {
 
   final _storage = const FlutterSecureStorage();
 
+
+// --- GESTIÓN DE IDIOMA ---
+Future<void> setLanguage(String code) async {
+  // Guardamos en el almacenamiento seguro
+  await _storage.write(key: 'language_code', value: code);
+}
+
+Future<String> getLanguage() async {
+  // Leemos del almacenamiento seguro
+  String? code = await _storage.read(key: 'language_code');
+  return code ?? 'es'; // 'es' por defecto si no hay nada guardado
+}
   // --- GUARDAR SESIÓN ---
   Future<void> guardarSesion(
     String jsonResponse,

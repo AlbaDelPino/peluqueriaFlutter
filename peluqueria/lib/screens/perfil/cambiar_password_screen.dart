@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import '../../services/user_preferences.dart';
 import '../../config/api_config.dart';
 import '../../services/auth_service.dart';
-
+import 'package:peluqueria/widget/texto_automatico.dart';
 
 class CambiarPasswordScreen extends StatefulWidget {
   const CambiarPasswordScreen({super.key});
@@ -58,7 +58,7 @@ final AuthService _authService = AuthService();
   void _mostrarMensaje(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg),
+        content: TextoAutomatico(msg),
         backgroundColor: isError ? Colors.redAccent : Colors.green,
         behavior: SnackBarBehavior.floating,
       ),
@@ -70,7 +70,7 @@ final AuthService _authService = AuthService();
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
+        title: const TextoAutomatico(
           "SEGURIDAD",
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
@@ -91,7 +91,7 @@ final AuthService _authService = AuthService();
                 color: Color(0xFFFF6B00),
               ),
               const SizedBox(height: 20),
-              const Text(
+              const TextoAutomatico(
                 "Nueva Contraseña",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
@@ -99,13 +99,14 @@ final AuthService _authService = AuthService();
 
               _buildField(
                 _passNuevaCtrl,
-                "Escribe la nueva contraseña",
+                TextoAutomatico("Escribe la nueva contraseña"),
+            
                 Icons.lock_outline,
               ),
               const SizedBox(height: 20),
               _buildField(
                 _passConfirmaCtrl,
-                "Confirma la contraseña",
+                const TextoAutomatico("Confirma la contraseña"),
                 Icons.lock_reset_outlined,
               ),
 
@@ -122,7 +123,7 @@ final AuthService _authService = AuthService();
                           borderRadius: BorderRadius.circular(15),
                         ),
                       ),
-                      child: const Text(
+                      child: const TextoAutomatico(
                         "ACTUALIZAR AHORA",
                         style: TextStyle(
                           color: Colors.white,
@@ -137,12 +138,12 @@ final AuthService _authService = AuthService();
     );
   }
 
-  Widget _buildField(TextEditingController ctrl, String label, IconData icon) {
+  Widget _buildField(TextEditingController ctrl, Widget labelWidget, IconData icon) {
     return TextFormField(
       controller: ctrl,
       obscureText: true,
       decoration: InputDecoration(
-        labelText: label,
+        label: labelWidget,
         prefixIcon: Icon(icon, color: naranjaLogo),
         filled: true,
         fillColor: const Color(0xFFF5F5F5),

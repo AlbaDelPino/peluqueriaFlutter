@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:peluqueria/widget/texto_automatico.dart';
 
 class DetalleCitaScreen extends StatefulWidget {
   final dynamic cita;
@@ -53,14 +54,14 @@ class _DetalleCitaScreenState extends State<DetalleCitaScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              const TextoAutomatico(
                 "SELECCIONAR ORIGEN",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 20),
               ListTile(
                 leading: Icon(Icons.camera_alt, color: naranjaLogo),
-                title: const Text("Usar Cámara"),
+                title: const TextoAutomatico("Usar Cámara"),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.camera);
@@ -68,7 +69,7 @@ class _DetalleCitaScreenState extends State<DetalleCitaScreen> {
               ),
               ListTile(
                 leading: Icon(Icons.photo_library, color: naranjaLogo),
-                title: const Text("Elegir de Galería"),
+                title: const TextoAutomatico("Elegir de Galería"),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.gallery);
@@ -92,7 +93,7 @@ class _DetalleCitaScreenState extends State<DetalleCitaScreen> {
           icon: Icon(Icons.arrow_back_ios_new, color: negroSuave, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
+        title: TextoAutomatico(
           "DETALLE DE LA CITA",
           style: TextStyle(
             color: negroSuave,
@@ -136,7 +137,7 @@ class _DetalleCitaScreenState extends State<DetalleCitaScreen> {
               const SizedBox(height: 25),
 
               // 2. Comentario
-              const Text(
+              const TextoAutomatico(
                 "COMENTARIO",
                 style: TextStyle(
                   fontSize: 11,
@@ -150,7 +151,7 @@ class _DetalleCitaScreenState extends State<DetalleCitaScreen> {
               const SizedBox(height: 25),
 
               // 3. Foto
-              const Text(
+              const TextoAutomatico(
                 "FOTO DEL RESULTADO",
                 style: TextStyle(
                   fontSize: 11,
@@ -175,7 +176,7 @@ class _DetalleCitaScreenState extends State<DetalleCitaScreen> {
   // --- WIDGETS DE APOYO ---
 
   Widget _buildSectionTitle(String title) {
-    return Text(
+    return TextoAutomatico(
       title,
       style: TextStyle(
         color: negroSuave,
@@ -199,7 +200,7 @@ class _DetalleCitaScreenState extends State<DetalleCitaScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              TextoAutomatico(
                 label,
                 style: const TextStyle(
                   fontSize: 10,
@@ -207,7 +208,7 @@ class _DetalleCitaScreenState extends State<DetalleCitaScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              Text(
+              TextoAutomatico(
                 value,
                 style: TextStyle(
                   fontSize: 15,
@@ -282,7 +283,7 @@ class _DetalleCitaScreenState extends State<DetalleCitaScreen> {
                 children: [
                   Icon(Icons.camera_alt_outlined, color: naranjaLogo, size: 40),
                   const SizedBox(height: 8),
-                  const Text(
+                  const TextoAutomatico(
                     "Tocar para añadir foto",
                     style: TextStyle(color: Colors.grey, fontSize: 13),
                   ),
@@ -313,7 +314,7 @@ class _DetalleCitaScreenState extends State<DetalleCitaScreen> {
         onPressed: () {
           // Lógica para enviar datos
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Valoración guardada (Simulación)")),
+            const SnackBar(content: TextoAutomatico("Valoración guardada (Simulación)")),
           );
           Navigator.pop(context);
         },
@@ -324,7 +325,7 @@ class _DetalleCitaScreenState extends State<DetalleCitaScreen> {
             borderRadius: BorderRadius.circular(15),
           ),
         ),
-        child: const Text(
+        child: const TextoAutomatico(
           "GUARDAR VALORACIÓN",
           style: TextStyle(
             color: Colors.white,
