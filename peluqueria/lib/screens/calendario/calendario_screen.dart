@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:peluqueria/widget/texto_automatico.dart';
+import 'package:provider/provider.dart';
 import '../../models/servicios/servicio_model.dart';
 import '../../models/horario/horario_model.dart';
-import '../../services/servicio_service.dart';
+import '../../services/horario_service.dart';
 import '../../services/user_preferences.dart';
-import '../../config/api_config.dart';
+import '../../providers/locale_provider.dart';
+import '../../widget/texto_automatico.dart';
 
 class CalendarioScreen extends StatefulWidget {
   final Servicio servicio;
@@ -19,175 +18,114 @@ class CalendarioScreen extends StatefulWidget {
 }
 
 class _CalendarioScreenState extends State<CalendarioScreen> {
-  final ServicioService _servicioService = ServicioService();
+  final HorarioService _horarioService = HorarioService();
   final UserPreferences _prefs = UserPreferences();
 
   DateTime _diaEnfocado = DateTime.now();
-  DateTime? _diaSeleccionado;
-
+  DateTime? _diaSeleccionado = DateTime.now();
   List<Map<String, dynamic>> _bloquesFinales = [];
-  List<String> _diasConPlazas = []; // Equivale a tu lista de C#
+  List<String> _diasConPlazas = []; 
+  List<DateTime> _fechasBloqueadas = []; 
   bool _estaCargando = false;
 
   final Color naranjaLogo = const Color(0xFFFF6B00);
   final Color grisFondo = const Color(0xFFF4F7F9);
-  final Color negroSuave = const Color(0xFF2D2D2D);
 
   @override
   void initState() {
     super.initState();
-    _diaSeleccionado = _diaEnfocado;
     _inicializarDatos();
   }
 
-  // --- LÓGICA TIPO C# ---
-
   Future<void> _inicializarDatos() async {
-    // 1. Cargamos los horarios para saber qué días poner en negrita (pintarDiasDisponibles)
-    await _obtenerConfiguracionDias();
-    // 2. Cargamos los bloques del día actual
+    setState(() => _estaCargando = true);
+    await _obtenerConfiguracionDias(); // Configura días laborables del servicio
+    await _obtenerBloqueos(); // Carga bloqueos de fecha
     await _cargarDatosDia(_diaSeleccionado!);
   }
 
-  Future<void> _obtenerConfiguracionDias() async {
-    try {
-      // Buscamos los horarios semanales del servicio
-      final horariosBase = await _servicioService.buscarHorariosPorServicio(
-        widget.servicio.idServicio,
-      );
-
-      setState(() {
-        // Extraemos los nombres de los días (Lunes, Martes...) que tienen plazas >= 1
-        _diasConPlazas = horariosBase
-            .where((h) => h.plazas >= 1)
-            .map((h) => _normalizarNombreDia(h.diaSemana))
-            .toSet()
-            .toList();
-      });
-    } catch (e) {
-      print("Error en configuración inicial: $e");
-    }
+  Future<void> _obtenerBloqueos() async {
+    final bloqueos = await _horarioService.obtenerDiasBloqueados();
+    setState(() => _fechasBloqueadas = bloqueos);
   }
 
-  // --- LÓGICA DE API BLOQUES ---
+  Future<void> _obtenerConfiguracionDias() async {
+    final horarios = await _horarioService.buscarHorariosPorServicio(widget.servicio.idServicio);
+    setState(() {
+      _diasConPlazas = horarios
+          .where((h) => h.plazas >= 1)
+          .map((h) => _normalizarNombreDia(h.diaSemana))
+          .toSet()
+          .toList();
+    });
+  }
+
+  // Lógica de habilitación específica para este servicio
+  bool _esDiaHabilitado(DateTime day) {
+    DateTime diaLimpio = DateTime(day.year, day.month, day.day);
+    DateTime hoyLimpio = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+
+    if (diaLimpio.isBefore(hoyLimpio)) return false;
+
+    // Filtro 1: ¿El servicio abre ese día de la semana?
+    bool atiendeEseDia = _diasConPlazas.contains(_getNombreDiaEspanol(day));
+    if (!atiendeEseDia) return false;
+
+    // Filtro 2: ¿La fecha está bloqueada en el sistema?
+    bool estaBloqueado = _fechasBloqueadas.any((d) => 
+      d.year == diaLimpio.year && d.month == diaLimpio.month && d.day == diaLimpio.day);
+    
+    return !estaBloqueado;
+  }
 
   Future<void> _cargarDatosDia(DateTime date) async {
     setState(() => _estaCargando = true);
-    final String fechaStr = DateFormat('yyyy-MM-dd').format(date);
-
+    final String fechaApi = DateFormat('dd/MM/yyyy').format(date);
+    
     try {
-      final token = await _prefs.token;
-      // Buscamos horarios específicos para ese día de la semana
-      final horariosBase = await _servicioService.buscarHorariosPorDiaYServicio(
-        _getDiaBackend(date),
-        widget.servicio.idServicio,
+      final horarios = await _horarioService.buscarHorariosPorDiaYServicio(
+        _getDiaBackend(date), 
+        widget.servicio.idServicio
       );
 
-      List<Map<String, dynamic>> listaTemporal = [];
-
-      for (var h in horariosBase) {
-        final url = Uri.parse(ApiConfig.getDisponibilidad(fechaStr, h.id));
-        final response = await http.get(
-          url,
-          headers: {'Authorization': 'Bearer $token'},
-        );
-
-        if (response.statusCode == 200) {
-          Map<String, dynamic> bloquesMap = jsonDecode(response.body);
-          bloquesMap.forEach((hora, plazas) {
-            if (plazas > 0) {
-              // Solo añadimos si hay plazas (como en tu C#)
-              listaTemporal.add({
-                'hora': hora,
-                'plazas': plazas,
-                'horarioObj': h,
-              });
-            }
-          });
-        }
+      List<Map<String, dynamic>> temp = [];
+      for (var h in horarios) {
+        final plazasMap = await _horarioService.obtenerPlazasDisponibles(fechaApi, h.id);
+        plazasMap.forEach((hora, plazas) {
+          if (plazas > 0) {
+            temp.add({'hora': hora, 'plazas': plazas, 'horarioObj': h});
+          }
+        });
       }
 
-      listaTemporal.sort((a, b) => a['hora'].compareTo(b['hora']));
-
-      setState(() {
-        _bloquesFinales = listaTemporal;
-        _estaCargando = false;
+      temp.sort((a, b) => a['hora'].compareTo(b['hora']));
+      setState(() { 
+        _bloquesFinales = temp; 
+        _estaCargando = false; 
       });
     } catch (e) {
       setState(() => _estaCargando = false);
-      _mostrarSnackBar("Error al conectar con el servidor", Colors.redAccent);
     }
   }
-
-  // --- ACCIÓN DE RESERVAR (POST) ---
-
-  Future<void> _confirmarReserva(HorarioSemanal h, String horaBloque) async {
-    final int? clienteId = await _prefs.userId;
-    final String fechaStr = DateFormat('yyyy-MM-dd').format(_diaSeleccionado!);
-    final String horaLimpia = horaBloque.substring(0, 5);
-
-    if (clienteId == null) return;
-
-    setState(() => _estaCargando = true);
-
-    try {
-      final bool exito = await _servicioService.crearReserva(
-        clienteId,
-        h.id,
-        fechaStr,
-        horaLimpia,
-      );
-
-      if (exito) {
-        _mostrarSnackBar("¡Reserva confirmada!", Colors.green);
-        Navigator.pop(context, true);
-      } else {
-        _mostrarSnackBar("No se pudo completar la reserva", Colors.orange);
-      }
-    } catch (e) {
-      _mostrarSnackBar("Error inesperado", Colors.redAccent);
-    } finally {
-      if (mounted) setState(() => _estaCargando = false);
-    }
-  }
-
-  // --- INTERFAZ (UI COMPATIBLE) ---
 
   @override
   Widget build(BuildContext context) {
+    final bool isEn = Provider.of<LocaleProvider>(context).locale.languageCode == 'en';
+
     return Scaffold(
       backgroundColor: grisFondo,
       appBar: AppBar(
-        elevation: 0,
         backgroundColor: naranjaLogo,
-        title: const TextoAutomatico(
-          "Reserva tu cita",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+        title: TextoAutomatico(isEn ? "Book Appointment" : "Reserva tu cita", style: const TextStyle(color: Colors.white)),
         centerTitle: true,
       ),
       body: Column(
         children: [
           _buildCalendarioHeader(),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(25, 20, 25, 10),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: TextoAutomatico(
-                "BLOQUES DISPONIBLES",
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ),
-          ),
           Expanded(
-            child: _estaCargando
-                ? Center(child: CircularProgressIndicator(color: naranjaLogo))
-                : _buildListaBloques(),
+            child: _estaCargando 
+              ? Center(child: CircularProgressIndicator(color: naranjaLogo)) 
+              : _buildListaBloques(isEn)
           ),
         ],
       ),
@@ -195,132 +133,62 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   }
 
   Widget _buildCalendarioHeader() {
+    final lang = Provider.of<LocaleProvider>(context).locale.languageCode;
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 10,
-            offset: Offset(0, 5),
-          ),
-        ],
+        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)]
       ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: TextoAutomatico(
-              widget.servicio.nombre.toUpperCase(),
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                color: negroSuave,
-              ),
-            ),
-          ),
-          TableCalendar(
-            locale: 'es_ES',
-            firstDay: DateTime.now(),
-            lastDay: DateTime.now().add(const Duration(days: 60)),
-            focusedDay: _diaEnfocado,
-            startingDayOfWeek: StartingDayOfWeek.monday,
-            selectedDayPredicate: (day) => isSameDay(_diaSeleccionado, day),
-
-            // FILTRO C#: Solo habilitar si el día tiene plazas configuradas
-            enabledDayPredicate: (day) {
-              return _diasConPlazas.contains(_getNombreDiaEspanol(day));
-            },
-
-            // ESTILO C# (AddBoldedDates): Pintar días disponibles en Negrita
-            calendarBuilders: CalendarBuilders(
-              defaultBuilder: (context, day, focusedDay) {
-                if (_diasConPlazas.contains(_getNombreDiaEspanol(day))) {
-                  return Center(
-                    child: TextoAutomatico(
-                      '${day.day}',
-                      style: TextStyle(
-                        color: naranjaLogo,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  );
-                }
-                return null;
-              },
-            ),
-
-            calendarFormat: CalendarFormat.month,
-            headerStyle: const HeaderStyle(
-              formatButtonVisible: false,
-              titleCentered: true,
-            ),
-            calendarStyle: CalendarStyle(
-              selectedDecoration: BoxDecoration(
-                color: naranjaLogo,
-                shape: BoxShape.circle,
-              ),
-              todayDecoration: BoxDecoration(
-                color: naranjaLogo.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              disabledTextStyle: const TextStyle(color: Colors.black26),
-            ),
-            onDaySelected: (sel, foc) {
-              setState(() {
-                _diaSeleccionado = sel;
-                _diaEnfocado = foc;
-              });
-              _cargarDatosDia(sel);
-            },
-          ),
-          const SizedBox(height: 15),
-        ],
+      child: TableCalendar(
+        locale: lang == 'es' ? 'es_ES' : 'en_US',
+        firstDay: DateTime.now(),
+        lastDay: DateTime.now().add(const Duration(days: 60)),
+        focusedDay: _diaEnfocado,
+        startingDayOfWeek: StartingDayOfWeek.monday,
+        selectedDayPredicate: (day) => isSameDay(_diaSeleccionado, day),
+        enabledDayPredicate: _esDiaHabilitado,
+        headerStyle: const HeaderStyle(formatButtonVisible: false, titleCentered: true),
+        calendarStyle: CalendarStyle(
+          selectedDecoration: BoxDecoration(color: naranjaLogo, shape: BoxShape.circle),
+          todayDecoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: naranjaLogo)),
+          todayTextStyle: TextStyle(color: naranjaLogo, fontWeight: FontWeight.bold),
+          disabledTextStyle: const TextStyle(color: Colors.black26),
+        ),
+        calendarBuilders: CalendarBuilders(
+          defaultBuilder: (context, day, focusedDay) {
+            if (_esDiaHabilitado(day)) {
+              return Center(child: Text('${day.day}', style: TextStyle(color: naranjaLogo, fontWeight: FontWeight.bold)));
+            }
+            return null;
+          },
+        ),
+        onDaySelected: (sel, foc) {
+          setState(() { _diaSeleccionado = sel; _diaEnfocado = foc; });
+          _cargarDatosDia(sel);
+        },
       ),
     );
   }
 
-  Widget _buildListaBloques() {
+  Widget _buildListaBloques(bool isEn) {
     if (_bloquesFinales.isEmpty) {
-      return const Center(
-        child: TextoAutomatico(
-          "No hay turnos disponibles.",
-          style: TextStyle(color: Colors.grey),
-        ),
-      );
+      return Center(child: TextoAutomatico(isEn ? "No slots available" : "No hay turnos disponibles."));
     }
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
       itemCount: _bloquesFinales.length,
       itemBuilder: (context, i) {
-        final bloque = _bloquesFinales[i];
+        final b = _bloquesFinales[i];
         return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           child: ListTile(
-            title: TextoAutomatico(
-              bloque['hora'].substring(0, 5),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            subtitle: TextoAutomatico(
-              "${bloque['plazas']} plazas libres",
-              style: const TextStyle(color: Colors.green),
-            ),
+            title: Text(b['hora'].substring(0, 5), style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text("${b['plazas']} ${isEn ? 'slots' : 'libres'}", style: const TextStyle(color: Colors.green)),
             trailing: ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: naranjaLogo),
-              onPressed: () =>
-                  _confirmarReserva(bloque['horarioObj'], bloque['hora']),
-              child: const TextoAutomatico(
-                "RESERVAR",
-                style: TextStyle(color: Colors.white),
-              ),
+              onPressed: () => _mostrarPopUpConfirmacion(b['horarioObj'], b['hora'], isEn),
+              child: Text(isEn ? "BOOK" : "RESERVAR", style: const TextStyle(color: Colors.white)),
             ),
           ),
         );
@@ -328,46 +196,48 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
     );
   }
 
-  // --- HELPERS ---
-
-  String _getNombreDiaEspanol(DateTime date) {
-    List<String> dias = [
-      "Lunes",
-      "Martes",
-      "Miércoles",
-      "Jueves",
-      "Viernes",
-      "Sábado",
-      "Domingo",
-    ];
-    return dias[date.weekday - 1];
+  void _mostrarPopUpConfirmacion(HorarioSemanal h, String hora, bool isEn) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(isEn ? "Confirm" : "Confirmar"),
+        content: Text("${widget.servicio.nombre}\n${DateFormat('dd/MM/yyyy').format(_diaSeleccionado!)} - $hora"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCELAR")),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final id = await _prefs.userId;
+              _procederConReserva(h, hora, id);
+            },
+            child: const Text("CONFIRMAR"),
+          )
+        ],
+      ),
+    );
   }
 
-  String _getDiaBackend(DateTime date) {
-    List<String> dias = [
-      "LUNES",
-      "MARTES",
-      "MIERCOLES",
-      "JUEVES",
-      "VIERNES",
-      "SABADO",
-      "DOMINGO",
-    ];
-    return dias[date.weekday - 1];
+  Future<void> _procederConReserva(HorarioSemanal h, String hora, int clienteId) async {
+    setState(() => _estaCargando = true);
+    final exito = await _horarioService.crearReserva(clienteId, h.id, _diaSeleccionado!, hora);
+    if (mounted) setState(() => _estaCargando = false);
+    if (exito) {
+      _mostrarSnackBar("¡Reserva realizada!", Colors.green);
+      Navigator.pop(context, true);
+    } else {
+      _mostrarSnackBar("Error en la reserva", Colors.red);
+    }
   }
 
+  String _getNombreDiaEspanol(DateTime date) => ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"][date.weekday - 1];
+  String _getDiaBackend(DateTime date) => ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"][date.weekday - 1];
+  
   String _normalizarNombreDia(String dia) {
-    // Convierte "MIERCOLES" o "miércoles" a "Miércoles" para comparar con el calendario
-    if (dia.isEmpty) return "";
     String d = dia.toLowerCase();
     if (d.contains("miercoles")) return "Miércoles";
     if (d.contains("sabado")) return "Sábado";
     return d[0].toUpperCase() + d.substring(1);
   }
 
-  void _mostrarSnackBar(String mensaje, Color color) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: TextoAutomatico(mensaje), backgroundColor: color));
-  }
+  void _mostrarSnackBar(String m, Color c) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m), backgroundColor: c));
 }

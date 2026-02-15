@@ -56,4 +56,17 @@ class ApiConfig {
       "$baseUrl/citas/disponible?fecha=$fecha&horarioId=$horarioId";
 
   static const String reservarCitaUrl = "$baseUrl/citas/reservar";
+
+// --- VALORACIONES ---
+  // POST: /valoraciones/{idCliente}
+  static String crearValoracionUrl(int idCliente) => '$baseUrl/valoraciones/$idCliente';
+  
+  // GET: /valoraciones/cliente/{idCliente}
+  static String valoracionesClienteUrl(int idCliente) => '$baseUrl/valoraciones/cliente/$idCliente';
+
+  // --- BLOQUEOS ---
+  static const String bloqueosUrl = '$baseUrl/bloqueos';
+  static String bloqueoPorFecha(String fecha) => '$baseUrl/bloqueos/fecha?fecha=$fecha';
+  static String bloqueosPorHorario(int horarioId) => '$baseUrl/bloqueos/horario?horarioId=$horarioId';
+
 }

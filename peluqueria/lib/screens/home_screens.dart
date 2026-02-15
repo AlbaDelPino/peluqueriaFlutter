@@ -20,13 +20,13 @@ class _HomeScreensState extends State<HomeScreens> {
   int _selectedIndex = 0;
   final prefs = UserPreferences();
 
-  // Definimos las páginas como una lista fija para optimizar el rendimiento
+  // Lista de páginas
   final List<Widget> _paginas = [
-    InicioContenido(), // Índice 0
-    const ServiciosScreen(), // Índice 1
-    const MisCitasScreen(),
-    const GaleriaServiciosScreen(),
-    const PerfilScreen(), // Índice 2
+    InicioContenido(),                // 0
+    const ServiciosScreen(),          // 1
+    const MisCitasScreen(),           // 2
+    const GaleriaServiciosScreen(),   // 3
+    const PerfilScreen(),             // 4
   ];
 
   void _onItemTapped(int index) {
@@ -39,11 +39,15 @@ class _HomeScreensState extends State<HomeScreens> {
   Widget build(BuildContext context) {
     // Colores corporativos
     const Color naranjaLogo = Color(0xFFFF6B00);
+    
+    // Obtenemos el provider del idioma
+    final provider = Provider.of<LocaleProvider>(context);
+    final bool isEn = provider.locale.languageCode == 'en';
 
     return Scaffold(
       backgroundColor: Colors.white,
 
-      // 1. APPBAR MODERNA
+      // 1. APPBAR CON CAMBIO DE IDIOMA
       appBar: AppBar(
         title: const Text(
           "BERNAT EXPERIENCE",
@@ -56,18 +60,14 @@ class _HomeScreensState extends State<HomeScreens> {
         actions: [
           IconButton(
             icon: const Icon(Icons.language),
+            tooltip: isEn ? "Change Language" : "Cambiar Idioma",
             onPressed: () {
-  // Usamos listen: false porque solo queremos ejecutar la función, no redibujar el botón en sí mismo
-                final provider = Provider.of<LocaleProvider>(context, listen: false);
-                
-                if (provider.locale.languageCode == 'es') {
-                  provider.setLocale(const Locale('en'));
-                  print("Cambiando a Inglés"); // Esto te ayudará a ver en la consola si el botón funciona
-                } else {
-                  provider.setLocale(const Locale('es'));
-                  print("Cambiando a Español");
-                }
-              },
+              if (provider.locale.languageCode == 'es') {
+                provider.setLocale(const Locale('en'));
+              } else {
+                provider.setLocale(const Locale('es'));
+              }
+            },
           ),
         ],
         centerTitle: true,
@@ -76,13 +76,16 @@ class _HomeScreensState extends State<HomeScreens> {
         elevation: 0,
       ),
 
-      // 2. MENÚ LATERAL (DRAWER)
+      // 2. MENÚ LATERAL
       drawer: const MenuLateral(),
 
-      // 3. CUERPO DE LA APP (Mantiene el estado de las pestañas)
-      body: IndexedStack(index: _selectedIndex, children: _paginas),
+      // 3. CUERPO (IndexedStack para no perder el scroll al cambiar de pestaña)
+      body: IndexedStack(
+        index: _selectedIndex, 
+        children: _paginas
+      ),
 
-      // 4. BARRA DE NAVEGACIÓN INFERIOR (ESTILIZADA)
+      // 4. BARRA DE NAVEGACIÓN DINÁMICA
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
@@ -104,31 +107,26 @@ class _HomeScreensState extends State<HomeScreens> {
           elevation: 0,
           selectedFontSize: 12,
           unselectedFontSize: 12,
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home_rounded),
-              activeIcon: Icon(Icons.home_rounded),
-              label: 'Inicio',
+              icon: const Icon(Icons.home_rounded),
+              label: isEn ? 'Home' : 'Inicio',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.content_cut_rounded),
-              activeIcon: Icon(Icons.content_cut_rounded),
-              label: 'Servicios',
+              icon: const Icon(Icons.content_cut_rounded),
+              label: isEn ? 'Services' : 'Servicios',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.event_note_outlined),
-              activeIcon: Icon(Icons.event_note_rounded),
-              label: 'Mis citas',
+              icon: const Icon(Icons.event_note_rounded),
+              label: isEn ? 'Appointments' : 'Mis citas',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_rounded),
-              activeIcon: Icon(Icons.person_rounded),
-              label: 'Galeria',
+              icon: const Icon(Icons.collections_rounded), // Icono cambiado para Galería
+              label: isEn ? 'Gallery' : 'Galería',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_rounded),
-              activeIcon: Icon(Icons.person_rounded),
-              label: 'Perfil',
+              icon: const Icon(Icons.person_rounded),
+              label: isEn ? 'Profile' : 'Perfil',
             ),
           ],
         ),
