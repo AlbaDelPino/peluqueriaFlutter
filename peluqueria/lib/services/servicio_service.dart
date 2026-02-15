@@ -7,7 +7,6 @@ import 'user_preferences.dart'; // Tu clase que usa FlutterSecureStorage
 import '../../config/api_config.dart';
 
 class ServicioService {
-
   final UserPreferences _prefs = UserPreferences();
 
   // Función privada para no repetir código: obtiene los headers con el Token
@@ -24,7 +23,7 @@ class ServicioService {
     try {
       final headers = await _getAuthHeaders();
       final response = await http.get(
-         Uri.parse(ApiConfig.serviciosUrl),
+        Uri.parse(ApiConfig.serviciosUrl),
         headers: headers,
       );
 
@@ -46,7 +45,7 @@ class ServicioService {
     try {
       final headers = await _getAuthHeaders();
       final response = await http.get(
-         Uri.parse(ApiConfig.tiposServicioUrl),
+        Uri.parse(ApiConfig.tiposServicioUrl),
         headers: headers,
       );
 
@@ -67,7 +66,7 @@ class ServicioService {
       if (clienteId == 0) return [];
 
       final headers = await _getAuthHeaders();
-final url = Uri.parse(ApiConfig.favoritosCliente(clienteId));
+      final url = Uri.parse(ApiConfig.favoritosCliente(clienteId));
       final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
@@ -116,8 +115,8 @@ final url = Uri.parse(ApiConfig.favoritosCliente(clienteId));
     try {
       final token = await _prefs.token;
       // Construimos la URL con los QueryParams que pide tu controlador
-final url = Uri.parse(ApiConfig.buscarHorariosUrl).replace(
-       queryParameters: {
+      final url = Uri.parse(ApiConfig.buscarHorariosUrl).replace(
+        queryParameters: {
           'diaSemana': diaSemana.toUpperCase(), // Ej: "LUNES"
           'idServicio': idServicio.toString(),
         },
@@ -143,33 +142,61 @@ final url = Uri.parse(ApiConfig.buscarHorariosUrl).replace(
   }
 
   // 2. Crear la reserva (POST)
+  // Método corregido en servicio_service.dart
   Future<bool> crearReserva(
     int clienteId,
-    int servicioId,
     int horarioId,
     String fecha,
+    String horaInicio,
   ) async {
     try {
       final token = await _prefs.token;
-      final response = await http.post(
-        Uri.parse(ApiConfig.reservasUrl),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
+      final url = Uri.parse(ApiConfig.reservarCitaUrl);
+
+      // Creamos el mapa asegurando tipos de datos puros
+      final Map<String, dynamic> citaRequest = {
+        "fecha": fecha, // String -> "2026-02-16"
+        "horaInicio": horaInicio, // String -> "08:50"
+        "cliente": {
+          "id": clienteId, // int -> 19 (sin comillas en el JSON)
         },
-        body: jsonEncode({
-          "cliente": {"id": clienteId},
-          "servicio": {"idServicio": servicioId},
-          "horario": {"id": horarioId},
-          "fecha": fecha, // Formato "2024-05-20"
-          "estado": "PENDIENTE",
-        }),
+        "horario": {
+          "id": horarioId, // int -> 1 (sin comillas en el JSON)
+        },
+      };
+
+      print("--- INICIANDO PETICIÓN ---");
+      print("URL: $url");
+      print("JSON a enviar: ${jsonEncode(citaRequest)}");
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode(citaRequest),
       );
+
+      print("Respuesta del servidor (Status): ${response.statusCode}");
+
+      // Si el código es 403, imprimimos el cuerpo para ver si Spring Security dice algo
+      if (response.statusCode == 403) {
+        print(
+          "ERROR 403: Acceso denegado. Revisa el Token o los permisos en Java.",
+        );
+        print("Cuerpo del error: ${response.body}");
+      }
+
+      // Retornamos true si se creó (201) o si el servidor respondió OK (200)
       return response.statusCode == 201 || response.statusCode == 200;
     } catch (e) {
+      print("EXCEPCIÓN EN crearReserva: $e");
       return false;
     }
   }
+
   // En servicio_service.dart
   // En servicio_service.dart
 
@@ -194,5 +221,40 @@ final url = Uri.parse(ApiConfig.buscarHorariosUrl).replace(
       print("Error consultando plazas: $e");
     }
     return {"libres": 0, "totales": 0};
+  }
+
+  Future<List<HorarioSemanal>> buscarHorariosPorServicio(int idServicio) async {
+    try {
+      // 1. Obtenemos el token guardado para la cabecera
+      final token = await _prefs.token;
+
+      // 2. Construimos la URL (Asegúrate que coincida con tu backend de C#)
+      // Equivale a: http://localhost:8082/horarios/servicio/{id}
+      final url = Uri.parse(
+        '${ApiConfig.baseUrl}/horarios/servicio/$idServicio',
+      );
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token', // Seguridad como en tu C#
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // 3. Decodificamos la lista de horarios
+        List<dynamic> body = jsonDecode(response.body);
+
+        // 4. Convertimos cada item del JSON a un objeto HorarioSemanal
+        return body.map((item) => HorarioSemanal.fromJson(item)).toList();
+      } else {
+        print("Error en servidor: ${response.statusCode}");
+        return [];
+      }
+    } catch (e) {
+      print("Error de conexión en buscarHorariosPorServicio: $e");
+      return []; // Devolvemos lista vacía para no romper la app
+    }
   }
 }

@@ -47,9 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       print("RESPUESTA REAL DEL SERVIDOR: '$response'"); // <--- AÑADE ESTO
 
-      if (response == "CUENTA_NO_VERIFICADA") {
-        _mostrarDialogoNoVerificado();
-      } else if (response == null ||
+      if (response == null ||
           response == "CREDENCIALES_MAL" ||
           response.contains("ERROR")) {
         _mostrarSnackBar("Usuario o contraseña incorrectos", Colors.redAccent);
@@ -84,28 +82,6 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  void _mostrarDialogoNoVerificado() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: const Text(
-          "Cuenta no activa",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: const Text(
-          "Tu cuenta aún no ha sido verificada. Revisa tu correo electrónico.",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("ENTENDIDO", style: TextStyle(color: naranjaLogo)),
-          ),
-        ],
-      ),
-    );
   }
 
   void _mostrarSnackBar(String mensaje, Color color) {

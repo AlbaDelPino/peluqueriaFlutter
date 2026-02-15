@@ -6,7 +6,6 @@ import 'detalle_cita_screen.dart';
 import 'package:intl/intl.dart';
 import '../../config/api_config.dart';
 
-
 class MisCitasScreen extends StatefulWidget {
   const MisCitasScreen({super.key});
 
@@ -32,7 +31,8 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
 
     try {
       final response = await http.get(
-      Uri.parse(ApiConfig.getCitasByCliente(clienteId)),        headers: {'Authorization': 'Bearer $token'},
+        Uri.parse(ApiConfig.getCitasByCliente(clienteId)),
+        headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200) {
@@ -54,51 +54,32 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Colors.white, // Fondo blanco para toda la pantalla
+      appBar: AppBar(
+        title: const Text(
+          "Mis Citas",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: naranjaBernat, // Naranja Bernat
+        elevation: 0,
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+        ), // Flecha de retorno blanca
+      ),
       body: RefreshIndicator(
         onRefresh: _fetchCitas,
         color: naranjaBernat,
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              expandedHeight: 120.0,
-              floating: false,
-              pinned: true,
-              elevation: 0,
-              backgroundColor: naranjaBernat,
-              flexibleSpace: FlexibleSpaceBar(
-                title: const Text(
-                  "MIS CITAS",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
-                    fontSize: 16,
-                  ),
-                ),
-                centerTitle: true,
-                background: Container(color: naranjaBernat),
+        child: _isLoading
+            ? Center(child: CircularProgressIndicator(color: naranjaBernat))
+            : _citas.isEmpty
+            ? _buildEmptyState()
+            : ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+                itemCount: _citas.length,
+                itemBuilder: (context, index) =>
+                    _buildModernCitaCard(_citas[index]),
               ),
-            ),
-            _isLoading
-                ? const SliverFillRemaining(
-                    child: Center(
-                      child: CircularProgressIndicator(color: Color(0xFFFF6B00)),
-                    ),
-                  )
-                : _citas.isEmpty
-                    ? SliverFillRemaining(child: _buildEmptyState())
-                    : SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) => _buildModernCitaCard(_citas[index]),
-                            childCount: _citas.length,
-                          ),
-                        ),
-                      ),
-          ],
-        ),
       ),
     );
   }
@@ -108,11 +89,19 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.calendar_month_outlined, size: 80, color: Colors.grey[300]),
+          Icon(
+            Icons.calendar_month_outlined,
+            size: 80,
+            color: Colors.grey[300],
+          ),
           const SizedBox(height: 20),
           Text(
             "No tienes citas programadas",
-            style: TextStyle(color: Colors.grey[600], fontSize: 16, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -122,9 +111,12 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
   Widget _buildModernCitaCard(dynamic cita) {
     // Parsing de fecha y hora desde el backend
     DateTime fechaParsed = DateTime.parse(cita['fecha']);
-    String diaSemana = DateFormat("EEEE", 'es').format(fechaParsed).toUpperCase();
+    String diaSemana = DateFormat(
+      "EEEE",
+      'es',
+    ).format(fechaParsed).toUpperCase();
     String diaMes = DateFormat("d 'de' MMMM", 'es').format(fechaParsed);
-    
+
     // La hora viene del objeto cita directamente como LocalTime (HH:mm:ss)
     String hora = cita['horaInicio'].toString().substring(0, 5);
 
@@ -154,10 +146,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
         child: IntrinsicHeight(
           child: Row(
             children: [
-              Container(
-                width: 6,
-                color: _getStatusColor(estado),
-              ),
+              Container(width: 6, color: _getStatusColor(estado)),
               Expanded(
                 child: InkWell(
                   onTap: () async {
@@ -202,14 +191,24 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            const Icon(Icons.access_time_rounded, size: 16, color: Colors.grey),
+                            const Icon(
+                              Icons.access_time_rounded,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
                             const SizedBox(width: 5),
                             Text(
                               "$hora h",
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             const SizedBox(width: 15),
-                            const Icon(Icons.content_cut_rounded, size: 16, color: Colors.grey),
+                            const Icon(
+                              Icons.content_cut_rounded,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
                             const SizedBox(width: 5),
                             Expanded(
                               child: Text(
@@ -234,10 +233,14 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
 
   Color _getStatusColor(String estado) {
     switch (estado) {
-      case "CONFIRMADO": return Colors.green;
-      case "COMPLETADO": return Colors.blue;
-      case "CANCELADO": return Colors.redAccent;
-      default: return Colors.grey;
+      case "CONFIRMADO":
+        return Colors.green;
+      case "COMPLETADO":
+        return Colors.blue;
+      case "CANCELADO":
+        return Colors.redAccent;
+      default:
+        return Colors.grey;
     }
   }
 

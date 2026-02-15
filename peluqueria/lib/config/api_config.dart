@@ -5,7 +5,7 @@ class ApiConfig {
   // --- AUTENTICACIÓN Y REGISTRO ---
   static const String loginUrl = '$baseUrl/api/auth/signin';
   static const String signupUrl =
-      '$baseUrl/api/auth/signup'; // Usado en SignupScreen
+      '$baseUrl/api/auth/signup/cliente/public'; // Usado en SignupScreen
   static const String googleLoginUrl = '$baseUrl/api/auth/google';
   static const String meUrl =
       '$baseUrl/api/auth/me'; // Usado en Perfil y Editar Perfil
@@ -32,7 +32,6 @@ class ApiConfig {
 
   // --- HORARIOS Y RESERVAS ---
   static const String buscarHorariosUrl = '$baseUrl/horarios/buscar';
-  static const String reservasUrl = '$baseUrl/reservas';
   static const String plazasDisponiblesUrl = '$baseUrl/citas/disponible';
   static String misReservas(int clienteId) =>
       '$baseUrl/api/reservas/cliente/$clienteId';
@@ -40,7 +39,7 @@ class ApiConfig {
   // --- GALERÍA DE IMÁGENES ---
   static const String todasImagenesUrl = '$baseUrl/api/imagenes';
   static String imagenesPorServicio(int id) =>
-      '$baseUrl/api/imagenes/servicio/$id';
+      '$baseUrl/api/imagenes/subir/$id';
 
   // --- CITAS ENDPOINTS ---
   // Obtener todas las citas de un cliente específico

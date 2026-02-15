@@ -39,7 +39,6 @@ class AuthService {
       print("CUERPO RECIBIDO: ${response.body}");
 
       if (response.statusCode == 200) return response.body;
-      if (response.statusCode == 403) return "CUENTA_NO_VERIFICADA";
       if (response.statusCode == 401) return "CREDENCIALES_MAL";
       return "ERROR_DESCONOCIDO";
     } catch (e) {

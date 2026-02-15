@@ -84,7 +84,7 @@ class _DetalleTipoScreenState extends State<DetalleTipoScreen> {
                         ),
                       ),
                       Text(
-                        "${s.precio}€",
+                        "${s.precio}€(DONACIÓN)",
                         style: const TextStyle(
                           color: Color(0xFFFF6B00),
                           fontWeight: FontWeight.bold,

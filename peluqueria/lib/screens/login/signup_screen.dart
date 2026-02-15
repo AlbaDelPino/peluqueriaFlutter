@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import '../../config/api_config.dart';
 import '../../services/auth_service.dart';
 
-
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -25,6 +24,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _dirController = TextEditingController();
 
   bool _isLoading = false;
+  bool _aceptaTerminos = false;
   bool _obscurePassword = true;
 
   // Paleta de colores BERNAT
@@ -49,7 +49,6 @@ class _SignupScreenState extends State<SignupScreen> {
       "estado":
           true, // El estado lógico es activo, pero "verificado" será false en BD
       "rol": "ROLE_CLIENTE",
-      "direccion": _dirController.text.trim(),
       "alergenos": "",
       "imagen": null,
     };
@@ -85,27 +84,27 @@ class _SignupScreenState extends State<SignupScreen> {
             borderRadius: BorderRadius.circular(20),
           ),
           title: Icon(
-            Icons.mark_email_read_outlined,
+            Icons.check_circle_outline, // Icono de éxito
             color: naranjaLogo,
-            size: 50,
+            size: 60,
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                "¡REGISTRO CASI COMPLETADO!",
+                "¡REGISTRO COMPLETADO!",
                 textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               const SizedBox(height: 15),
               Text(
-                "Hemos enviado un enlace de activación a:\n${_emailController.text.trim()}",
+                "Tu cuenta ha sido creada correctamente.",
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 14),
               ),
               const SizedBox(height: 10),
               const Text(
-                "Por favor, revisa tu bandeja de entrada (o spam) y pulsa en el enlace para poder iniciar sesión.",
+                "Ya puedes iniciar sesión con tus datos y disfrutar de la experiencia Bernat.",
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 13, color: Colors.grey),
               ),
@@ -123,6 +122,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   style: TextStyle(
                     color: naranjaLogo,
                     fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
               ),
@@ -249,12 +249,43 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               ),
 
-              _buildModernInput(
-                controller: _dirController,
-                label: "DIRECCIÓN",
-                icon: Icons.location_on_outlined,
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
+              // Variable de estado que debes añadir al principio de tu clase: bool _aceptaTerminos = false;
+              Row(
+                children: [
+                  Checkbox(
+                    value: _aceptaTerminos,
+                    activeColor: naranjaLogo,
+                    onChanged: (value) {
+                      setState(() {
+                        _aceptaTerminos = value!;
+                      });
+                    },
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _mostrarTerminos,
+                      child: RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 13,
+                          ),
+                          children: [
+                            const TextSpan(text: "Acepto los "),
+                            TextSpan(
+                              text: "términos y condiciones",
+                              style: TextStyle(
+                                color: naranjaLogo,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 30),
@@ -333,6 +364,46 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         ),
         validator: validator,
+      ),
+    );
+  }
+
+  void _mostrarTerminos() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          "Términos y Condiciones",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Los datos recogidos serán los mínimos necesarios, no se destinarán a otros fines ni se cederán a terceros y se conservarán únicamente durante el tiempo necesario para su finalidad.",
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 15),
+              const Text(
+                "El cliente podrá ejercer sus derechos de acceso, rectificación, supresión, oposición, limitación del tratamiento y portabilidad solicitándolo al responsable del tratamiento.",
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 15),
+              const Text(
+                "Asimismo, AUTORIZO al salón a realizar y utilizar imágenes (fotografías y/o vídeos) del resultado del servicio con fines informativos y promocionales del propio salón.",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("CERRAR", style: TextStyle(color: naranjaLogo)),
+          ),
+        ],
       ),
     );
   }

@@ -34,7 +34,7 @@ class _InicioContenidoState extends State<InicioContenido> {
                   const SizedBox(height: 25),
 
                   // 3. Sección de Interacción (Tu código anterior mejorado)
-                  _buildSeccionInteraccion(),
+                  _buildSeccionDonacion(),
                 ],
               ),
             ),
@@ -150,20 +150,59 @@ class _InicioContenidoState extends State<InicioContenido> {
     );
   }
 
-  // --- WIDGET: SECCIÓN DE INTERACCIÓN ---
-  Widget _buildSeccionInteraccion() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "¿QUIERES CONOCERNOS?",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-            color: Colors.grey,
+  //// --- WIDGET: SECCIÓN DE DONACIÓN / OBJETIVO SOCIAL ---
+  Widget _buildSeccionDonacion() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        // Un degradado sutil o un color crema para diferenciarlo
+        color: naranjaLogo.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: naranjaLogo.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.volunteer_activism, color: naranjaLogo, size: 28),
+              const SizedBox(width: 12),
+              Text(
+                "MÁS QUE UN CORTE",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: naranjaLogo,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 15),
+          Text(
+            "Tu belleza genera impacto",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: negroSuave,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            "Es importante que sepas que el importe íntegro de nuestros servicios se gestiona como una donación. "
+            "Gracias a tu aporte, podemos continuar con nuestras labores sociales y de capacitación profesional. "
+            "¡Tu visita marca la diferencia!",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: negroSuave.withOpacity(0.8),
+              height: 1.5,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
