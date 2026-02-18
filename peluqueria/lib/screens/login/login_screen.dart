@@ -59,23 +59,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
-
-  void _loginConGoogle() async {
-    setState(() => _isLoading = true);
-    try {
-      final String? response = await AuthService().iniciarSesionConGoogle();
-      if (response == null) return;
-      
-      final prefs = UserPreferences();
-      await prefs.guardarSesion(response, "GOOGLE_AUTH");
-      if (mounted) Navigator.pushReplacementNamed(context, '/home');
-    } catch (e) {
-      _mostrarSnackBar("Error".tr(context), Colors.redAccent);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
   void _mostrarSnackBar(String mensaje, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -85,6 +68,39 @@ class _LoginScreenState extends State<LoginScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
+  }
+
+  void _loginConGoogle() async {
+    setState(() => _isLoading = true);
+    try {
+      final String? response = await AuthService().iniciarSesionConGoogle();
+      
+      // 1. Si el usuario canceló la ventana de Google
+      if (response == null) return;
+      
+      // 2. FILTRO CRÍTICO: Si la respuesta es un mensaje de error (SHA-1, Token, etc.)
+      if (response.startsWith("ERROR")) {
+        print("Deteniendo flujo por error de configuración: $response");
+        _mostrarSnackBar(
+          "Error de configuración (SHA-1). Contacta al administrador.".tr(context), 
+          Colors.redAccent
+        );
+        return; // 🔥 AQUÍ ESTÁ EL FRENO. Evita guardar sesión y navegar.
+      }
+      
+      // 3. Si no es error, procedemos con normalidad
+      final prefs = UserPreferences();
+      await prefs.guardarSesion(response, "GOOGLE_AUTH");
+      
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } catch (e) {
+      print("Excepción en UI al login con Google: $e");
+      _mostrarSnackBar("Error inesperado en el inicio de sesión".tr(context), Colors.redAccent);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override

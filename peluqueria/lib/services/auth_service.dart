@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../config/api_config.dart';
 import 'user_preferences.dart'; // Tu clase que usa FlutterSecureStorage
 import '../models/usuario/cliente_model.dart';
+import 'package:flutter/services.dart';
 
 class AuthService {
   final UserPreferences _prefs = UserPreferences();
@@ -47,53 +48,61 @@ class AuthService {
     }
   }
 
-  /// Inicio de sesión con Google mejorado
-  Future<String?> iniciarSesionConGoogle() async {
+  
+Future<String?> iniciarSesionConGoogle() async {
+  try {
+    // 1. Limpieza total
     try {
-      // Limpiamos sesión previa para que siempre deje elegir cuenta
-      await _googleSignIn.signOut();
+      await _googleSignIn.signOut(); 
+    } catch (_) {}
 
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+    // 2. Intento de inicio de sesión
+    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
-      if (googleUser == null) {
-        print("El usuario canceló el inicio de sesión");
-        return null;
-      }
+    // Si el usuario cancela, salimos sin error
+    if (googleUser == null) return null; 
 
-      // --- CAMBIO 2: Obtener el ID Token de forma segura ---
-      // Esto es lo que Spring Boot verificará para saber que no es un login falso
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final String? idToken = googleAuth.idToken;
+    // 3. Obtención de credenciales
+    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+    final String? idToken = googleAuth.idToken;
 
-      if (idToken == null) {
-        print("No se pudo obtener el ID Token");
-        return "ERROR_TOKEN";
-      }
-
-      // --- CAMBIO 3: Enviar el ID Token al backend ---
-      // Solo enviamos el idToken. Tu Spring Boot (con la librería que pusimos en el pom.xml)
-      // se encargará de extraer el email, nombre e imagen desde ese token.
-      final response = await http
-          .post(
-            Uri.parse(ApiConfig.googleLoginUrl),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({"idToken": idToken}),
-          )
-          .timeout(const Duration(seconds: 10));
-
-      if (response.statusCode == 200) {
-        // Aquí recibes el JwtResponse (Token JWT de tu Spring Boot + datos de tu MySQL)
-        return response.body;
-      } else {
-        print("Error Servidor: ${response.statusCode} - ${response.body}");
-        return "ERROR_SERVIDOR";
-      }
-    } catch (e) {
-      print("Error crítico Google Sign-In: $e");
-      return "ERROR_CONEXION";
+    if (idToken == null) {
+      print("ERROR: ID Token nulo.");
+      return "ERROR_TOKEN";
     }
+
+    // 4. Llamada al Backend
+    final response = await http.post(
+      Uri.parse(ApiConfig.googleLoginUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({"idToken": idToken}),
+    ).timeout(const Duration(seconds: 15));
+
+    // VALIDACIÓN CRUCIAL: Solo si es 200 intentamos procesar
+    if (response.statusCode == 200) {
+      return response.body; 
+    } else {
+      print("Error Servidor: ${response.statusCode}");
+      // IMPORTANTE: No retornamos el body si no es 200 para evitar el error de formato
+      return "ERROR_SERVIDOR_${response.statusCode}";
+    }
+
+  } on PlatformException catch (e) {
+    // ESTO DETIENE EL INICIO DE SESIÓN SI EL SHA-1 ESTÁ MAL
+    print("Error de Plataforma detectado: ${e.code}");
+    
+    if (e.code == 'sign_in_failed' || e.code == '10' || e.code == '12500') {
+      print("🚨 ERROR CRÍTICO: Configuración de Google/SHA-1 incorrecta.");
+      return "ERROR_CONFIGURACION_GOOGLE"; 
+    }
+    return "ERROR_PLATAFORMA";
+    
+  } catch (e) {
+    print("Error inesperado: $e");
+    return "ERROR_CONEXION";
   }
+}
+
 
   Future<http.Response> register(Map<String, dynamic> userData) async {
     final url = Uri.parse(ApiConfig.signupUrl);
