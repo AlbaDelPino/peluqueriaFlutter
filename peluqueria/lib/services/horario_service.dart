@@ -32,6 +32,19 @@ class HorarioService {
     }
     return [];
   }
+  Future<List<Map<String, dynamic>>> obtenerBloqueosCompletos() async {
+  try {
+    final headers = await _getAuthHeaders();
+    final response = await http.get(Uri.parse("${ApiConfig.baseUrl}/bloqueos"), headers: headers);
+    if (response.statusCode == 200) {
+      List<dynamic> body = json.decode(utf8.decode(response.bodyBytes));
+      return List<Map<String, dynamic>>.from(body);
+    }
+  } catch (e) {
+    debugPrint("Error en obtenerBloqueos: $e");
+  }
+  return [];
+}
 
   // Busca qué días de la semana tiene configurados un servicio
   Future<List<HorarioSemanal>> buscarHorariosPorServicio(int idServicio) async {

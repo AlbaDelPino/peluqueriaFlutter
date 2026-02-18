@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../models/servicios/servicio_model.dart';
 import '../calendario/calendario_screen.dart';
-import 'package:peluqueria/widget/texto_automatico.dart';
+import '../../widget/texto_automatico.dart';
 
 class DetalleTipoScreen extends StatefulWidget {
   final String titulo;
   final List<Servicio> servicios;
   final Set<int> idsFavoritos;
-  final Function(Servicio, bool)
-  onToggle; // Enviamos el servicio y el nuevo estado
+  final Function(Servicio, bool) onToggle;
 
   const DetalleTipoScreen({
     super.key,
@@ -23,12 +23,13 @@ class DetalleTipoScreen extends StatefulWidget {
 }
 
 class _DetalleTipoScreenState extends State<DetalleTipoScreen> {
+  // Color corporativo unificado con el calendario
+  final Color naranjaLogo = const Color(0xFFFF6B00);
+
   void _handleLocalTap(Servicio s) {
-    // 1. Determinamos el nuevo estado ANTES de cambiarlo
     final bool yaEraFav = widget.idsFavoritos.contains(s.idServicio);
     final bool nuevoEstado = !yaEraFav;
 
-    // 2. Actualizamos la interfaz LOCAL de inmediato
     setState(() {
       if (nuevoEstado) {
         widget.idsFavoritos.add(s.idServicio);
@@ -37,25 +38,30 @@ class _DetalleTipoScreenState extends State<DetalleTipoScreen> {
       }
     });
 
-    // 3. Notificamos al padre para que hable con el servidor
     widget.onToggle(s, nuevoEstado);
   }
 
   @override
   Widget build(BuildContext context) {
+    // Detectamos idioma para posibles textos dinámicos
+    final String languageCode = Localizations.localeOf(context).languageCode;
+    final bool isEn = languageCode == 'en';
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         title: TextoAutomatico(
-          widget.titulo,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          widget.titulo.toUpperCase(),
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, letterSpacing: 0.5),
         ),
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
+        centerTitle: true,
       ),
       body: ListView.builder(
-        padding: const EdgeInsets.all(15),
+        // Añadimos SafeArea manual con el padding inferior
+        padding: const EdgeInsets.fromLTRB(15, 15, 15, 30),
         itemCount: widget.servicios.length,
         itemBuilder: (context, index) {
           final s = widget.servicios[index];
@@ -63,12 +69,16 @@ class _DetalleTipoScreenState extends State<DetalleTipoScreen> {
 
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(20), // Bordes más redondeados
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 5),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
               ],
             ),
             child: Row(
@@ -81,28 +91,32 @@ class _DetalleTipoScreenState extends State<DetalleTipoScreen> {
                         s.nombre,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                          fontSize: 16,
+                          color: Colors.black87,
                         ),
                       ),
+                      const SizedBox(height: 4),
                       TextoAutomatico(
-                        "${s.precio}€(DONACIÓN)",
-                        style: const TextStyle(
-                          color: Color(0xFFFF6B00),
+                        "${s.precio}€ ${isEn ? '(DONATION)' : '(DONACIÓN)'}",
+                        style: TextStyle(
+                          color: naranjaLogo,
                           fontWeight: FontWeight.bold,
+                          fontSize: 14,
                         ),
                       ),
                     ],
                   ),
                 ),
+                // Botón de Favorito
                 IconButton(
                   onPressed: () => _handleLocalTap(s),
                   icon: Icon(
                     esFav ? Icons.favorite : Icons.favorite_border,
-                    color: esFav
-                        ? const Color(0xFFFF6B00)
-                        : Colors.grey.shade400,
+                    color: esFav ? naranjaLogo : Colors.grey.shade400,
                   ),
                 ),
+                const SizedBox(width: 8),
+                // Botón Reservar
                 ElevatedButton(
                   onPressed: () => Navigator.push(
                     context,
@@ -111,14 +125,20 @@ class _DetalleTipoScreenState extends State<DetalleTipoScreen> {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 0, 0, 0),
+                    backgroundColor: Colors.black,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const TextoAutomatico(
-                    "Reservar",
-                    style: TextStyle(color: Colors.white),
+                  child: TextoAutomatico(
+                    isEn ? "Book" : "Reservar",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ],

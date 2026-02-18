@@ -1,6 +1,5 @@
-import 'dart:io';
+import 'dart:convert'; // Necesario para base64Decode
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:peluqueria/widget/texto_automatico.dart';
 
 class DetalleCitaScreen extends StatefulWidget {
@@ -12,78 +11,15 @@ class DetalleCitaScreen extends StatefulWidget {
 }
 
 class _DetalleCitaScreenState extends State<DetalleCitaScreen> {
-  final _comentarioController = TextEditingController();
-  int _calificacion = 0;
-
-  // Variable para almacenar la imagen seleccionada
-  File? _imageFile;
-  final ImagePicker _picker = ImagePicker();
-
-  // Colores corporativos BERNAT
   final Color naranjaLogo = const Color(0xFFFF6B00);
   final Color negroSuave = const Color(0xFF2D2D2D);
 
-  // Método para seleccionar imagen (Cámara o Galería)
-  Future<void> _pickImage(ImageSource source) async {
-    try {
-      final XFile? pickedFile = await _picker.pickImage(
-        source: source,
-        imageQuality: 80,
-      );
-
-      if (pickedFile != null) {
-        setState(() {
-          _imageFile = File(pickedFile.path);
-        });
-      }
-    } catch (e) {
-      debugPrint("Error al seleccionar imagen: $e");
-    }
-  }
-
-  // Menú inferior para elegir origen de la foto
-  void _showImageSourceOptions() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const TextoAutomatico(
-                "SELECCIONAR ORIGEN",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              const SizedBox(height: 20),
-              ListTile(
-                leading: Icon(Icons.camera_alt, color: naranjaLogo),
-                title: const TextoAutomatico("Usar Cámara"),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.camera);
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.photo_library, color: naranjaLogo),
-                title: const TextoAutomatico("Elegir de Galería"),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.gallery);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    // Extraemos la valoración del objeto cita
+    final val = widget.cita['valoracion'];
+    final bool estaValorada = val != null;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -93,79 +29,95 @@ class _DetalleCitaScreenState extends State<DetalleCitaScreen> {
           icon: Icon(Icons.arrow_back_ios_new, color: negroSuave, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: TextoAutomatico(
-          "DETALLE DE LA CITA",
-          style: TextStyle(
-            color: negroSuave,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
+        title: const TextoAutomatico("DETALLE DE LA RESERVA", 
+          style: TextStyle(color: Color(0xFF2D2D2D), fontWeight: FontWeight.bold, fontSize: 16)),
         centerTitle: true,
       ),
-      // SafeArea protege el contenido de notches y barras de navegación del móvil
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(25, 10, 25, 30),
+          padding: const EdgeInsets.all(25),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSectionTitle("Información de la reserva"),
-              const SizedBox(height: 15),
-              _buildReadOnlyField(
-                "FECHA",
-                widget.cita['fecha'],
-                Icons.calendar_today,
-              ),
-              const SizedBox(height: 15),
-              _buildReadOnlyField(
-                "HORA",
-                "${widget.cita['horario']['horaInicio'].substring(0, 5)} h",
-                Icons.access_time,
-              ),
-
-              const SizedBox(height: 30),
-              const Divider(),
+              _buildSectionTitle("Información de la cita"),
               const SizedBox(height: 20),
+              _buildReadOnlyField("FECHA", widget.cita['fecha'], Icons.calendar_today),
+              const SizedBox(height: 15),
+              _buildReadOnlyField("HORA", "${widget.cita['horaInicio'].substring(0, 5)} h", Icons.access_time),
+              const SizedBox(height: 15),
+              _buildReadOnlyField("ESTADO", widget.cita['estado'] ?? "CONFIRMADO", Icons.info_outline),
 
-              _buildSectionTitle("Tu experiencia en Bernat"),
-              const SizedBox(height: 20),
+              // --- SECCIÓN DE VALORACIÓN ---
+              if (estaValorada) ...[
+                const SizedBox(height: 30),
+                const Divider(),
+                const SizedBox(height: 20),
+                _buildSectionTitle("Tu valoración"),
+                const SizedBox(height: 15),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Puntuación General destacada
+                      _buildStarRowDetailed("Puntuación General", val['puntuacion'], isMain: true),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        child: Divider(),
+                      ),
+                      
+                      // Desglose de estrellas por categoría
+                      _buildStarRowDetailed("Trato personal", val['trato']),
+                      _buildStarRowDetailed("Desarrollo del servicio", val['desarrollo']),
+                      _buildStarRowDetailed("Claridad en la comunicación", val['comunicacion']),
+                      _buildStarRowDetailed("Limpieza y organización", val['organizacion']),
+                      
+                      const SizedBox(height: 20),
+                      const TextoAutomatico("COMENTARIO", 
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
+                      const SizedBox(height: 5),
+                      TextoAutomatico(
+                        val['comentario'] ?? "Sin comentario",
+                        style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.black87, fontSize: 14),
+                      ),
 
-              // 1. Estrellas
-              _buildStarRating(),
-
-              const SizedBox(height: 25),
-
-              // 2. Comentario
-              const TextoAutomatico(
-                "COMENTARIO",
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
+                      // --- VISUALIZACIÓN DE IMAGEN (BASE64) ---
+                      if (val['imagen'] != null && val['imagen'].toString().isNotEmpty) ...[
+                        const SizedBox(height: 25),
+                        const TextoAutomatico("FOTO DEL RESULTADO", 
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
+                        const SizedBox(height: 10),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.memory(
+                            base64Decode(val['imagen']), // Decodifica el string Base64 del backend
+                            width: double.infinity,
+                            height: 250,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              height: 100,
+                              width: double.infinity,
+                              color: Colors.grey[200],
+                              child: const Icon(Icons.broken_image, color: Colors.grey),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              _buildComentarioField(),
-
-              const SizedBox(height: 25),
-
-              // 3. Foto
-              const TextoAutomatico(
-                "FOTO DEL RESULTADO",
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
+              ] else if (widget.cita['estado'] == "COMPLETADO") ...[
+                const SizedBox(height: 40),
+                const Center(
+                  child: TextoAutomatico("Cita pendiente de valoración", 
+                    style: TextStyle(color: Colors.grey, fontSize: 13)),
                 ),
-              ),
-              const SizedBox(height: 10),
-              _buildFotoSelector(),
-
-              const SizedBox(height: 40),
-
-              // 4. Botón Guardar
-              _buildBotonGuardar(),
+              ],
             ],
           ),
         ),
@@ -173,166 +125,54 @@ class _DetalleCitaScreenState extends State<DetalleCitaScreen> {
     );
   }
 
-  // --- WIDGETS DE APOYO ---
-
-  Widget _buildSectionTitle(String title) {
-    return TextoAutomatico(
-      title,
-      style: TextStyle(
-        color: negroSuave,
-        fontSize: 18,
-        fontWeight: FontWeight.w900,
+  // Widget para filas de estrellas detalladas
+  Widget _buildStarRowDetailed(String label, dynamic score, {bool isMain = false}) {
+    int finalScore = score ?? 0;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: TextoAutomatico(label, 
+              style: TextStyle(
+                fontSize: isMain ? 14 : 12, 
+                fontWeight: isMain ? FontWeight.bold : FontWeight.normal,
+                color: isMain ? negroSuave : Colors.black87
+              )),
+          ),
+          Row(
+            children: List.generate(5, (index) => Icon(
+              index < finalScore ? Icons.star : Icons.star_border,
+              color: naranjaLogo,
+              size: isMain ? 20 : 16,
+            )),
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return TextoAutomatico(title, style: TextStyle(color: negroSuave, fontSize: 18, fontWeight: FontWeight.w900));
   }
 
   Widget _buildReadOnlyField(String label, String value, IconData icon) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
       child: Row(
         children: [
-          Icon(icon, color: Colors.grey, size: 20),
+          Icon(icon, color: naranjaLogo.withOpacity(0.7), size: 20),
           const SizedBox(width: 15),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextoAutomatico(
-                label,
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              TextoAutomatico(
-                value,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: negroSuave,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              TextoAutomatico(label, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+              TextoAutomatico(value, style: TextStyle(fontSize: 15, color: negroSuave, fontWeight: FontWeight.w600)),
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStarRating() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(5, (index) {
-        return IconButton(
-          icon: Icon(
-            index < _calificacion ? Icons.star : Icons.star_border,
-            color: naranjaLogo,
-            size: 40,
-          ),
-          onPressed: () => setState(() => _calificacion = index + 1),
-        );
-      }),
-    );
-  }
-
-  Widget _buildComentarioField() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F7),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: TextField(
-        controller: _comentarioController,
-        maxLines: 3,
-        decoration: const InputDecoration(
-          hintText: "¿Qué te pareció el servicio?",
-          hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.all(15),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFotoSelector() {
-    return GestureDetector(
-      onTap: _showImageSourceOptions,
-      child: Container(
-        width: double.infinity,
-        height: 180,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF7F7F7),
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(
-            color: Colors.grey.shade300,
-            style: BorderStyle.solid,
-          ),
-        ),
-        child: _imageFile != null
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(15),
-                child: Image.file(_imageFile!, fit: BoxFit.cover),
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.camera_alt_outlined, color: naranjaLogo, size: 40),
-                  const SizedBox(height: 8),
-                  const TextoAutomatico(
-                    "Tocar para añadir foto",
-                    style: TextStyle(color: Colors.grey, fontSize: 13),
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-
-  Widget _buildBotonGuardar() {
-    return Container(
-      width: double.infinity,
-      height: 55,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        gradient: LinearGradient(
-          colors: [naranjaLogo, const Color(0xFFFF8C32)],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: naranjaLogo.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: () {
-          // Lógica para enviar datos
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: TextoAutomatico("Valoración guardada (Simulación)")),
-          );
-          Navigator.pop(context);
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-        ),
-        child: const TextoAutomatico(
-          "GUARDAR VALORACIÓN",
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
       ),
     );
   }
