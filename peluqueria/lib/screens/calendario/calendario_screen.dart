@@ -195,14 +195,34 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
       itemCount: _bloquesFinales.length,
       itemBuilder: (context, i) {
         final b = _bloquesFinales[i];
+        final String duracion = "${b['duracion'] ?? '30'} min"; 
+        final String horaInicio = b['hora'].substring(0, 5);
         return Card(
           elevation: 0,
           color: Colors.white,
           shape: RoundedRectangleBorder(side: const BorderSide(color: Colors.black12), borderRadius: BorderRadius.circular(12)),
           margin: const EdgeInsets.only(bottom: 10),
           child: ListTile(
-            title: TextoAutomatico(b['hora'].substring(0, 5), style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: TextoAutomatico("${b['plazas']} plazas libres", style: const TextStyle(color: Colors.green)),
+          title: Row(
+              children: [
+                const Icon(Icons.timer_outlined, size: 16, color: Colors.grey),
+                const SizedBox(width: 8),
+                TextoAutomatico(
+                  " $horaInicio h", 
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
+                ),
+              ],
+            ),            
+            subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 4),
+                  TextoAutomatico("Duración: $duracion", 
+                    style: TextStyle(color: Colors.black.withOpacity(0.7), fontSize: 13)),
+                  TextoAutomatico("${b['plazas']} plazas libres", 
+                    style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w500)),
+                ],
+              ), 
             trailing: ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: naranjaLogo, elevation: 0),
               onPressed: () => _confirmarReservaBottomSheet(b['horarioObj'], b['hora']),
