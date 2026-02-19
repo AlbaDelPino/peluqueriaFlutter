@@ -8,6 +8,8 @@ import '../../services/horario_service.dart';
 import '../../services/user_preferences.dart';
 import '../../providers/locale_provider.dart';
 import '../../widget/texto_automatico.dart';
+import '../../services/notification_service.dart'; // Soluciona el error de 'NotificationService'
+
 
 class CalendarioScreen extends StatefulWidget {
   final Servicio servicio;
@@ -342,37 +344,60 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
 
   Future<void> _ejecutarReserva(HorarioSemanal h, String hora, int clienteId) async {
     setState(() => _estaCargando = true);
+    
+    // 1. Guardamos la fecha de la cita para el recordatorio
+    // Combinamos el día seleccionado con la hora elegida
+    final partesHora = hora.split(':');
+    final DateTime fechaCitaCompleta = DateTime(
+      _diaSeleccionado!.year,
+      _diaSeleccionado!.month,
+      _diaSeleccionado!.day,
+      int.parse(partesHora[0]),
+      int.parse(partesHora[1]),
+    );
+
     final exito = await _horarioService.crearReserva(clienteId, h.id, _diaSeleccionado!, hora);
+    
     if (mounted) setState(() => _estaCargando = false);
+    
     if (exito) {
-    // 1. Mostrar mensaje de éxito
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: TextoAutomatico("¡Reserva realizada con éxito!"), 
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      )
-    );
+      // --- INTEGRACIÓN DE NOTIFICACIÓN REAL ---
+      try {
+        await NotificationService.programarRecordatorioCita(
+          h.id, // Usamos el ID del horario como ID de notificación
+          fechaCitaCompleta,
+        );
+        debugPrint("🔔 Recordatorio programado para: $fechaCitaCompleta");
+      } catch (e) {
+        debugPrint("❌ Error al programar notificación: $e");
+      }
+      // ---------------------------------------
 
-    // 2. Redirigir al inicio y borrar el historial de navegación
-    // Reemplaza '/home' por el nombre de tu ruta principal o usa la clase de tu Home
-    if (mounted) {
-      Navigator.pushNamedAndRemoveUntil(
-        context, 
-        '/home', // <--- Asegúrate de que esta ruta coincida con la de tu main.dart
-        (route) => false, 
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: TextoAutomatico("¡Reserva realizada con éxito!"), 
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          )
+        );
+
+        Navigator.pushNamedAndRemoveUntil(
+          context, 
+          '/home', 
+          (route) => false, 
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: TextoAutomatico("Error al realizar la reserva"), 
+            backgroundColor: Colors.red
+          )
+        );
+      }
     }
-  } else {
-    // Opcional: Avisar si algo falló
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: TextoAutomatico("Error al realizar la reserva"), 
-        backgroundColor: Colors.red
-      )
-    );
-  }
-
   }
 
   String _getNombreDiaEspanol(DateTime d) => ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"][d.weekday - 1];

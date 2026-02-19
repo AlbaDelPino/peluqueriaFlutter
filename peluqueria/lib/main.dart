@@ -8,12 +8,16 @@ import 'package:peluqueria/screens/home_screens.dart';
 import 'package:peluqueria/screens/login/signup_screen.dart';
 import 'package:peluqueria/providers/locale_provider.dart'; 
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:peluqueria/services/notification_service.dart';
 
 final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+NotificationService.init().then((_) {
+    debugPrint("Notificaciones listas en segundo plano");
+  });
   // Bloquear orientación vertical
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

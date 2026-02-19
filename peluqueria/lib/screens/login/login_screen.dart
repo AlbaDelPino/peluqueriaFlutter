@@ -6,6 +6,7 @@ import '../../providers/locale_provider.dart';
 import '../../config/traducciones.dart';
 import '../contraseña/olvide_password_screen.dart';
 import 'package:peluqueria/widget/texto_automatico.dart';
+import 'package:peluqueria/services/notification_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -25,10 +26,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final Color naranjaLogo = const Color(0xFFFF6B00);
   final Color negroSuave = const Color(0xFF2D2D2D);
 
-  // --- NUEVOS PATRONES DE VALIDACIÓN ---
-  // Usuario: letras, números o puntos. Mínimo 4 caracteres.
+  // --- PATRONES DE VALIDACIÓN ---
   final RegExp _userPattern = RegExp(r'^[a-zA-Z0-9.]{4,20}$');
-  // Pass: 8+ chars, 1 Mayús, 1 Núm, 1 Símbolo (Igual que Signup)
   final RegExp _passPattern = RegExp(r'^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$&*~]).{8,}$');
 
   @override
@@ -49,15 +48,51 @@ class _LoginScreenState extends State<LoginScreen> {
         _passController.text.trim(),
       );
       
+      if (!mounted) return;
+
       if (response == null || response == "CREDENCIALES_MAL" || response.contains("ERROR")) {
         _mostrarSnackBar("Usuario o contraseña incorrectos".tr(context), Colors.redAccent);
       } else {
         final prefs = UserPreferences();
         await prefs.guardarSesion(response, _passController.text.trim());
+        
+        // Programamos una notificación de prueba (Aviso 24h)
+        await NotificationService.programarRecordatorioCita(
+          24, 
+          DateTime.now().add(const Duration(days: 1))
+        );
+
         if (mounted) Navigator.pushReplacementNamed(context, '/home');
       }
     } catch (e) {
       _mostrarSnackBar("Error de conexión con el servidor".tr(context), Colors.redAccent);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _loginConGoogle() async {
+    setState(() => _isLoading = true);
+    try {
+      final String? response = await AuthService().iniciarSesionConGoogle();
+      if (!mounted || response == null) return;
+      
+      if (response.startsWith("ERROR")) {
+        _mostrarSnackBar("Error de configuración (SHA-1)".tr(context), Colors.redAccent);
+        return; 
+      }
+      
+      final prefs = UserPreferences();
+      await prefs.guardarSesion(response, "GOOGLE_AUTH");
+      
+      await NotificationService.programarRecordatorioCita(
+        24, 
+        DateTime.now().add(const Duration(days: 1))
+      );
+
+      if (mounted) Navigator.pushReplacementNamed(context, '/home');
+    } catch (e) {
+      _mostrarSnackBar("Error inesperado en Google".tr(context), Colors.redAccent);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -72,33 +107,6 @@ class _LoginScreenState extends State<LoginScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
-  }
-
-  void _loginConGoogle() async {
-    setState(() => _isLoading = true);
-    try {
-      final String? response = await AuthService().iniciarSesionConGoogle();
-      if (response == null) return;
-      
-      if (response.startsWith("ERROR")) {
-        _mostrarSnackBar(
-          "Error de configuración (SHA-1). Contacta al administrador.".tr(context), 
-          Colors.redAccent
-        );
-        return; 
-      }
-      
-      final prefs = UserPreferences();
-      await prefs.guardarSesion(response, "GOOGLE_AUTH");
-      
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
-      }
-    } catch (e) {
-      _mostrarSnackBar("Error inesperado en el inicio de sesión".tr(context), Colors.redAccent);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
   }
 
   @override
@@ -118,14 +126,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 40),
                     _buildLogo(),
                     const SizedBox(height: 25),
-                    TextoAutomatico(
-                      "BERNAT",
-                      style: TextStyle(fontSize: 38, fontWeight: FontWeight.w900, color: negroSuave, letterSpacing: 1.5),
-                    ),
-                    TextoAutomatico(
-                      "EXPERIENCE",
-                      style: TextStyle(fontSize: 12, letterSpacing: 6, fontWeight: FontWeight.w300, color: naranjaLogo),
-                    ),
+                    TextoAutomatico("BERNAT", style: TextStyle(fontSize: 38, fontWeight: FontWeight.w900, color: negroSuave, letterSpacing: 1.5)),
+                    TextoAutomatico("EXPERIENCE", style: TextStyle(fontSize: 12, letterSpacing: 6, fontWeight: FontWeight.w300, color: naranjaLogo)),
                     const SizedBox(height: 50),
                     _buildModernInput(
                       controller: _userController,
@@ -133,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       icon: Icons.alternate_email_rounded,
                       validator: (v) {
                         if (v == null || v.isEmpty) return "Introduce tu usuario".tr(context);
-                        if (!_userPattern.hasMatch(v)) return "Usuario no válido (4-15 caracteres)".tr(context);
+                        if (!_userPattern.hasMatch(v)) return "Usuario no válido (4-20 caracteres)".tr(context);
                         return null;
                       },
                     ),
@@ -145,7 +147,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       isPassword: true,
                       validator: (v) {
                         if (v == null || v.isEmpty) return "La contraseña es obligatoria".tr(context);
-                        // Aplicamos el patrón robusto de config api+
                         if (!_passPattern.hasMatch(v)) return "Formato de contraseña incorrecto".tr(context);
                         return null;
                       },
@@ -154,10 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const OlvidePasswordScreen())),
-                        child: TextoAutomatico(
-                          '¿Olvidaste tu clave?'.tr(context),
-                          style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                        ),
+                        child: TextoAutomatico('¿Olvidaste tu clave?'.tr(context), style: TextStyle(color: Colors.grey[600], fontSize: 13)),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -177,11 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-          Positioned(
-            top: 50,
-            right: 20,
-            child: _buildBotonIdioma(),
-          ),
+          Positioned(top: 50, right: 20, child: _buildBotonIdioma()),
         ],
       ),
     );
@@ -216,10 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
       child: ElevatedButton(
         onPressed: _login,
         style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-        child: TextoAutomatico(
-          'INICIAR SESIÓN'.tr(context),
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-        ),
+        child: TextoAutomatico('INICIAR SESIÓN'.tr(context), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
       ),
     );
   }
@@ -239,12 +230,15 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildGoogleIcon(),
-            const SizedBox(width: 12),
-            TextoAutomatico(
-              'Continuar con Google'.tr(context),
-              style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w500),
+            Image.network(
+              'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png', 
+              height: 24, 
+              width: 24,
+              // Evitamos el error de 'const' quitándolo del builder
+              errorBuilder: (context, error, stackTrace) => const Icon(Icons.account_circle, color: Colors.grey),
             ),
+            const SizedBox(width: 12),
+            TextoAutomatico('Continuar con Google'.tr(context), style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w500)),
           ],
         ),
       ),
@@ -258,10 +252,7 @@ class _LoginScreenState extends State<LoginScreen> {
         TextoAutomatico('¿Eres nuevo aquí? '.tr(context), style: TextStyle(color: Colors.grey[600])),
         GestureDetector(
           onTap: () => Navigator.pushNamed(context, '/registro'),
-          child: TextoAutomatico(
-            'Crea una cuenta'.tr(context),
-            style: TextStyle(color: naranjaLogo, fontWeight: FontWeight.bold),
-          ),
+          child: TextoAutomatico('Crea una cuenta'.tr(context), style: TextStyle(color: naranjaLogo, fontWeight: FontWeight.bold)),
         ),
       ],
     );
@@ -290,11 +281,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildLogo() {
     return Container(
       decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: naranjaLogo.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))]),
-      child: Image.asset('assets/iconPeluqueria.png', height: 110, errorBuilder: (c, e, s) => Icon(Icons.cut, size: 80, color: naranjaLogo)),
+      child: Image.asset('assets/icon_peluqueria.png', height: 110, errorBuilder: (c, e, s) => Icon(Icons.cut, size: 80, color: naranjaLogo)),
     );
-  }
-
-  Widget _buildGoogleIcon() {
-    return Image.network('https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png', height: 24, width: 24);
   }
 }
