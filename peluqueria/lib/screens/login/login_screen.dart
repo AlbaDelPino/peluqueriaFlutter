@@ -25,8 +25,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final Color naranjaLogo = const Color(0xFFFF6B00);
   final Color negroSuave = const Color(0xFF2D2D2D);
 
-  // --- PATRONES DE VALIDACIÓN ---
-  final RegExp _userPattern = RegExp(r'^[a-zA-Z0-9_-]{4,15}$');
+  // --- NUEVOS PATRONES DE VALIDACIÓN ---
+  // Usuario: letras, números o puntos. Mínimo 4 caracteres.
+  final RegExp _userPattern = RegExp(r'^[a-zA-Z0-9.]{4,20}$');
+  // Pass: 8+ chars, 1 Mayús, 1 Núm, 1 Símbolo (Igual que Signup)
+  final RegExp _passPattern = RegExp(r'^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$&*~]).{8,}$');
 
   @override
   void dispose() {
@@ -59,6 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
+
   void _mostrarSnackBar(String mensaje, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -74,21 +78,16 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       final String? response = await AuthService().iniciarSesionConGoogle();
-      
-      // 1. Si el usuario canceló la ventana de Google
       if (response == null) return;
       
-      // 2. FILTRO CRÍTICO: Si la respuesta es un mensaje de error (SHA-1, Token, etc.)
       if (response.startsWith("ERROR")) {
-        print("Deteniendo flujo por error de configuración: $response");
         _mostrarSnackBar(
           "Error de configuración (SHA-1). Contacta al administrador.".tr(context), 
           Colors.redAccent
         );
-        return; // 🔥 AQUÍ ESTÁ EL FRENO. Evita guardar sesión y navegar.
+        return; 
       }
       
-      // 3. Si no es error, procedemos con normalidad
       final prefs = UserPreferences();
       await prefs.guardarSesion(response, "GOOGLE_AUTH");
       
@@ -96,7 +95,6 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacementNamed(context, '/home');
       }
     } catch (e) {
-      print("Excepción en UI al login con Google: $e");
       _mostrarSnackBar("Error inesperado en el inicio de sesión".tr(context), Colors.redAccent);
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -146,8 +144,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       icon: Icons.lock_outline_rounded,
                       isPassword: true,
                       validator: (v) {
-                        if (v == null || v.isEmpty) return "Campo obligatorio".tr(context);
-                        if (v.length < 4) return "Mínimo 4 caracteres".tr(context);
+                        if (v == null || v.isEmpty) return "La contraseña es obligatoria".tr(context);
+                        // Aplicamos el patrón robusto de config api+
+                        if (!_passPattern.hasMatch(v)) return "Formato de contraseña incorrecto".tr(context);
                         return null;
                       },
                     ),

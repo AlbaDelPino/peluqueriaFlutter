@@ -21,10 +21,17 @@ class _SignupScreenState extends State<SignupScreen> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passController = TextEditingController();
+  final _confirmPassController = TextEditingController(); // NUEVO
 
   bool _isLoading = false;
   bool _aceptaTerminos = false;
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true; // NUEVO
+
+  // --- LÓGICA DE FORTALEZA ---
+  double _strengthValue = 0;
+  String _strengthLabel = "";
+  Color _strengthColor = Colors.grey;
 
   final Color naranjaLogo = const Color(0xFFFF6B00);
   final Color negroSuave = const Color(0xFF2D2D2D);
@@ -33,6 +40,8 @@ class _SignupScreenState extends State<SignupScreen> {
   final RegExp _userPattern = RegExp(r'^[a-zA-Z0-9_-]{4,15}$');
   final RegExp _emailPattern = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
   final RegExp _phonePattern = RegExp(r'^[0-9]{9}$');
+  // Patrón seguro: 8+ caracteres, 1 Mayúscula, 1 Número, 1 Carácter especial
+  final RegExp _passPattern = RegExp(r'^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$&*~]).{8,}$');
 
   @override
   void dispose() {
@@ -41,7 +50,33 @@ class _SignupScreenState extends State<SignupScreen> {
     _emailController.dispose();
     _phoneController.dispose();
     _passController.dispose();
+    _confirmPassController.dispose(); // NUEVO
     super.dispose();
+  }
+
+  // --- MÉTODO PARA CALCULAR LA FUERZA ---
+  void _checkPasswordStrength(String value) {
+    double strength = 0;
+    if (value.length >= 6) strength = 0.3; 
+    if (value.length >= 8) strength = 0.6;
+    if (_passPattern.hasMatch(value)) strength = 1.0;
+
+    setState(() {
+      _strengthValue = strength;
+      if (strength == 0) {
+        _strengthLabel = "";
+        _strengthColor = Colors.grey;
+      } else if (strength <= 0.3) {
+        _strengthLabel = "Contraseña débil".tr(context);
+        _strengthColor = Colors.red;
+      } else if (strength <= 0.6) {
+        _strengthLabel = "Contraseña media".tr(context);
+        _strengthColor = Colors.orange;
+      } else {
+        _strengthLabel = "Contraseña muy segura".tr(context);
+        _strengthColor = Colors.green;
+      }
+    });
   }
 
   Future<void> _ejecutarRegistro() async {
@@ -173,7 +208,10 @@ class _SignupScreenState extends State<SignupScreen> {
                 type: TextInputType.number,
                 validator: (v) => (v == null || !_phonePattern.hasMatch(v)) ? "Deben ser 9 números".tr(context) : null,
               ),
-              _buildPasswordInput(),
+              
+              // --- SECCIÓN DE CONTRASEÑAS ---
+              _buildPasswordSection(),
+              
               _buildCheckTerminos(),
               const SizedBox(height: 30),
               _isLoading
@@ -187,29 +225,107 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  Widget _buildPasswordInput() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 15),
-      decoration: BoxDecoration(color: const Color(0xFFF7F7F7), borderRadius: BorderRadius.circular(15)),
-      child: TextFormField(
-        controller: _passController,
-        obscureText: _obscurePassword,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        decoration: InputDecoration(
-          labelText: "CONTRASEÑA".tr(context),
-          labelStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-          prefixIcon: Icon(Icons.lock_outline, color: naranjaLogo, size: 20),
-          suffixIcon: IconButton(
-            icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, size: 20),
-            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+ Widget _buildPasswordSection() {
+  return Column(
+    children: [
+      // --- CAMPO: CONTRASEÑA ---
+      Container(
+        margin: const EdgeInsets.only(bottom: 5),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7F7F7), 
+          borderRadius: BorderRadius.circular(15)
         ),
-        validator: (v) => (v != null && v.length >= 6) ? null : "Mínimo 6 caracteres".tr(context),
+        child: TextFormField(
+          controller: _passController,
+          obscureText: _obscurePassword,
+          onChanged: _checkPasswordStrength,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          decoration: InputDecoration(
+            labelText: "CONTRASEÑA".tr(context),
+            labelStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+            prefixIcon: Icon(Icons.lock_outline, color: naranjaLogo, size: 20),
+            suffixIcon: IconButton(
+              icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, size: 20),
+              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+            ),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+          ),
+          // Validador detallado paso a paso
+          validator: (v) {
+            if (v == null || v.isEmpty) return "La contraseña es obligatoria".tr(context);
+            if (v.length < 8) return "Mínimo 8 caracteres".tr(context);
+            if (!RegExp(r'[A-Z]').hasMatch(v)) return "Debe incluir una mayúscula".tr(context);
+            if (!RegExp(r'[0-9]').hasMatch(v)) return "Debe incluir al menos un número".tr(context);
+            if (!RegExp(r'[!@#\$&*~]').hasMatch(v)) return "Falta un símbolo especial (!@#\$&*)".tr(context);
+            return null;
+          },
+        ),
       ),
-    );
-  }
+
+      // --- INDICADOR VISUAL DE FORTALEZA ---
+      Padding(
+        padding: const EdgeInsets.only(bottom: 15, left: 5, right: 5),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: _strengthValue,
+                backgroundColor: Colors.grey[200],
+                color: _strengthColor,
+                minHeight: 6,
+              ),
+            ),
+            if (_strengthLabel.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 5),
+                child: Row(
+                  children: [
+                    Icon(Icons.shield_outlined, size: 14, color: _strengthColor),
+                    const SizedBox(width: 6),
+                    TextoAutomatico(_strengthLabel, 
+                      style: TextStyle(color: _strengthColor, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+
+      // --- CAMPO: CONFIRMAR CONTRASEÑA ---
+      Container(
+        margin: const EdgeInsets.only(bottom: 15),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7F7F7), 
+          borderRadius: BorderRadius.circular(15)
+        ),
+        child: TextFormField(
+          controller: _confirmPassController,
+          obscureText: _obscureConfirmPassword,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          decoration: InputDecoration(
+            labelText: "CONFIRMAR CONTRASEÑA".tr(context),
+            labelStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+            prefixIcon: Icon(Icons.lock_reset, color: naranjaLogo, size: 20),
+            suffixIcon: IconButton(
+              icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility, size: 20),
+              onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+            ),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+          ),
+          validator: (v) {
+            if (v == null || v.isEmpty) return "Repite la contraseña".tr(context);
+            if (v != _passController.text) return "Las contraseñas no coinciden".tr(context);
+            return null;
+          },
+        ),
+      ),
+    ],
+  );
+}
 
   Widget _buildCheckTerminos() {
     return Row(

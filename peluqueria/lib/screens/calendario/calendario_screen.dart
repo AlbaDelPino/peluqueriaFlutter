@@ -345,9 +345,34 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
     final exito = await _horarioService.crearReserva(clienteId, h.id, _diaSeleccionado!, hora);
     if (mounted) setState(() => _estaCargando = false);
     if (exito) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: TextoAutomatico("Reserva realizada con éxito"), backgroundColor: Colors.green));
-      Navigator.pop(context, true);
+    // 1. Mostrar mensaje de éxito
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: TextoAutomatico("¡Reserva realizada con éxito!"), 
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      )
+    );
+
+    // 2. Redirigir al inicio y borrar el historial de navegación
+    // Reemplaza '/home' por el nombre de tu ruta principal o usa la clase de tu Home
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(
+        context, 
+        '/home', // <--- Asegúrate de que esta ruta coincida con la de tu main.dart
+        (route) => false, 
+      );
     }
+  } else {
+    // Opcional: Avisar si algo falló
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: TextoAutomatico("Error al realizar la reserva"), 
+        backgroundColor: Colors.red
+      )
+    );
+  }
+
   }
 
   String _getNombreDiaEspanol(DateTime d) => ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"][d.weekday - 1];

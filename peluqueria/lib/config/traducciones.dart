@@ -1,4 +1,3 @@
-// lib/config/traducciones.dart
 import 'package:flutter/material.dart';
 
 extension Trans on String {
@@ -65,6 +64,10 @@ extension Trans on String {
         'es': 'CONTRASEÑA',
         'en': 'PASSWORD'
       },
+      'CONFIRMAR CONTRASEÑA': {
+        'es': 'CONFIRMAR CONTRASEÑA',
+        'en': 'CONFIRM PASSWORD'
+      },
       'Acepto los ': {
         'es': 'Acepto los ',
         'en': 'I accept the '
@@ -90,10 +93,32 @@ extension Trans on String {
         'en': 'GOT IT'
       },
 
+      // --- FORTALEZA DE CONTRASEÑA ---
+      'Contraseña débil': {
+        'es': 'Contraseña débil',
+        'en': 'Weak password'
+      },
+      'Contraseña media': {
+        'es': 'Contraseña media',
+        'en': 'Medium password'
+      },
+      'Contraseña muy segura': {
+        'es': 'Contraseña muy segura',
+        'en': 'Strong password'
+      },
+
       // --- VALIDACIONES ---
       'Campo obligatorio': {
         'es': 'Campo obligatorio',
         'en': 'Required field'
+      },
+      'La contraseña es obligatoria': {
+        'es': 'La contraseña es obligatoria',
+        'en': 'Password is required'
+      },
+      'Repite la contraseña': {
+        'es': 'Repite la contraseña',
+        'en': 'Repeat your password'
       },
       'Introduce tu usuario': {
         'es': 'Introduce tu usuario',
@@ -103,13 +128,25 @@ extension Trans on String {
         'es': 'Usuario no válido (4-15 caracteres)',
         'en': 'Invalid username (4-15 chars)'
       },
-      'Mínimo 4 caracteres': {
-        'es': 'Mínimo 4 caracteres',
-        'en': 'Min. 4 characters'
+      'Mínimo 8 caracteres': {
+        'es': 'Mínimo 8 caracteres',
+        'en': 'Min. 8 characters'
       },
-      'Mínimo 6 caracteres': {
-        'es': 'Mínimo 6 caracteres',
-        'en': 'Min. 6 characters'
+      'Debe incluir una mayúscula': {
+        'es': 'Debe incluir una mayúscula',
+        'en': 'Must include an uppercase letter'
+      },
+      'Debe incluir al menos un número': {
+        'es': 'Debe incluir al menos un número',
+        'en': 'Must include at least one number'
+      },
+      'Falta un símbolo especial (!@#\$&*)': {
+        'es': 'Falta un símbolo especial (!@#\$&*)',
+        'en': 'Special symbol missing (!@#\$&*)'
+      },
+      'Las contraseñas no coinciden': {
+        'es': 'Las contraseñas no coinciden',
+        'en': 'Passwords do not match'
       },
       'Indica tu nombre': {
         'es': 'Indica tu nombre',
@@ -153,6 +190,10 @@ extension Trans on String {
         'es': 'CERRAR',
         'en': 'CLOSE'
       },
+      'Formato de contraseña incorrecto': {
+  'es': 'Formato de contraseña incorrecto',
+  'en': 'Incorrect password format'
+},
     };
 
     return data[this]?[lang] ?? this;

@@ -13,7 +13,7 @@ final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<v
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  
   // Bloquear orientación vertical
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
