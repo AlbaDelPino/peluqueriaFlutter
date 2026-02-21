@@ -36,6 +36,15 @@ class _HomeScreensState extends State<HomeScreens> {
   void initState() {
     super.initState();
     _sincronizarNotificacionesCitas();
+    _vincularFCMConBackend(); // <--- Vinculación del token al iniciar
+  }
+
+  // Sincroniza el token del dispositivo con tu API en Spring Boot
+  Future<void> _vincularFCMConBackend() async {
+    final idCliente = await prefs.userId;
+    if (idCliente != 0) {
+      await NotificationService.vincularDispositivoConBackend(idCliente);
+    }
   }
 
   Future<void> _sincronizarNotificacionesCitas() async {
@@ -63,8 +72,6 @@ class _HomeScreensState extends State<HomeScreens> {
             if (f != null && h != null) {
               String fechaLimpia = f.toString().split('T')[0];
               DateTime fechaCita = DateTime.parse("$fechaLimpia $h");
-
-              debugPrint("🔔 [DEBUG] Programando Recordatorio para Cita ID $id a las $fechaCita");
 
               await NotificationService.programarRecordatorioCita(
                 int.parse(id.toString()), 
@@ -128,23 +135,19 @@ class _HomeScreensState extends State<HomeScreens> {
         children: _paginas
       ),
 
-      // BOTÓN DE PRUEBA RÁPIDA
       floatingActionButton: FloatingActionButton(
         backgroundColor: naranjaLogo,
         child: const Icon(Icons.notification_add, color: Colors.white),
         onPressed: () async {
-          // Programamos una notificación para dentro de 5 segundos
-          DateTime pruebaTime = DateTime.now().add(const Duration(seconds: 5));
-          
-          await// Prueba rápida en el botón naranja
-NotificationService.programarRecordatorioCita(
-  888, 
-  DateTime.now().add(Duration(seconds: 10 + 3600)) // Le sumamos 1h y 10 seg para que el aviso de "1h antes" sea dentro de 10 seg
-);
+          // Prueba rápida: Notificación local en 10 segundos
+          await NotificationService.programarRecordatorioCita(
+            888, 
+            DateTime.now().add(const Duration(seconds: 10 + 3600)) 
+          );
           
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(isEn ? "Testing in 5s... Lock your phone!" : "Probando en 5s... ¡Bloquea el móvil!"),
+              content: Text(isEn ? "Testing in 10s... Lock your phone!" : "Probando en 10s... ¡Bloquea el móvil!"),
               backgroundColor: Colors.black87,
             ),
           );

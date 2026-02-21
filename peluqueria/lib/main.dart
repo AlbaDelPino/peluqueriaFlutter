@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart'; 
 import 'package:flutter_localizations/flutter_localizations.dart'; 
+import 'package:firebase_core/firebase_core.dart'; // Añadido
 import 'package:peluqueria/services/user_preferences.dart';
 import 'package:peluqueria/screens/login/login_screen.dart';
 import 'package:peluqueria/screens/home_screens.dart';
@@ -15,16 +16,19 @@ final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<v
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-NotificationService.init().then((_) {
-    debugPrint("Notificaciones listas en segundo plano");
-  });
+  // 1. Inicializar Firebase
+  await Firebase.initializeApp(); 
+
+  // 2. Inicializar nuestro servicio de notificaciones
+  await NotificationService.init();
+
   // Bloquear orientación vertical
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // Cargamos los formatos de fecha para español e inglés
+  // Cargamos los formatos de fecha
   await Future.wait([
     initializeDateFormatting('es', null),
     initializeDateFormatting('en', null),
@@ -49,19 +53,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Bernat Experience',
-      
-      // CONFIGURACIÓN DE IDIOMA
       locale: localeProvider.locale, 
-      supportedLocales: const [
-        Locale('es'),
-        Locale('en'),
-      ],
+      supportedLocales: const [Locale('es'), Locale('en')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-
       theme: ThemeData(
         primarySwatch: Colors.orange,
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFFF6B00)),
@@ -73,17 +71,12 @@ class MyApp extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(color: Color(0xFFFF6B00)),
-              ),
+              body: Center(child: CircularProgressIndicator(color: Color(0xFFFF6B00))),
             );
           }
-
-          if (snapshot.hasData && snapshot.data == true) {
-            return const HomeScreens();
-          } else {
-            return const LoginScreen();
-          }
+          return (snapshot.hasData && snapshot.data == true) 
+              ? const HomeScreens() 
+              : const LoginScreen();
         },
       ),
       routes: {
@@ -94,5 +87,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-

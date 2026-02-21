@@ -26,7 +26,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final Color naranjaLogo = const Color(0xFFFF6B00);
   final Color negroSuave = const Color(0xFF2D2D2D);
 
-  // --- PATRONES DE VALIDACIÓN ---
   final RegExp _userPattern = RegExp(r'^[a-zA-Z0-9.]{4,20}$');
   final RegExp _passPattern = RegExp(r'^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$&*~]).{8,}$');
 
@@ -56,11 +55,11 @@ class _LoginScreenState extends State<LoginScreen> {
         final prefs = UserPreferences();
         await prefs.guardarSesion(response, _passController.text.trim());
         
-        // Programamos una notificación de prueba (Aviso 24h)
-        await NotificationService.programarRecordatorioCita(
-          24, 
-          DateTime.now().add(const Duration(days: 1))
-        );
+        // --- VINCULACIÓN FCM CON EL SERVIDOR ---
+        final idCliente = await prefs.userId;
+        if (idCliente != 0) {
+          await NotificationService.vincularDispositivoConBackend(idCliente);
+        }
 
         if (mounted) Navigator.pushReplacementNamed(context, '/home');
       }
@@ -85,10 +84,11 @@ class _LoginScreenState extends State<LoginScreen> {
       final prefs = UserPreferences();
       await prefs.guardarSesion(response, "GOOGLE_AUTH");
       
-      await NotificationService.programarRecordatorioCita(
-        24, 
-        DateTime.now().add(const Duration(days: 1))
-      );
+      // --- VINCULACIÓN FCM CON EL SERVIDOR ---
+      final idCliente = await prefs.userId;
+      if (idCliente != 0) {
+        await NotificationService.vincularDispositivoConBackend(idCliente);
+      }
 
       if (mounted) Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
@@ -234,7 +234,6 @@ class _LoginScreenState extends State<LoginScreen> {
               'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png', 
               height: 24, 
               width: 24,
-              // Evitamos el error de 'const' quitándolo del builder
               errorBuilder: (context, error, stackTrace) => const Icon(Icons.account_circle, color: Colors.grey),
             ),
             const SizedBox(width: 12),
@@ -281,7 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildLogo() {
     return Container(
       decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: naranjaLogo.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))]),
-      child: Image.asset('assets/icon_peluqueria.png', height: 110, errorBuilder: (c, e, s) => Icon(Icons.cut, size: 80, color: naranjaLogo)),
+      child: Image.asset('assets/iconPeluqueria.png', height: 110, errorBuilder: (c, e, s) => Icon(Icons.cut, size: 80, color: naranjaLogo)),
     );
   }
 }

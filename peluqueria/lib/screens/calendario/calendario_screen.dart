@@ -10,7 +10,6 @@ import '../../providers/locale_provider.dart';
 import '../../widget/texto_automatico.dart';
 import '../../services/notification_service.dart'; // Soluciona el error de 'NotificationService'
 
-
 class CalendarioScreen extends StatefulWidget {
   final Servicio servicio;
   const CalendarioScreen({super.key, required this.servicio});
@@ -141,7 +140,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
     final String languageCode = Localizations.localeOf(context).languageCode;
     final String localConfig = (languageCode == 'en') ? 'en_US' : 'es_ES';
     return Container(
-      width: MediaQuery.of(context).size.width, // Ocupa todo el ancho
+      width: MediaQuery.of(context).size.width,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
@@ -153,36 +152,29 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
         lastDay: DateTime.now().add(const Duration(days: 60)),
         focusedDay: _diaEnfocado,
         startingDayOfWeek: StartingDayOfWeek.monday,
-        rowHeight: 45, // Altura de filas para que no se vea comprimido
+        rowHeight: 45,
         daysOfWeekHeight: 30,
-        
-        // --- ESTO ESTIRA LOS DÍAS ---
         headerStyle: const HeaderStyle(
           formatButtonVisible: false,
           titleCentered: true,
           leftChevronIcon: Icon(Icons.chevron_left, color: Colors.black),
           rightChevronIcon: Icon(Icons.chevron_right, color: Colors.black),
         ),
-
         daysOfWeekStyle: const DaysOfWeekStyle(
           weekdayStyle: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
           weekendStyle: TextStyle(color: Colors.black45, fontWeight: FontWeight.bold),
         ),
-
         calendarStyle: CalendarStyle(
           outsideDaysVisible: false,
           selectedDecoration: BoxDecoration(color: naranjaLogo, shape: BoxShape.circle),
           todayDecoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: naranjaLogo)),
           todayTextStyle: TextStyle(color: naranjaLogo, fontWeight: FontWeight.bold),
           disabledTextStyle: const TextStyle(color: Colors.black12),
-          // Márgenes mínimos para maximizar el ancho
           cellPadding: EdgeInsets.zero,
           cellMargin: const EdgeInsets.all(2),
         ),
-
         selectedDayPredicate: (day) => isSameDay(_diaSeleccionado, day),
         enabledDayPredicate: _esDiaHabilitado,
-
         onDaySelected: (sel, foc) {
           setState(() { _diaSeleccionado = sel; _diaEnfocado = foc; });
           _cargarDatosDia(sel);
@@ -205,7 +197,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
           shape: RoundedRectangleBorder(side: const BorderSide(color: Colors.black12), borderRadius: BorderRadius.circular(12)),
           margin: const EdgeInsets.only(bottom: 10),
           child: ListTile(
-          title: Row(
+            title: Row(
               children: [
                 const Icon(Icons.timer_outlined, size: 16, color: Colors.grey),
                 const SizedBox(width: 8),
@@ -216,15 +208,15 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
               ],
             ),            
             subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 4),
-                  TextoAutomatico("Duración: $duracion", 
-                    style: TextStyle(color: Colors.black.withOpacity(0.7), fontSize: 13)),
-                  TextoAutomatico("${b['plazas']} plazas libres", 
-                    style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w500)),
-                ],
-              ), 
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                TextoAutomatico("Duración: $duracion", 
+                  style: TextStyle(color: Colors.black.withOpacity(0.7), fontSize: 13)),
+                TextoAutomatico("${b['plazas']} plazas libres", 
+                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w500)),
+              ],
+            ), 
             trailing: ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: naranjaLogo, elevation: 0),
               onPressed: () => _confirmarReservaBottomSheet(b['horarioObj'], b['hora']),
@@ -236,26 +228,21 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
     );
   }
 
-  // ... (resto del código igual hasta el BottomSheet)
-
   void _confirmarReservaBottomSheet(HorarioSemanal h, String hora) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
       elevation: 10,
-      // isScrollControlled: true permite que el modal no se corte si el contenido es grande
       isScrollControlled: true, 
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        // Usamos SafeArea para respetar la barra del sistema del móvil
         return SafeArea(
           child: Padding(
-            // El padding inferior (bottom) ahora tiene un extra para separarse del borde
             padding: EdgeInsets.fromLTRB(30, 35, 30, MediaQuery.of(context).viewInsets.bottom + 20),
             child: Column(
-              mainAxisSize: MainAxisSize.min, // El modal solo ocupa lo que necesita
+              mainAxisSize: MainAxisSize.min, 
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const TextoAutomatico(
@@ -263,15 +250,12 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 0.5)
                 ),
                 const SizedBox(height: 30),
-                
                 _itemDetalleConTabulacion("SERVICIO", widget.servicio.nombre.toUpperCase()),
                 const Divider(color: Colors.black12, height: 25),
                 _itemDetalleConTabulacion("FECHA", DateFormat('dd / MM / yyyy').format(_diaSeleccionado!)),
                 const Divider(color: Colors.black12, height: 25),
                 _itemDetalleConTabulacion("HORA", hora.substring(0, 5)),
-                
                 const SizedBox(height: 40),
-                
                 SizedBox(
                   width: double.infinity,
                   height: 55,
@@ -292,7 +276,6 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
                     ),
                   ),
                 ),
-                // Este espacio extra asegura que el botón nunca toque el borde físico del móvil
                 const SizedBox(height: 10), 
               ],
             ),
@@ -302,20 +285,19 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
     );
   }
 
-  // Widget mejorado para manejar nombres largos con "tabulación" visual
   Widget _itemDetalleConTabulacion(String label, String valor) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start, // Alinea al tope si hay varias líneas
+      crossAxisAlignment: CrossAxisAlignment.start, 
       children: [
         TextoAutomatico(
           label, 
           style: const TextStyle(fontSize: 12, color: Colors.black45, fontWeight: FontWeight.bold)
         ),
-        const SizedBox(width: 20), // Espacio fijo de "tabulación"
+        const SizedBox(width: 20), 
         Expanded(
           child: TextoAutomatico(
             valor,
-            textAlign: TextAlign.right, // Lo empuja hacia la derecha
+            textAlign: TextAlign.right, 
             style: const TextStyle(
               fontSize: 15, 
               color: Colors.black, 
@@ -327,26 +309,9 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
     );
   }
 
-// ... (resto de funciones iguales)
-
-  Widget _itemDetalleMinimal(String label, String valor) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          TextoAutomatico(label, style: const TextStyle(fontSize: 12, color: Colors.black45, fontWeight: FontWeight.bold)),
-          TextoAutomatico(valor, style: const TextStyle(fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
-
   Future<void> _ejecutarReserva(HorarioSemanal h, String hora, int clienteId) async {
     setState(() => _estaCargando = true);
     
-    // 1. Guardamos la fecha de la cita para el recordatorio
-    // Combinamos el día seleccionado con la hora elegida
     final partesHora = hora.split(':');
     final DateTime fechaCitaCompleta = DateTime(
       _diaSeleccionado!.year,
@@ -361,17 +326,15 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
     if (mounted) setState(() => _estaCargando = false);
     
     if (exito) {
-      // --- INTEGRACIÓN DE NOTIFICACIÓN REAL ---
       try {
         await NotificationService.programarRecordatorioCita(
-          h.id, // Usamos el ID del horario como ID de notificación
+          h.id, 
           fechaCitaCompleta,
         );
         debugPrint("🔔 Recordatorio programado para: $fechaCitaCompleta");
       } catch (e) {
         debugPrint("❌ Error al programar notificación: $e");
       }
-      // ---------------------------------------
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
