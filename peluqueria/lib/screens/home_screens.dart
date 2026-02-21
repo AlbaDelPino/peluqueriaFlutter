@@ -8,10 +8,10 @@ import 'perfil/perfil_screen.dart';
 import 'galeriaImagen/galeria_screens.dart';
 import '../providers/locale_provider.dart';
 import 'inicio_contenido.dart';
-import 'dart:convert'; 
-import 'package:http/http.dart' as http; 
-import '../config/api_config.dart'; 
-import '../services/notification_service.dart'; 
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
+import '../services/notification_service.dart';
 
 class HomeScreens extends StatefulWidget {
   const HomeScreens({super.key});
@@ -25,11 +25,11 @@ class _HomeScreensState extends State<HomeScreens> {
   final prefs = UserPreferences();
 
   final List<Widget> _paginas = [
-    InicioContenido(),                
-    const ServiciosScreen(),          
-    const MisCitasScreen(),           
-    const GaleriaServiciosScreen(),   
-    const PerfilScreen(),             
+    InicioContenido(),
+    const ServiciosScreen(),
+    const MisCitasScreen(),
+    const GaleriaServiciosScreen(),
+    const PerfilScreen(),
   ];
 
   @override
@@ -55,27 +55,27 @@ class _HomeScreensState extends State<HomeScreens> {
 
       final url = ApiConfig.getCitasByCliente(idCliente);
       final resp = await http.get(
-        Uri.parse(url), 
+        Uri.parse(url),
         headers: {'Authorization': 'Bearer $token'},
       );
 
       if (resp.statusCode == 200) {
         final List<dynamic> citas = json.decode(resp.body);
         debugPrint("📅 [DEBUG] Procesando ${citas.length} citas...");
-        
+
         for (var cita in citas) {
           try {
             final id = cita['id'];
             final f = cita['fecha'];
-            final h = cita['horaInicio']; 
+            final h = cita['horaInicio'];
 
             if (f != null && h != null) {
               String fechaLimpia = f.toString().split('T')[0];
               DateTime fechaCita = DateTime.parse("$fechaLimpia $h");
 
               await NotificationService.programarRecordatorioCita(
-                int.parse(id.toString()), 
-                fechaCita
+                int.parse(id.toString()),
+                fechaCita,
               );
             }
           } catch (e) {
@@ -116,9 +116,9 @@ class _HomeScreensState extends State<HomeScreens> {
             icon: const Icon(Icons.language),
             onPressed: () {
               provider.setLocale(
-                provider.locale.languageCode == 'es' 
-                ? const Locale('en') 
-                : const Locale('es')
+                provider.locale.languageCode == 'es'
+                    ? const Locale('en')
+                    : const Locale('es'),
               );
             },
           ),
@@ -129,30 +129,8 @@ class _HomeScreensState extends State<HomeScreens> {
         elevation: 0,
       ),
       drawer: const MenuLateral(),
-      
-      body: IndexedStack(
-        index: _selectedIndex, 
-        children: _paginas
-      ),
 
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: naranjaLogo,
-        child: const Icon(Icons.notification_add, color: Colors.white),
-        onPressed: () async {
-          // Prueba rápida: Notificación local en 10 segundos
-          await NotificationService.programarRecordatorioCita(
-            888, 
-            DateTime.now().add(const Duration(seconds: 10 + 3600)) 
-          );
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(isEn ? "Testing in 10s... Lock your phone!" : "Probando en 10s... ¡Bloquea el móvil!"),
-              backgroundColor: Colors.black87,
-            ),
-          );
-        },
-      ),
+      body: IndexedStack(index: _selectedIndex, children: _paginas),
 
       bottomNavigationBar: Container(
         decoration: BoxDecoration(

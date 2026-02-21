@@ -1,6 +1,6 @@
 class ApiConfig {
   // Base URL - El corazón de tu conexión
-  static const String baseUrl = 'http://192.168.1.11:8082';
+  static const String baseUrl = 'http://192.168.1.35:8082';
 
   // --- AUTENTICACIÓN Y REGISTRO ---
   static const String loginUrl = '$baseUrl/api/auth/signin';
@@ -80,7 +80,4 @@ class ApiConfig {
       '$baseUrl/bloqueos/fecha?fecha=$fecha';
   static String bloqueosPorHorario(int horarioId) =>
       '$baseUrl/bloqueos/horario?horarioId=$horarioId';
-
-      // --- NOTIFICACIONES Y DISPOSITIVOS ---
-  static const String vincularDispositivoUrl = '$baseUrl/api/dispositivos/vincular';
 }

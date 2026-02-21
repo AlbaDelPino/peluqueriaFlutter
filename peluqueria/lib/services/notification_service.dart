@@ -1,39 +1,54 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/foundation.dart';
-
-import '../config/api_config.dart'; // Importante para usar ApiConfig.baseUrl
-import '../services/user_preferences.dart'; // Para obtener el userId
+import 'package:firebase_messaging/firebase_messaging.dart';
+import '../config/api_config.dart';
+import '../services/user_preferences.dart';
 
 class NotificationService {
-  // Instancia única del plugin
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  /// Inicializa el servicio de notificaciones
-  /// Se debe llamar en el main.dart: await NotificationService.init();
+  /// Inicializa el servicio y configura el canal para notificaciones flotantes
   static Future<void> init() async {
-    tz.initializeTimeZones(); // Configura las zonas horarias
+    tz.initializeTimeZones();
+
+    // 1. CONFIGURACIÓN DEL CANAL ANDROID (IMPORTANTE PARA NOTIFICACIONES FLOTANTES)
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'high_importance_channel', // ID idéntico al que uses en Java
+      'Recordatorios Bernat Experience', // Nombre que verá el usuario en ajustes
+      description: 'Canal para recordatorios de citas con prioridad alta.',
+      importance: Importance.max, // <--- Esto permite que la notificación flote
+      playSound: true,
+      enableVibration: true,
+    );
+
+    // 2. REGISTRAR EL CANAL EN EL PLUGIN
+    await _notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(channel);
 
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
+        );
 
-    const InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsIOS,
+        );
 
     await _notificationsPlugin.initialize(
       initializationSettings,
@@ -41,42 +56,58 @@ class NotificationService {
         debugPrint("Notificación pulsada: ${details.payload}");
       },
     );
+
+    // 3. SOLICITAR PERMISOS AUTOMÁTICAMENTE AL INICIAR
+    await solicitarPermisos();
   }
 
- static Future<void> vincularDispositivoConBackend(int idCliente) async {
-    final deviceInfo = DeviceInfoPlugin();
-    
+  /// Pide permiso al usuario para mostrar alertas, sonidos y banners
+  static Future<void> solicitarPermisos() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      debugPrint('✅ El usuario concedió permiso de notificaciones');
+    } else if (settings.authorizationStatus ==
+        AuthorizationStatus.provisional) {
+      debugPrint('✅ Permiso provisional concedido');
+    } else {
+      debugPrint('❌ El usuario rechazó los permisos de notificación');
+    }
+  }
+
+  static Future<void> vincularDispositivoConBackend(int idCliente) async {
     try {
-      String deviceId = '';
-      if (Platform.isAndroid) {
-        AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-        deviceId = androidInfo.id;
-      } else if (Platform.isIOS) {
-        IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-        deviceId = iosInfo.identifierForVendor ?? 'unknown_ios';
+      String? tokenReal = await FirebaseMessaging.instance.getToken();
+
+      if (tokenReal == null) {
+        debugPrint("❌ No se pudo obtener el token de Firebase");
+        return;
       }
 
-      // El token que enviaremos (tu Java espera un Map con la clave "token")
-      String tokenAutomatico = "token_${deviceId}_$idCliente";
+      debugPrint("🚀 Token Real de Firebase: $tokenReal");
 
-      // IMPORTANTE: Tu Java usa @PathVariable Long clienteId y @RequestMapping("/api/fcm")
-      // Por lo tanto, la URL debe ser: /api/fcm/token/{idCliente}
       final String url = '${ApiConfig.baseUrl}/api/fcm/token/$idCliente';
 
       final response = await http.post(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
-        // Tu Java espera @RequestBody Map<String, String> body con la clave "token"
-        body: jsonEncode({
-          'token': tokenAutomatico,
-        }),
+        body: jsonEncode({'token': tokenReal}),
       );
 
       if (response.statusCode == 200) {
-        debugPrint("✅ Token registrado en Java para cliente $idCliente");
+        debugPrint("✅ Token REAL registrado en Java para cliente $idCliente");
       } else {
-        debugPrint("❌ Error servidor: ${response.statusCode} - ${response.body}");
-        debugPrint("🔗 Intentaste llamar a: $url");
+        debugPrint("❌ Error servidor: ${response.statusCode}");
       }
     } catch (e) {
       debugPrint("⚠️ Error de conexión: $e");
@@ -85,24 +116,14 @@ class NotificationService {
 
   // --- PROGRAMACIÓN LOCAL ---
 
-  /// Programa un recordatorio para una cita específica
-  /// Se ejecuta 1 hora antes de la cita por defecto
-  /// Programa un recordatorio para una cita específica
-  /// Se ejecuta 24 horas (1 día) antes de la cita
   static Future<void> programarRecordatorioCita(
     int id,
     DateTime fechaCita,
   ) async {
-    // CAMBIA ESTA LÍNEA: de hours: 1 a days: 1
     final momentoNotificacion = fechaCita.subtract(const Duration(days: 1));
 
-    // Si la cita es para mañana y ya faltan menos de 24 horas, 
-    // el recordatorio sería para "un momento ya pasado".
     if (momentoNotificacion.isBefore(DateTime.now())) {
-      debugPrint("⚠️ Falta menos de un día para la cita, programando aviso inmediato...");
-      // Opcional: Si quieres que avise de todos modos aunque falte menos de un día, 
-      // podrías programarla para dentro de 5 segundos:
-      // final momentoNotificacion = DateTime.now().add(Duration(seconds: 5));
+      debugPrint("⚠️ Cita muy próxima, ignorando programación local...");
       return;
     }
 
@@ -113,23 +134,23 @@ class NotificationService {
       tz.TZDateTime.from(momentoNotificacion, tz.local),
       const NotificationDetails(
         android: AndroidNotificationDetails(
-          'citas_channel',
-          'Recordatorios de Citas',
+          'high_importance_channel', // <--- USAMOS EL CANAL DE ALTA IMPORTANCIA
+          'Recordatorios Bernat Experience',
           importance: Importance.max,
           priority: Priority.high,
+          fullScreenIntent: true, // Ayuda en algunos dispositivos a que flote
         ),
         iOS: DarwinNotificationDetails(),
       ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       payload: 'reserva_$id',
     );
 
-    debugPrint("🔔 Notificación programada para el día anterior: $momentoNotificacion");
+    debugPrint("🔔 Notificación programada para: $momentoNotificacion");
   }
 
-  /// Cancela una notificación específica (útil si el cliente cancela la cita)
   static Future<void> cancelarNotificacion(int id) async {
     await _notificationsPlugin.cancel(id);
     debugPrint("🔔 Notificación $id cancelada.");
