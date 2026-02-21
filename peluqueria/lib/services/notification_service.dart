@@ -48,38 +48,38 @@ class NotificationService {
     
     try {
       String deviceId = '';
-      String modelo = '';
-
       if (Platform.isAndroid) {
         AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
         deviceId = androidInfo.id;
-        modelo = androidInfo.model;
       } else if (Platform.isIOS) {
         IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
         deviceId = iosInfo.identifierForVendor ?? 'unknown_ios';
-        modelo = iosInfo.utsname.machine;
       }
 
-      // Generamos un token automático para que no lo tengas que pasar tú
+      // El token que enviaremos (tu Java espera un Map con la clave "token")
       String tokenAutomatico = "token_${deviceId}_$idCliente";
 
+      // IMPORTANTE: Tu Java usa @PathVariable Long clienteId y @RequestMapping("/api/fcm")
+      // Por lo tanto, la URL debe ser: /api/fcm/token/{idCliente}
+      final String url = '${ApiConfig.baseUrl}/api/fcm/token/$idCliente';
+
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/api/dispositivos/vincular'),
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
+        // Tu Java espera @RequestBody Map<String, String> body con la clave "token"
         body: jsonEncode({
-          'clienteId': idCliente,
-          'deviceId': deviceId,
           'token': tokenAutomatico,
-          'modelo': modelo,
-          'plataforma': Platform.isAndroid ? 'ANDROID' : 'IOS',
         }),
       );
 
       if (response.statusCode == 200) {
-        debugPrint("✅ Vinculado cliente $idCliente en ${ApiConfig.baseUrl}");
+        debugPrint("✅ Token registrado en Java para cliente $idCliente");
+      } else {
+        debugPrint("❌ Error servidor: ${response.statusCode} - ${response.body}");
+        debugPrint("🔗 Intentaste llamar a: $url");
       }
     } catch (e) {
-      debugPrint("⚠️ Error: $e");
+      debugPrint("⚠️ Error de conexión: $e");
     }
   }
 
@@ -87,29 +87,34 @@ class NotificationService {
 
   /// Programa un recordatorio para una cita específica
   /// Se ejecuta 1 hora antes de la cita por defecto
+  /// Programa un recordatorio para una cita específica
+  /// Se ejecuta 24 horas (1 día) antes de la cita
   static Future<void> programarRecordatorioCita(
     int id,
     DateTime fechaCita,
   ) async {
-    // Calculamos el momento de la notificación (ejemplo: 1 hora antes)
-    final momentoNotificacion = fechaCita.subtract(const Duration(hours: 1));
+    // CAMBIA ESTA LÍNEA: de hours: 1 a days: 1
+    final momentoNotificacion = fechaCita.subtract(const Duration(days: 1));
 
-    // Si la cita es muy pronto y la hora de notificación ya pasó, no programamos nada
+    // Si la cita es para mañana y ya faltan menos de 24 horas, 
+    // el recordatorio sería para "un momento ya pasado".
     if (momentoNotificacion.isBefore(DateTime.now())) {
-      debugPrint("⚠️ La hora del recordatorio ya ha pasado, no se programará.");
+      debugPrint("⚠️ Falta menos de un día para la cita, programando aviso inmediato...");
+      // Opcional: Si quieres que avise de todos modos aunque falte menos de un día, 
+      // podrías programarla para dentro de 5 segundos:
+      // final momentoNotificacion = DateTime.now().add(Duration(seconds: 5));
       return;
     }
 
     await _notificationsPlugin.zonedSchedule(
-      id, // ID único de la notificación
+      id,
       'Recordatorio de Cita',
-      'Tienes una cita programada para las ${fechaCita.hour}:${fechaCita.minute.toString().padLeft(2, '0')} h.',
+      'Mañana tienes una cita a las ${fechaCita.hour}:${fechaCita.minute.toString().padLeft(2, '0')} h.',
       tz.TZDateTime.from(momentoNotificacion, tz.local),
       const NotificationDetails(
         android: AndroidNotificationDetails(
-          'citas_channel', // ID del canal
-          'Recordatorios de Citas', // Nombre del canal
-          channelDescription: 'Notificaciones para recordatorios de citas',
+          'citas_channel',
+          'Recordatorios de Citas',
           importance: Importance.max,
           priority: Priority.high,
         ),
@@ -120,6 +125,8 @@ class NotificationService {
           UILocalNotificationDateInterpretation.absoluteTime,
       payload: 'reserva_$id',
     );
+
+    debugPrint("🔔 Notificación programada para el día anterior: $momentoNotificacion");
   }
 
   /// Cancela una notificación específica (útil si el cliente cancela la cita)

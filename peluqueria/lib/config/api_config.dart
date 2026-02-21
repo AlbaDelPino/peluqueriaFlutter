@@ -80,4 +80,7 @@ class ApiConfig {
       '$baseUrl/bloqueos/fecha?fecha=$fecha';
   static String bloqueosPorHorario(int horarioId) =>
       '$baseUrl/bloqueos/horario?horarioId=$horarioId';
+
+      // --- NOTIFICACIONES Y DISPOSITIVOS ---
+  static const String vincularDispositivoUrl = '$baseUrl/api/dispositivos/vincular';
 }
