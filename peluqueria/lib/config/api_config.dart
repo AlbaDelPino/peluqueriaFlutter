@@ -57,25 +57,27 @@ class ApiConfig {
 
   static const String reservarCitaUrl = "$baseUrl/citas/reservar";
 
-// --- VALORACIONES ---
- // --- VALORACIONES (Basado en tu Controller) ---
-  
-// Mapea a: @GetMapping("/{id}") - Ojo: Este busca por ID de la valoración
-static String getValoracionById(int id) => '$baseUrl/valoraciones/$id';
+  // --- VALORACIONES ---
+  // --- VALORACIONES (Basado en tu Controller) ---
 
-// Mapea a: @GetMapping("/cliente/{idCliente}")
-static String getValoracionesDelCliente(int idCliente) => '$baseUrl/valoraciones/cliente/$idCliente';
+  // Mapea a: @GetMapping("/{id}") - Ojo: Este busca por ID de la valoración
+  static String getValoracionById(int id) => '$baseUrl/valoraciones/$id';
 
-// Mapea a: @PostMapping("/{idCliente}")
-static String postValoracion(int idCliente) => '$baseUrl/valoraciones/$idCliente';
+  // Mapea a: @GetMapping("/cliente/{idCliente}")
+  static String getValoracionesDelCliente(int idCliente) =>
+      '$baseUrl/valoraciones/cliente/$idCliente';
 
-// Mapea a: @DeleteMapping("/{id}")
-static String eliminarValoracion(int id) => '$baseUrl/valoraciones/$id';
+  // Mapea a: @PostMapping("/{idCliente}")
+  static String postValoracion(int idCliente) =>
+      '$baseUrl/valoraciones/$idCliente';
+
+  // Mapea a: @DeleteMapping("/{id}")
+  static String eliminarValoracion(int id) => '$baseUrl/valoraciones/$id';
+
   // --- BLOQUEOS ---
   static const String bloqueosUrl = '$baseUrl/bloqueos';
-  static String bloqueoPorFecha(String fecha) => '$baseUrl/bloqueos/fecha?fecha=$fecha';
-  static String bloqueosPorHorario(int horarioId) => '$baseUrl/bloqueos/horario?horarioId=$horarioId';
-
-
-
+  static String bloqueoPorFecha(String fecha) =>
+      '$baseUrl/bloqueos/fecha?fecha=$fecha';
+  static String bloqueosPorHorario(int horarioId) =>
+      '$baseUrl/bloqueos/horario?horarioId=$horarioId';
 }

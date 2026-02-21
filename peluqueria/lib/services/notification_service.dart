@@ -1,103 +1,130 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:http/http.dart' as http;
+import 'dart:io';
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:http/http.dart' as http;
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter/foundation.dart';
+
+import '../config/api_config.dart'; // Importante para usar ApiConfig.baseUrl
+import '../services/user_preferences.dart'; // Para obtener el userId
 
 class NotificationService {
-  static final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
-  static final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  // Instancia única del plugin
+  static final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
+  /// Inicializa el servicio de notificaciones
+  /// Se debe llamar en el main.dart: await NotificationService.init();
   static Future<void> init() async {
-    tz.initializeTimeZones();
-    
-    // Configuración Android
+    tz.initializeTimeZones(); // Configura las zonas horarias
+
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    
+
+    const DarwinInitializationSettings initializationSettingsIOS =
+        DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+
     const InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
     );
 
-    await _notifications.initialize(initializationSettings);
-
-    // Escuchar mensajes de Firebase en primer plano
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      _mostrarNotificacionDeFCM(message);
-    });
-  }
-
-  // --- VINCULACIÓN CON SPRING BOOT ---
-  static Future<void> vincularDispositivoConBackend(int clienteId) async {
-    NotificationSettings settings = await _fcm.requestPermission(
-      alert: true, badge: true, sound: true,
+    await _notificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (details) {
+        debugPrint("Notificación pulsada: ${details.payload}");
+      },
     );
-
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      String? token = await _fcm.getToken();
-      if (token != null) {
-        debugPrint("🚀 [FCM] Token: $token");
-        await _enviarTokenAlServidor(clienteId, token);
-      }
-    }
   }
 
-  static Future<void> _enviarTokenAlServidor(int clienteId, String token) async {
+ static Future<void> vincularDispositivoConBackend(int idCliente) async {
+    final deviceInfo = DeviceInfoPlugin();
+    
     try {
-      // Reemplaza con tu IP de 'config api+'
-      final url = Uri.parse("http://10.0.2.2:8080/api/fcm/token/$clienteId");
+      String deviceId = '';
+      String modelo = '';
+
+      if (Platform.isAndroid) {
+        AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+        deviceId = androidInfo.id;
+        modelo = androidInfo.model;
+      } else if (Platform.isIOS) {
+        IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+        deviceId = iosInfo.identifierForVendor ?? 'unknown_ios';
+        modelo = iosInfo.utsname.machine;
+      }
+
+      // Generamos un token automático para que no lo tengas que pasar tú
+      String tokenAutomatico = "token_${deviceId}_$idCliente";
+
       final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"token": token}),
+        Uri.parse('${ApiConfig.baseUrl}/api/dispositivos/vincular'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'clienteId': idCliente,
+          'deviceId': deviceId,
+          'token': tokenAutomatico,
+          'modelo': modelo,
+          'plataforma': Platform.isAndroid ? 'ANDROID' : 'IOS',
+        }),
       );
+
       if (response.statusCode == 200) {
-        debugPrint("✅ Token guardado en servidor");
+        debugPrint("✅ Vinculado cliente $idCliente en ${ApiConfig.baseUrl}");
       }
     } catch (e) {
-      debugPrint("❌ Error vinculando token: $e");
+      debugPrint("⚠️ Error: $e");
     }
   }
 
-  // --- NOTIFICACIONES LOCALES (Recordatorios) ---
-  static Future<void> programarRecordatorioCita(int id, DateTime fechaCita) async {
-    // Ejemplo: Notificar 1 hora antes
-    final scheduledDate = fechaCita.subtract(const Duration(hours: 1));
-    
-    if (scheduledDate.isBefore(DateTime.now())) return;
+  // --- PROGRAMACIÓN LOCAL ---
 
-    await _notifications.zonedSchedule(
-      id,
+  /// Programa un recordatorio para una cita específica
+  /// Se ejecuta 1 hora antes de la cita por defecto
+  static Future<void> programarRecordatorioCita(
+    int id,
+    DateTime fechaCita,
+  ) async {
+    // Calculamos el momento de la notificación (ejemplo: 1 hora antes)
+    final momentoNotificacion = fechaCita.subtract(const Duration(hours: 1));
+
+    // Si la cita es muy pronto y la hora de notificación ya pasó, no programamos nada
+    if (momentoNotificacion.isBefore(DateTime.now())) {
+      debugPrint("⚠️ La hora del recordatorio ya ha pasado, no se programará.");
+      return;
+    }
+
+    await _notificationsPlugin.zonedSchedule(
+      id, // ID único de la notificación
       'Recordatorio de Cita',
-      'Tu cita comienza en 1 hora. ¡Te esperamos!',
-      tz.TZDateTime.from(scheduledDate, tz.local),
+      'Tienes una cita programada para las ${fechaCita.hour}:${fechaCita.minute.toString().padLeft(2, '0')} h.',
+      tz.TZDateTime.from(momentoNotificacion, tz.local),
       const NotificationDetails(
         android: AndroidNotificationDetails(
-          'bernat_local', 'Recordatorios Locales',
-          importance: Importance.max, priority: Priority.high,
+          'citas_channel', // ID del canal
+          'Recordatorios de Citas', // Nombre del canal
+          channelDescription: 'Notificaciones para recordatorios de citas',
+          importance: Importance.max,
+          priority: Priority.high,
         ),
+        iOS: DarwinNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      payload: 'reserva_$id',
     );
   }
 
-  static void _mostrarNotificacionDeFCM(RemoteMessage message) async {
-    RemoteNotification? notification = message.notification;
-    if (notification != null) {
-      await _notifications.show(
-        notification.hashCode,
-        notification.title,
-        notification.body,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'bernat_fcm', 'Notificaciones Servidor',
-            importance: Importance.max, priority: Priority.high,
-          ),
-        ),
-      );
-    }
+  /// Cancela una notificación específica (útil si el cliente cancela la cita)
+  static Future<void> cancelarNotificacion(int id) async {
+    await _notificationsPlugin.cancel(id);
+    debugPrint("🔔 Notificación $id cancelada.");
   }
 }
