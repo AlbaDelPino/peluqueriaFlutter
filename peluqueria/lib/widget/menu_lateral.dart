@@ -16,10 +16,7 @@ class MenuLateral extends StatelessWidget {
 
   // --- FUNCIÓN PARA LLAMADA DIRECTA ---
   Future<void> _hacerLlamada() async {
-    final Uri launchUri = Uri(
-      scheme: 'tel',
-      path: '+34637849998',
-    );
+    final Uri launchUri = Uri(scheme: 'tel', path: '+34675893456');
     try {
       if (await canLaunchUrl(launchUri)) {
         await launchUrl(launchUri, mode: LaunchMode.externalApplication);
@@ -34,7 +31,7 @@ class MenuLateral extends StatelessWidget {
   // --- FUNCIÓN PARA WHATSAPP ---
   Future<void> _abrirWhatsApp() async {
     final Uri whatsappUri = Uri.parse(
-      "https://wa.me/34637849998?text=Hola,%20me%20gustaría%20pedir%20información.",
+      "https://wa.me/34678345123?text=Hola,%20me%20gustaría%20pedir%20información.",
     );
     try {
       if (await canLaunchUrl(whatsappUri)) {
@@ -50,7 +47,9 @@ class MenuLateral extends StatelessWidget {
   // --- FUNCIÓN PARA ABRIR MAPAS ---
   Future<void> _abrirMapas() async {
     // Reemplaza con la dirección real o coordenadas de la peluquería
-    final Uri mapUri = Uri.parse("https://www.google.com/maps/search/?api=1&query=Peluqueria+Bernat+Experience");
+    final Uri mapUri = Uri.parse(
+      "https://www.google.com/maps/search/?api=1&query=Peluqueria+Bernat+Experience",
+    );
     try {
       if (await canLaunchUrl(mapUri)) {
         await launchUrl(mapUri, mode: LaunchMode.externalApplication);
@@ -68,13 +67,15 @@ class MenuLateral extends StatelessWidget {
     String imagen = await prefs.imagenUsuario;
 
     try {
-      final response = await http.get(
-        Uri.parse(ApiConfig.meUrl),
-        headers: {
-          'Authorization': 'Bearer $tokenActual',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 5));
+      final response = await http
+          .get(
+            Uri.parse(ApiConfig.meUrl),
+            headers: {
+              'Authorization': 'Bearer $tokenActual',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
         final decodedData = jsonDecode(response.body);
@@ -103,7 +104,9 @@ class MenuLateral extends StatelessWidget {
 
         final String nombre = snapshot.data!['nombre']!;
         final String imagen = snapshot.data!['imagen']!;
-        final String cleanImg = imagen.contains(',') ? imagen.split(',').last : imagen;
+        final String cleanImg = imagen.contains(',')
+            ? imagen.split(',').last
+            : imagen;
 
         return Drawer(
           backgroundColor: Colors.white,
@@ -122,7 +125,10 @@ class MenuLateral extends StatelessWidget {
                 ),
                 accountName: TextoAutomatico(
                   nombre,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
                 accountEmail: const TextoAutomatico(
                   "Cliente Bernat Experience",
@@ -145,7 +151,9 @@ class MenuLateral extends StatelessWidget {
                         Navigator.pop(context);
                         await Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const EditarPerfilScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => const EditarPerfilScreen(),
+                          ),
                         );
                       },
                     ),
@@ -156,13 +164,15 @@ class MenuLateral extends StatelessWidget {
                         Navigator.pop(context);
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const CambiarPasswordScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => const CambiarPasswordScreen(),
+                          ),
                         );
                       },
                     ),
-                    
+
                     const Divider(indent: 20, endIndent: 20),
-                    
+
                     // --- SECCIÓN: CONTACTO ---
                     _buildMenuItem(
                       icon: Icons.phone_in_talk_outlined,
@@ -185,14 +195,18 @@ class MenuLateral extends StatelessWidget {
 
                     // --- SECCIÓN: AYUDA Y SOPORTE ---
                     Padding(
-                      padding: const EdgeInsets.only(left: 24, top: 10, bottom: 5),
+                      padding: const EdgeInsets.only(
+                        left: 24,
+                        top: 10,
+                        bottom: 5,
+                      ),
                       child: TextoAutomatico(
                         "AYUDA Y SOPORTE",
                         style: TextStyle(
                           color: Colors.grey[500],
                           fontSize: 11,
                           letterSpacing: 1.1,
-                          fontWeight: FontWeight.bold
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -214,25 +228,51 @@ class MenuLateral extends StatelessWidget {
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                              title: TextoAutomatico("Bernat Experience", style: TextStyle(color: naranjaLogo, fontWeight: FontWeight.bold)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              title: TextoAutomatico(
+                                "Bernat Experience",
+                                style: TextStyle(
+                                  color: naranjaLogo,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               content: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const TextoAutomatico("Versión 1.0.2", style: TextStyle(fontWeight: FontWeight.bold)),
+                                  const TextoAutomatico(
+                                    "Versión 1.0.2",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                   const SizedBox(height: 10),
-                                  const TextoAutomatico("Esta aplicación ha sido diseñada exclusivamente para los clientes de Bernat Experience."),
+                                  const TextoAutomatico(
+                                    "Esta aplicación ha sido diseñada exclusivamente para los clientes de Bernat Experience.",
+                                  ),
                                   const SizedBox(height: 10),
-                                  const TextoAutomatico("• Gestiona tus citas.\n• Contacto directo con profesionales.\n• Historial de servicios."),
+                                  const TextoAutomatico(
+                                    "• Gestiona tus citas.\n• Contacto directo con profesionales.\n• Historial de servicios.",
+                                  ),
                                   const SizedBox(height: 15),
-                                  const TextoAutomatico("© 2026 Bernat Experience. Todos los derechos reservados.", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                  const TextoAutomatico(
+                                    "© 2026 Bernat Experience. Todos los derechos reservados.",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                 ],
                               ),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(context),
-                                  child: TextoAutomatico("Cerrar", style: TextStyle(color: naranjaLogo)),
+                                  child: TextoAutomatico(
+                                    "Cerrar",
+                                    style: TextStyle(color: naranjaLogo),
+                                  ),
                                 ),
                               ],
                             );
@@ -240,8 +280,7 @@ class MenuLateral extends StatelessWidget {
                         );
                       },
                     ),
-                                  
-                     ],
+                  ],
                 ),
               ),
               SafeArea(
@@ -249,16 +288,26 @@ class MenuLateral extends StatelessWidget {
                   children: [
                     const Divider(),
                     ListTile(
-                      leading: const Icon(Icons.logout, color: Colors.redAccent),
+                      leading: const Icon(
+                        Icons.logout,
+                        color: Colors.redAccent,
+                      ),
                       title: const TextoAutomatico(
                         'Cerrar Sesión',
-                        style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       onTap: () async {
                         final prefs = UserPreferences();
                         await prefs.logout();
                         if (context.mounted) {
-                          Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/login',
+                            (route) => false,
+                          );
                         }
                       },
                     ),
@@ -282,7 +331,11 @@ class MenuLateral extends StatelessWidget {
       leading: Icon(icon, color: naranjaLogo),
       title: TextoAutomatico(
         title,
-        style: TextStyle(color: textoPrincipal, fontSize: 15, fontWeight: FontWeight.w500),
+        style: TextStyle(
+          color: textoPrincipal,
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
