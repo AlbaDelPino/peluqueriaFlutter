@@ -310,58 +310,51 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   }
 
   Future<void> _ejecutarReserva(HorarioSemanal h, String hora, int clienteId) async {
-    setState(() => _estaCargando = true);
-    
-    final partesHora = hora.split(':');
-    final DateTime fechaCitaCompleta = DateTime(
-      _diaSeleccionado!.year,
-      _diaSeleccionado!.month,
-      _diaSeleccionado!.day,
-      int.parse(partesHora[0]),
-      int.parse(partesHora[1]),
-    );
+  setState(() => _estaCargando = true);
+  
+  // 1. Preparamos la fecha
+  final partesHora = hora.split(':');
+  final DateTime fechaCitaCompleta = DateTime(
+    _diaSeleccionado!.year,
+    _diaSeleccionado!.month,
+    _diaSeleccionado!.day,
+    int.parse(partesHora[0]),
+    int.parse(partesHora[1]),
+  );
 
-    final exito = await _horarioService.crearReserva(clienteId, h.id, _diaSeleccionado!, hora);
-    
-    if (mounted) setState(() => _estaCargando = false);
-    
-    if (exito) {
-      try {
-        await NotificationService.programarRecordatorioCita(
-          h.id, 
-          fechaCitaCompleta,
-        );
-        debugPrint("🔔 Recordatorio programado para: $fechaCitaCompleta");
-      } catch (e) {
-        debugPrint("❌ Error al programar notificación: $e");
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: TextoAutomatico("¡Reserva realizada con éxito!"), 
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          )
-        );
-
-        Navigator.pushNamedAndRemoveUntil(
-          context, 
-          '/home', 
-          (route) => false, 
-        );
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: TextoAutomatico("Error al realizar la reserva"), 
-            backgroundColor: Colors.red
-          )
-        );
-      }
+  // 2. Llamada a la API
+  final exito = await _horarioService.crearReserva(clienteId, h.id, _diaSeleccionado!, hora);
+  
+  if (mounted) setState(() => _estaCargando = false);
+  
+  if (exito) {
+    try {
+      // 3. Programamos la notificación usando el nuevo método
+      await NotificationService.programarRecordatorioCita(
+        idCita: h.id, 
+        fechaCompleta: fechaCitaCompleta,
+        nombreServicio: widget.servicio.nombre, // <-- Pasamos el nombre del servicio
+      );
+      debugPrint("🔔 Recordatorio programado correctamente");
+    } catch (e) {
+      debugPrint("❌ Error al programar notificación: $e");
     }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TextoAutomatico("¡Reserva realizada con éxito!"), 
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        )
+      );
+
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+    }
+  } else {
+    // ... manejo de error (tu código actual)
   }
+}
 
   String _getNombreDiaEspanol(DateTime d) => ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"][d.weekday - 1];
   String _getDiaBackend(DateTime d) => ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"][d.weekday - 1];

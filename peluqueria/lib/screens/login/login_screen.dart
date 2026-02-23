@@ -36,8 +36,10 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// Lógica de Login Estándar
   void _login() async {
     if (!_formKey.currentState!.validate()) return;
+    
     FocusScope.of(context).unfocus();
     setState(() => _isLoading = true);
 
@@ -52,16 +54,17 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response == null || response == "CREDENCIALES_MAL" || response.contains("ERROR")) {
         _mostrarSnackBar("Usuario o contraseña incorrectos".tr(context), Colors.redAccent);
       } else {
+        // 1. Guardamos la sesión (Java ahora envía nombre, tlf, etc.)
         final prefs = UserPreferences();
         await prefs.guardarSesion(response, _passController.text.trim());
         
-        // --- VINCULACIÓN FCM CON EL SERVIDOR ---
-        final idCliente = await prefs.userId;
-        if (idCliente != 0) {
-          await NotificationService.vincularDispositivoConBackend(idCliente);
-        }
+        // 2. Inicializamos notificaciones por si el usuario tiene citas
+        await NotificationService.init();
 
-        if (mounted) Navigator.pushReplacementNamed(context, '/home');
+        // 3. Navegamos al Home
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
       }
     } catch (e) {
       _mostrarSnackBar("Error de conexión con el servidor".tr(context), Colors.redAccent);
@@ -70,6 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  /// Lógica de Login con Google
   void _loginConGoogle() async {
     setState(() => _isLoading = true);
     try {
@@ -81,14 +85,12 @@ class _LoginScreenState extends State<LoginScreen> {
         return; 
       }
       
+      // Guardamos sesión con flag especial para password
       final prefs = UserPreferences();
       await prefs.guardarSesion(response, "GOOGLE_AUTH");
       
-      // --- VINCULACIÓN FCM CON EL SERVIDOR ---
-      final idCliente = await prefs.userId;
-      if (idCliente != 0) {
-        await NotificationService.vincularDispositivoConBackend(idCliente);
-      }
+      // Inicializamos notificaciones
+      await NotificationService.init();
 
       if (mounted) Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
@@ -126,39 +128,53 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 40),
                     _buildLogo(),
                     const SizedBox(height: 25),
-                    TextoAutomatico("BERNAT", style: TextStyle(fontSize: 38, fontWeight: FontWeight.w900, color: negroSuave, letterSpacing: 1.5)),
-                    TextoAutomatico("EXPERIENCE", style: TextStyle(fontSize: 12, letterSpacing: 6, fontWeight: FontWeight.w300, color: naranjaLogo)),
+                    TextoAutomatico("BERNAT", 
+                      style: TextStyle(fontSize: 38, fontWeight: FontWeight.w900, color: negroSuave, letterSpacing: 1.5)),
+                    TextoAutomatico("EXPERIENCE", 
+                      style: TextStyle(fontSize: 12, letterSpacing: 6, fontWeight: FontWeight.w300, color: naranjaLogo)),
                     const SizedBox(height: 50),
+                    
                     _buildModernInput(
                       controller: _userController,
                       label: 'NOMBRE DE USUARIO'.tr(context),
                       icon: Icons.alternate_email_rounded,
+                      keyboardType: TextInputType.text,
+                      textInputAction: TextInputAction.next,
                       validator: (v) {
                         if (v == null || v.isEmpty) return "Introduce tu usuario".tr(context);
                         if (!_userPattern.hasMatch(v)) return "Usuario no válido (4-20 caracteres)".tr(context);
                         return null;
                       },
                     ),
+                    
                     const SizedBox(height: 20),
+                    
                     _buildModernInput(
                       controller: _passController,
                       label: 'CONTRASEÑA'.tr(context),
                       icon: Icons.lock_outline_rounded,
                       isPassword: true,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _login(),
                       validator: (v) {
                         if (v == null || v.isEmpty) return "La contraseña es obligatoria".tr(context);
                         if (!_passPattern.hasMatch(v)) return "Formato de contraseña incorrecto".tr(context);
                         return null;
                       },
                     ),
+                    
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const OlvidePasswordScreen())),
-                        child: TextoAutomatico('¿Olvidaste tu clave?'.tr(context), style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                        onPressed: () => Navigator.push(context, 
+                          MaterialPageRoute(builder: (context) => const OlvidePasswordScreen())),
+                        child: TextoAutomatico('¿Olvidaste tu clave?'.tr(context), 
+                          style: TextStyle(color: Colors.grey[600], fontSize: 13)),
                       ),
                     ),
+                    
                     const SizedBox(height: 20),
+                    
                     _isLoading
                         ? CircularProgressIndicator(color: naranjaLogo)
                         : Column(
@@ -168,6 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               _buildBotonGoogle(),
                             ],
                           ),
+                    
                     const SizedBox(height: 40),
                     _buildFooterRegistro(),
                   ],
@@ -209,8 +226,13 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       child: ElevatedButton(
         onPressed: _login,
-        style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-        child: TextoAutomatico('INICIAR SESIÓN'.tr(context), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent, 
+          shadowColor: Colors.transparent, 
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))
+        ),
+        child: TextoAutomatico('INICIAR SESIÓN'.tr(context), 
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
       ),
     );
   }
@@ -226,7 +248,10 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       child: OutlinedButton(
         onPressed: _loginConGoogle,
-        style: OutlinedButton.styleFrom(side: BorderSide.none, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide.none, 
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -237,7 +262,8 @@ class _LoginScreenState extends State<LoginScreen> {
               errorBuilder: (context, error, stackTrace) => const Icon(Icons.account_circle, color: Colors.grey),
             ),
             const SizedBox(width: 12),
-            TextoAutomatico('Continuar con Google'.tr(context), style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w500)),
+            TextoAutomatico('Continuar con Google'.tr(context), 
+              style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w500)),
           ],
         ),
       ),
@@ -251,25 +277,41 @@ class _LoginScreenState extends State<LoginScreen> {
         TextoAutomatico('¿Eres nuevo aquí? '.tr(context), style: TextStyle(color: Colors.grey[600])),
         GestureDetector(
           onTap: () => Navigator.pushNamed(context, '/registro'),
-          child: TextoAutomatico('Crea una cuenta'.tr(context), style: TextStyle(color: naranjaLogo, fontWeight: FontWeight.bold)),
+          child: TextoAutomatico('Crea una cuenta'.tr(context), 
+            style: TextStyle(color: naranjaLogo, fontWeight: FontWeight.bold)),
         ),
       ],
     );
   }
 
-  Widget _buildModernInput({required TextEditingController controller, required String label, required IconData icon, bool isPassword = false, required String? Function(String?) validator}) {
+  Widget _buildModernInput({
+    required TextEditingController controller, 
+    required String label, 
+    required IconData icon, 
+    bool isPassword = false, 
+    TextInputType keyboardType = TextInputType.text,
+    TextInputAction textInputAction = TextInputAction.next,
+    void Function(String)? onFieldSubmitted,
+    required String? Function(String?) validator
+  }) {
     return Container(
       decoration: BoxDecoration(color: const Color(0xFFF7F7F7), borderRadius: BorderRadius.circular(15)),
       child: TextFormField(
         controller: controller,
         obscureText: isPassword ? !_isPasswordVisible : false,
         validator: validator,
+        keyboardType: keyboardType,
+        textInputAction: textInputAction,
+        onFieldSubmitted: onFieldSubmitted,
         autovalidateMode: AutovalidateMode.onUserInteraction,
         decoration: InputDecoration(
           labelText: label,
           labelStyle: const TextStyle(color: Colors.grey, fontSize: 13),
           prefixIcon: Icon(icon, color: naranjaLogo, size: 20),
-          suffixIcon: isPassword ? IconButton(icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off, color: Colors.grey, size: 20), onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible)) : null,
+          suffixIcon: isPassword ? IconButton(
+            icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off, color: Colors.grey, size: 20), 
+            onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible)) 
+            : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
         ),
@@ -279,8 +321,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildLogo() {
     return Container(
-      decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: naranjaLogo.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))]),
-      child: Image.asset('assets/iconPeluqueria.png', height: 110, errorBuilder: (c, e, s) => Icon(Icons.cut, size: 80, color: naranjaLogo)),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle, 
+        boxShadow: [BoxShadow(color: naranjaLogo.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))]
+      ),
+      child: Image.asset('assets/iconPeluqueria.png', 
+        height: 110, 
+        errorBuilder: (c, e, s) => Icon(Icons.cut, size: 80, color: naranjaLogo)),
     );
   }
 }

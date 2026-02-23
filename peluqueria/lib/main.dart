@@ -19,8 +19,7 @@ void main() async {
   // 1. Inicializar Firebase
   await Firebase.initializeApp(); 
 
-  // 2. Inicializar nuestro servicio de notificaciones
-  await NotificationService.init();
+await NotificationService.init();
 
   // Bloquear orientación vertical
   await SystemChrome.setPreferredOrientations([

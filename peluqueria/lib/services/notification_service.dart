@@ -1,158 +1,115 @@
-import 'dart:io';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:intl/intl.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:flutter/foundation.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import '../config/api_config.dart';
-import '../services/user_preferences.dart';
+import 'package:peluqueria/models/cita/cita_model.dart';
+import 'package:peluqueria/services/user_preferences.dart';
+import 'package:peluqueria/config/traducciones.dart'; 
 
 class NotificationService {
-  static final FlutterLocalNotificationsPlugin _notificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  static final NotificationService _instance = NotificationService._internal();
+  factory NotificationService() => _instance;
+  NotificationService._internal();
 
-  /// Inicializa el servicio y configura el canal para notificaciones flotantes
+  final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
+  bool _initialized = false;
+
+  /// --- INICIALIZACIÓN ESTÁTICA ---
+  /// Ahora usa la instancia interna para evitar errores de "static access"
   static Future<void> init() async {
+    final service = NotificationService(); // Accedemos a la instancia singleton
+    
+    if (service._initialized) return;
+
+    // 1. Configurar Timezones
     tz.initializeTimeZones();
-
-    // 1. CONFIGURACIÓN DEL CANAL ANDROID (IMPORTANTE PARA NOTIFICACIONES FLOTANTES)
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'high_importance_channel', // ID idéntico al que uses en Java
-      'Recordatorios Bernat Experience', // Nombre que verá el usuario en ajustes
-      description: 'Canal para recordatorios de citas con prioridad alta.',
-      importance: Importance.max, // <--- Esto permite que la notificación flote
-      playSound: true,
-      enableVibration: true,
-    );
-
-    // 2. REGISTRAR EL CANAL EN EL PLUGIN
-    await _notificationsPlugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(channel);
-
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    const DarwinInitializationSettings initializationSettingsIOS =
-        DarwinInitializationSettings(
-          requestAlertPermission: true,
-          requestBadgePermission: true,
-          requestSoundPermission: true,
-        );
-
-    const InitializationSettings initializationSettings =
-        InitializationSettings(
-          android: initializationSettingsAndroid,
-          iOS: initializationSettingsIOS,
-        );
-
-    await _notificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (details) {
-        debugPrint("Notificación pulsada: ${details.payload}");
-      },
-    );
-
-    // 3. SOLICITAR PERMISOS AUTOMÁTICAMENTE AL INICIAR
-    await solicitarPermisos();
-  }
-
-  /// Pide permiso al usuario para mostrar alertas, sonidos y banners
-  static Future<void> solicitarPermisos() async {
-    FirebaseMessaging messaging = FirebaseMessaging.instance;
-
-    NotificationSettings settings = await messaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
-
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      debugPrint('✅ El usuario concedió permiso de notificaciones');
-    } else if (settings.authorizationStatus ==
-        AuthorizationStatus.provisional) {
-      debugPrint('✅ Permiso provisional concedido');
-    } else {
-      debugPrint('❌ El usuario rechazó los permisos de notificación');
-    }
-  }
-
-  static Future<void> vincularDispositivoConBackend(int idCliente) async {
+    final String timeZoneName = DateTime.now().timeZoneName;
     try {
-      String? tokenReal = await FirebaseMessaging.instance.getToken();
+      tz.setLocalLocation(tz.getLocation(timeZoneName));
+    } catch (_) {
+      tz.setLocalLocation(tz.UTC);
+    }
 
-      if (tokenReal == null) {
-        debugPrint("❌ No se pudo obtener el token de Firebase");
-        return;
-      }
+    // 2. Configuración Android
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    await service._plugin.initialize(
+      const InitializationSettings(android: androidSettings),
+    );
 
-      debugPrint("🚀 Token Real de Firebase: $tokenReal");
+    service._initialized = true;
+    debugPrint("✅ NotificationService: Inicializado correctamente");
+  }
 
-      final String url = '${ApiConfig.baseUrl}/api/fcm/token/$idCliente';
+  /// --- PROGRAMACIÓN DESDE CALENDARIO ---
+  static Future<void> programarRecordatorioCita({
+    required int idCita,
+    required DateTime fechaCompleta,
+    required String nombreServicio,
+  }) async {
+    final service = NotificationService();
+    if (!service._initialized) await init();
 
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'token': tokenReal}),
-      );
+    final now = DateTime.now();
+    final timeStr = DateFormat('HH:mm').format(fechaCompleta);
 
-      if (response.statusCode == 200) {
-        debugPrint("✅ Token REAL registrado en Java para cliente $idCliente");
-      } else {
-        debugPrint("❌ Error servidor: ${response.statusCode}");
-      }
-    } catch (e) {
-      debugPrint("⚠️ Error de conexión: $e");
+    // Cancelar previos (limpieza)
+    await service._plugin.cancel(idCita * 10);
+    await service._plugin.cancel(idCita * 10 + 1);
+
+    // 24 Horas antes
+    final remind24h = fechaCompleta.subtract(const Duration(hours: 24));
+    if (remind24h.isAfter(now)) {
+      final title = await service._translateStatic('notif_24h_title', args: {'service': nombreServicio});
+      final body = await service._translateStatic('notif_24h_body', args: {'time': timeStr});
+      await service._zonedSchedule(idCita * 10, title, body, remind24h);
+    }
+
+    // 1 Hora antes
+    final remind1h = fechaCompleta.subtract(const Duration(hours: 1));
+    if (remind1h.isAfter(now)) {
+      final title = await service._translateStatic('notif_1h_title', args: {'service': nombreServicio});
+      final body = await service._translateStatic('notif_1h_body', args: {'time': timeStr});
+      await service._zonedSchedule(idCita * 10 + 1, title, body, remind1h);
     }
   }
 
-  // --- PROGRAMACIÓN LOCAL ---
+  /// --- MÉTODOS PRIVADOS ---
+  
+  Future<String> _translateStatic(String key, {Map<String, String>? args}) async {
+    final lang = await UserPreferences().getLanguage();
+    String text = translationData[key]?[lang] ?? key;
+    args?.forEach((k, v) => text = text.replaceAll('{$k}', v));
+    return text;
+  }
 
-  static Future<void> programarRecordatorioCita(
-    int id,
-    DateTime fechaCita,
-  ) async {
-    final momentoNotificacion = fechaCita.subtract(const Duration(days: 1));
-
-    if (momentoNotificacion.isBefore(DateTime.now())) {
-      debugPrint("⚠️ Cita muy próxima, ignorando programación local...");
-      return;
-    }
-
-    await _notificationsPlugin.zonedSchedule(
-      id,
-      'Recordatorio de Cita',
-      'Mañana tienes una cita a las ${fechaCita.hour}:${fechaCita.minute.toString().padLeft(2, '0')} h.',
-      tz.TZDateTime.from(momentoNotificacion, tz.local),
+  Future<void> _zonedSchedule(int id, String title, String body, DateTime date) async {
+    await _plugin.zonedSchedule(
+      id, title, body,
+      tz.TZDateTime.from(date, tz.local),
       const NotificationDetails(
         android: AndroidNotificationDetails(
-          'high_importance_channel', // <--- USAMOS EL CANAL DE ALTA IMPORTANCIA
-          'Recordatorios Bernat Experience',
-          importance: Importance.max,
-          priority: Priority.high,
-          fullScreenIntent: true, // Ayuda en algunos dispositivos a que flote
+          'cita_alerts', 'Alertas de Citas',
+          channelDescription: 'Recordatorios de tus citas de peluquería',
+          importance: Importance.max, priority: Priority.high,
         ),
-        iOS: DarwinNotificationDetails(),
       ),
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      payload: 'reserva_$id',
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );
-
-    debugPrint("🔔 Notificación programada para: $momentoNotificacion");
   }
 
-  static Future<void> cancelarNotificacion(int id) async {
-    await _notificationsPlugin.cancel(id);
-    debugPrint("🔔 Notificación $id cancelada.");
+  // Si necesitas usar el modelo Cita directamente:
+  Future<void> scheduleReminders(Cita cita) async {
+    final parts = cita.horaInicio.split(':');
+    final DateTime dt = DateTime(
+      cita.fecha.year, cita.fecha.month, cita.fecha.day,
+      int.parse(parts[0]), int.parse(parts[1])
+    );
+    await programarRecordatorioCita(
+      idCita: cita.idCita, 
+      fechaCompleta: dt, 
+      nombreServicio: cita.nombreServicio
+    );
   }
 }
