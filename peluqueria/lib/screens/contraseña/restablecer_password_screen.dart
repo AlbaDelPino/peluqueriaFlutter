@@ -6,10 +6,14 @@ import '../../config/api_config.dart';
 import '../../services/auth_service.dart';
 import 'package:peluqueria/widget/texto_automatico.dart';
 
-
 class RestablecerPasswordScreen extends StatefulWidget {
   final String email;
-  const RestablecerPasswordScreen({super.key, required this.email});
+  final RegExp _emailPattern = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+  final RegExp _passPattern = RegExp(
+    r'^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$&*~]).{8,}$',
+  );
+
+  RestablecerPasswordScreen({super.key, required this.email});
 
   @override
   State<RestablecerPasswordScreen> createState() =>
@@ -182,8 +186,17 @@ class _RestablecerPasswordScreenState extends State<RestablecerPasswordScreen> {
         controller: _passCtrl,
         obscureText: _obscurePassword,
         autovalidateMode: AutovalidateMode.onUserInteraction,
-        validator: (v) =>
-            (v == null || v.length < 6) ? "Mínimo 6 caracteres" : null,
+        validator: (v) {
+          if (v == null || v.isEmpty) return "Campo obligatorio";
+          if (v.length < 8) return "Mínimo 8 caracteres";
+          if (!RegExp(r'[A-Z]').hasMatch(v))
+            return "Debe incluir una mayúscula";
+          if (!RegExp(r'[0-9]').hasMatch(v))
+            return "Debe incluir al menos un número";
+          if (!RegExp(r'[!@#\$&*~]').hasMatch(v))
+            return "Falta un símbolo especial (!@#\$&*)";
+          return null;
+        },
         decoration: InputDecoration(
           labelText: "NUEVA CONTRASEÑA",
           labelStyle: const TextStyle(color: Colors.grey, fontSize: 13),
