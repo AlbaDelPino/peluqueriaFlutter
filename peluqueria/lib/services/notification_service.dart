@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:peluqueria/models/cita/cita_model.dart';
 import 'package:peluqueria/services/user_preferences.dart';
 import 'package:peluqueria/config/traducciones.dart'; 
@@ -22,12 +23,14 @@ class NotificationService {
     
     if (service._initialized) return;
 
-    // 1. Configurar Timezones
+    // 1. Configurar Timezones de forma precisa usando flutter_timezone
     tz.initializeTimeZones();
-    final String timeZoneName = DateTime.now().timeZoneName;
     try {
+      final String timeZoneName = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(timeZoneName));
-    } catch (_) {
+      debugPrint("🌍 NotificationService: Timezone configurado a $timeZoneName");
+    } catch (e) {
+      debugPrint("⚠️ Error configurando timezone específico, usando UTC: $e");
       tz.setLocalLocation(tz.UTC);
     }
 
@@ -36,6 +39,24 @@ class NotificationService {
     await service._plugin.initialize(
       const InitializationSettings(android: androidSettings),
     );
+
+    // 3. Solicitar permisos obligatorios en Android 13+ y alarmas exactas para segundo plano
+    final androidImplementation = service._plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+
+    if (androidImplementation != null) {
+      // Permiso para mostrar notificaciones (Android 13+)
+      final hasPerm = await androidImplementation.requestNotificationsPermission();
+      debugPrint("🔔 Permiso de notificaciones concedido: $hasPerm");
+      
+      // Permiso para programar alarmas exactas (Android 13/14+)
+      try {
+        final hasAlarmPerm = await androidImplementation.requestExactAlarmsPermission();
+        debugPrint("⏰ Permiso de alarmas exactas concedido: $hasAlarmPerm");
+      } catch (e) {
+        debugPrint("⚠️ No se pudo solicitar/verificar el permiso de alarmas exactas: $e");
+      }
+    }
 
     service._initialized = true;
     debugPrint("✅ NotificationService: Inicializado correctamente");
