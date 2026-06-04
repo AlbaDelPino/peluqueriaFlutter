@@ -170,6 +170,8 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
           todayDecoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: naranjaLogo)),
           todayTextStyle: TextStyle(color: naranjaLogo, fontWeight: FontWeight.bold),
           disabledTextStyle: const TextStyle(color: Colors.black12),
+          defaultTextStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          weekendTextStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
           cellPadding: EdgeInsets.zero,
           cellMargin: const EdgeInsets.all(2),
         ),

@@ -182,8 +182,14 @@ class _RestablecerPasswordScreenState extends State<RestablecerPasswordScreen> {
         controller: _passCtrl,
         obscureText: _obscurePassword,
         autovalidateMode: AutovalidateMode.onUserInteraction,
-        validator: (v) =>
-            (v == null || v.length < 6) ? "Mínimo 6 caracteres" : null,
+        validator: (v) {
+          if (v == null || v.isEmpty) return "Mínimo 8 caracteres, 1 mayúscula, 1 número y 1 símbolo";
+          final RegExp passPattern = RegExp(r'^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$&*~]).{8,}$');
+          if (!passPattern.hasMatch(v)) {
+            return "Mínimo 8 caracteres, 1 mayúscula, 1 número y 1 símbolo (!@#\$&*~)";
+          }
+          return null;
+        },
         decoration: InputDecoration(
           labelText: "NUEVA CONTRASEÑA",
           labelStyle: const TextStyle(color: Colors.grey, fontSize: 13),

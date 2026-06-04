@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart'; 
-import 'package:flutter_localizations/flutter_localizations.dart'; 
-import 'package:firebase_core/firebase_core.dart'; // Añadido
+import 'package:provider/provider.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
 import 'package:peluqueria/services/user_preferences.dart';
 import 'package:peluqueria/screens/login/login_screen.dart';
 import 'package:peluqueria/screens/home_screens.dart';
 import 'package:peluqueria/screens/login/signup_screen.dart';
-import 'package:peluqueria/providers/locale_provider.dart'; 
+import 'package:peluqueria/providers/locale_provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:peluqueria/services/notification_service.dart';
 
-final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
+final RouteObserver<ModalRoute<void>> routeObserver =
+    RouteObserver<ModalRoute<void>>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // 1. Inicializar Firebase
-  await Firebase.initializeApp(); 
 
-await NotificationService.init();
+  // Firebase initialization removed (no Firebase used)
+
+  await NotificationService.init();
 
   // Bloquear orientación vertical
   await SystemChrome.setPreferredOrientations([
@@ -52,7 +52,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Bernat Experience',
-      locale: localeProvider.locale, 
+      locale: localeProvider.locale,
       supportedLocales: const [Locale('es'), Locale('en')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -70,11 +70,13 @@ class MyApp extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
-              body: Center(child: CircularProgressIndicator(color: Color(0xFFFF6B00))),
+              body: Center(
+                child: CircularProgressIndicator(color: Color(0xFFFF6B00)),
+              ),
             );
           }
-          return (snapshot.hasData && snapshot.data == true) 
-              ? const HomeScreens() 
+          return (snapshot.hasData && snapshot.data == true)
+              ? const HomeScreens()
               : const LoginScreen();
         },
       ),

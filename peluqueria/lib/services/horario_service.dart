@@ -48,27 +48,40 @@ class HorarioService {
 
   // Busca qué días de la semana tiene configurados un servicio
   Future<List<HorarioSemanal>> buscarHorariosPorServicio(int idServicio) async {
-    final headers = await _getAuthHeaders();
-    final url = Uri.parse('${ApiConfig.baseUrl}/horarios/servicio/$idServicio');
-    final response = await http.get(url, headers: headers);
-    if (response.statusCode == 200) {
-      List<dynamic> body = json.decode(utf8.decode(response.bodyBytes));
-      return body.map((item) => HorarioSemanal.fromJson(item)).toList();
+    try {
+      final headers = await _getAuthHeaders();
+      final url = Uri.parse('${ApiConfig.baseUrl}/horarios/servicio/$idServicio');
+      final response = await http.get(url, headers: headers);
+      if (response.statusCode == 200) {
+        List<dynamic> body = json.decode(utf8.decode(response.bodyBytes));
+        return body.map((item) => HorarioSemanal.fromJson(item)).toList();
+      } else {
+        debugPrint("Error buscarHorariosPorServicio: Código ${response.statusCode} - ${response.body}");
+      }
+    } catch (e) {
+      debugPrint("Error buscarHorariosPorServicio: $e");
     }
     return [];
   }
 
   // Obtiene los turnos para un día y servicio concreto
   Future<List<HorarioSemanal>> buscarHorariosPorDiaYServicio(String dia, int idServicio) async {
-    final headers = await _getAuthHeaders();
-    final url = Uri.parse(ApiConfig.buscarHorariosUrl).replace(queryParameters: {
-      'diaSemana': dia.toUpperCase(),
-      'idServicio': idServicio.toString(),
-    });
-    final response = await http.get(url, headers: headers);
-    if (response.statusCode == 200) {
-      List<dynamic> body = json.decode(utf8.decode(response.bodyBytes));
-      return body.map((item) => HorarioSemanal.fromJson(item)).toList();
+    try {
+      final headers = await _getAuthHeaders();
+      final url = Uri.parse(ApiConfig.buscarHorariosUrl).replace(queryParameters: {
+        'diaSemana': dia.toUpperCase(),
+        'idServicio': idServicio.toString(),
+      });
+      debugPrint("Realizando GET a: $url");
+      final response = await http.get(url, headers: headers);
+      if (response.statusCode == 200) {
+        List<dynamic> body = json.decode(utf8.decode(response.bodyBytes));
+        return body.map((item) => HorarioSemanal.fromJson(item)).toList();
+      } else {
+        debugPrint("Error buscarHorariosPorDiaYServicio: Código ${response.statusCode} - ${response.body}");
+      }
+    } catch (e) {
+      debugPrint("Error buscarHorariosPorDiaYServicio: $e");
     }
     return [];
   }

@@ -122,12 +122,12 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   _buildDato(
                     "Alérgenos",
                     cliente?.alergenos ?? "Ninguno",
-                    Icons.warning_amber_rounded,
+                    Icons.healing_outlined,
                   ),
                   _buildDato(
                     "observaciones",
                     cliente?.observacion ?? "Ninguno",
-                    Icons.warning_amber_rounded,
+                    Icons.assignment_outlined,
                   ),
                   const SizedBox(height: 30),
                   _buildBotonCerrarSesion(),

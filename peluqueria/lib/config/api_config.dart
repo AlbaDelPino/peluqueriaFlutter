@@ -1,6 +1,8 @@
 class ApiConfig {
   // Base URL - El corazón de tu conexión
-  static const String baseUrl = 'http://localhost:8082';
+  //   static const String baseUrl = 'http://217.154.179.135:8080/peluqueriaia';
+  static const String baseUrl = 'http://10.39.105.95:8082';
+  //   static const String baseUrl = 'http://localhost:8082';
 
   // --- AUTENTICACIÓN Y REGISTRO ---
   static const String loginUrl = '$baseUrl/api/auth/signin';
