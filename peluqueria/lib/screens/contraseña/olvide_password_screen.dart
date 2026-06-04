@@ -6,6 +6,7 @@ import '../../config/api_config.dart';
 import '../../services/auth_service.dart';
 import 'package:peluqueria/widget/texto_automatico.dart';
 
+
 class OlvidePasswordScreen extends StatefulWidget {
   const OlvidePasswordScreen({super.key});
 
@@ -33,6 +34,8 @@ class _OlvidePasswordScreenState extends State<OlvidePasswordScreen> {
     final email = _emailController.text.trim();
 
     setState(() => _isLoading = true);
+
+   
 
     try {
       final response = await _authService.sendForgotPasswordEmail(email);
@@ -118,8 +121,9 @@ class _OlvidePasswordScreenState extends State<OlvidePasswordScreen> {
                 label: "CORREO ELECTRÓNICO",
                 icon: Icons.email_outlined,
                 validator: (v) {
-                  if (v == null || v.isEmpty) return "Campo obligatorio";
-                  if (!_emailPattern.hasMatch(v)) return "Email no válido";
+                  if (v == null || v.isEmpty) return "El email es obligatorio";
+                  if (!_emailPattern.hasMatch(v))
+                    return "Formato de email no válido";
                   return null;
                 },
               ),
